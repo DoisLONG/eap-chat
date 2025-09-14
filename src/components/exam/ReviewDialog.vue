@@ -50,22 +50,12 @@
 
         <div class="td q">
           <div class="label">问题 {{ idx + 1 }}：</div>
-          <el-input
-            v-model="r.question"
-            placeholder="请输入问题"
-            :maxlength="120"
-            clearable
-          />
+          <el-input v-model="r.question" placeholder="请输入问题" :maxlength="120" clearable />
         </div>
 
         <div class="td a">
           <div class="label">答：</div>
-          <el-input
-            v-model="r.answer"
-            placeholder="请输入答案"
-            :maxlength="200"
-            clearable
-          />
+          <el-input v-model="r.answer" placeholder="请输入答案" :maxlength="200" clearable />
         </div>
 
         <div class="td act">
@@ -89,21 +79,14 @@
 
 <script setup>
 import { reactive, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+import { saveQaList } from '@/services/sop.api' // 接口函数
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
-  /**
-   * data 结构示例：
-   * {
-   *   title: '机械检修技工_SOP-01设备检修标准作业卡',
-   *   items: [
-   *     { stage:'阶段《作业中》步骤5', section:'作业量/任务分解 新需材料', question:'...', answer:'...' }
-   *   ]
-   * }
-   */
   data: { type: Object, default: () => ({ title: '', items: [] }) }
 })
-const emit = defineEmits(['update:modelValue','save','regen','add-doc','rename'])
+const emit = defineEmits(['update:modelValue', 'save', 'regen', 'add-doc', 'rename'])
 
 const local = reactive({ title: '', items: [] })
 
@@ -117,8 +100,11 @@ watch(
 )
 
 function cryptoRandom() {
-  try { return crypto.randomUUID?.() || String(Date.now() + Math.random()) }
-  catch { return String(Date.now() + Math.random()) }
+  try {
+    return crypto.randomUUID?.() || String(Date.now() + Math.random())
+  } catch {
+    return String(Date.now() + Math.random())
+  }
 }
 
 function addOne() {
@@ -130,17 +116,24 @@ function addOne() {
     answer: ''
   })
 }
+
 function remove(i) {
   local.items.splice(i, 1)
 }
-function onSave(sync = false) {
-  // 返回干净对象
-  emit('save', {
-    title: local.title.trim(),
-    items: local.items.map(({ _key, ...rest }) => ({ ...rest })),
-    sync
-  })
+
+async function onSave(sync = false) {
+  const cleanTitle = local.title.trim()
+  const cleanItems = local.items.map(({ _key, ...rest }) => rest)
+
+  try {
+    await saveQaList({ file_name: cleanTitle, records: cleanItems })
+    ElMessage.success(sync ? '已保存并同步知识库' : '保存成功')
+    emit('save', { title: cleanTitle, items: cleanItems, sync })
+  } catch (e) {
+    ElMessage.error('保存失败：' + (e.message || '请检查网络/接口'))
+  }
 }
+
 function onRename() {
   emit('rename', local.title.trim())
 }
@@ -175,14 +168,14 @@ function onRename() {
 .title-input {
   flex: 1;
 }
-.ml8 { margin-left: 8px; }
-
+.ml8 {
+  margin-left: 8px;
+}
 .head-ops {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-
 .thead {
   display: grid;
   grid-template-columns: 300px 1fr 1fr 76px;
@@ -192,8 +185,9 @@ function onRename() {
   color: #6b778c;
   font-weight: 600;
 }
-.th { padding-left: 6px; }
-
+.th {
+  padding-left: 6px;
+}
 .rows {
   max-height: 58vh;
   overflow: auto;
@@ -226,10 +220,18 @@ function onRename() {
 .pos-meta {
   min-width: 0;
 }
-.pos-line { font-weight: 600; }
-.pos-sub  { font-size: 12px; color: #8b98a9; }
-.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
+.pos-line {
+  font-weight: 600;
+}
+.pos-sub {
+  font-size: 12px;
+  color: #8b98a9;
+}
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .td.q .label,
 .td.a .label {
   margin-bottom: 6px;

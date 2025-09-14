@@ -12,13 +12,14 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/monitor-api': {
-        target: 'http://153.35.82.15:8080', // 你的 monitor-svc
+      '/sop-api': {
+        target: 'http://14.103.223.101:6007',
         changeOrigin: true,
-        rewrite: p => p.replace(/^\/monitor-api/, '/api')
+        rewrite: p => p.replace(/^\/sop-api/, ''),
+        secure: false
       },
-      '/api-153': {
-        target: 'http://153.35.82.15:31117',
+      '/chatapi': {
+        target: 'http://14.103.223.101:9010',
         changeOrigin: true,
         rewrite: path => path.replace(/^\/api-153/, ''),
       }

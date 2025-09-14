@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../pages/Login.vue'
-import LicenseAdmin from '../pages/LicenseAdmin.vue'
+import List from '../pages/LicenseAdmin.vue'
 const AppLayout = () => import('../layouts/AppLayout.vue')
 // const Chat = () => import('../pages/Chat.vue')
 const SopPicker  = () => import('../pages/SopPicker.vue')
@@ -17,13 +17,13 @@ const routes = [
     path: '/',
     component: AppLayout,
     children: [
-      { path: '', redirect: '/license/admin' },
-      { path: 'license/admin', name: 'LicenseAdmin', component: LicenseAdmin }
+      { path: '', redirect: '/list' },
+      { path: 'list', name: 'List', component: List }
     ]
   },
 
   // 兜底
-  { path: '/:pathMatch(.*)*', redirect: '/license/admin' }
+  { path: '/:pathMatch(.*)*', redirect: '/list' }
 ]
 
 const router = createRouter({

@@ -1,5 +1,6 @@
 <template>
   <div class="page">
+    <!-- 工具条 -->
     <div class="toolbar">
       <div class="left">
         <el-input
@@ -18,6 +19,7 @@
       </div>
     </div>
 
+    <!-- 列表 -->
     <el-table
       :data="list"
       v-loading="loading"
@@ -49,7 +51,7 @@
           </el-link>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="140" fixed="right">
+      <el-table-column label="操作" width="160" fixed="right">
         <template #default="{ row }">
           <el-button size="small" @click="onEdit(row)">编辑</el-button>
           <el-button size="small" @click="onDelete(row)" type="danger" plain>删除</el-button>
@@ -57,6 +59,7 @@
       </el-table-column>
     </el-table>
 
+    <!-- 分页 -->
     <div class="pager">
       <el-pagination
         background
@@ -68,7 +71,7 @@
       />
     </div>
 
-    <!-- 复核弹窗 -->
+    <!-- 复核弹窗（你已有的组件） -->
     <ReviewDialog
       v-model="review.visible"
       :data="review.data"
@@ -77,6 +80,57 @@
       @regen="handleRegen"
       @add-doc="handleAddDoc"
     />
+
+    <!-- 导入 SOP 对话框 -->
+    <el-dialog
+      v-model="importDlg.visible"
+      title="导入 SOP"
+      width="520px"
+      :close-on-click-modal="false"
+    >
+      <div class="import-body">
+        <el-form label-width="110px">
+          <el-form-item label="生成题目数">
+            <el-input-number v-model="importDlg.totalQa" :min="1" :max="200" />
+          </el-form-item>
+
+          <el-form-item label="选择文件">
+            <el-upload
+              drag
+              multiple
+              :auto-upload="false"
+              :file-list="importDlg.files"
+              :on-change="onUploadChange"
+              :on-remove="onUploadRemove"
+              accept=".xlsx,.xls"
+            >
+              <i class="el-icon-upload" />
+              <div class="el-upload__text">
+                拖拽文件到此处，或 <em>点击选择</em><br />
+                支持 .xlsx / .xls，多文件上传
+              </div>
+            </el-upload>
+          </el-form-item>
+        </el-form>
+
+        <div v-if="importDlg.running" class="import-progress">
+          <el-alert
+            title="任务已提交，正在轮询进度，请勿关闭窗口"
+            type="info"
+            :closable="false"
+            show-icon
+          />
+          <div class="hint">任务ID：{{ importDlg.taskId || '-' }}，状态：{{ importDlg.status || 'PENDING' }}</div>
+        </div>
+      </div>
+
+      <template #footer>
+        <el-button @click="importDlg.visible=false" :disabled="importDlg.running">取 消</el-button>
+        <el-button type="primary" @click="startImport" :loading="importDlg.running" :disabled="!importDlg.files.length">
+          {{ importDlg.running ? '导入中…' : '开始导入' }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -84,6 +138,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import ReviewDialog from '@/components/exam/ReviewDialog.vue'
+import { getSops, generateQa, pollTaskStatus, deleteSop, getQaList, saveQaList } from '@/services/sop.api'
 
 // ===== 查询条件 & 分页 =====
 const q = reactive({ keyword: '' })
@@ -92,32 +147,67 @@ const loading = ref(false)
 const list = ref([])
 let selection = ref([])
 
-// ===== mock 加载 =====
-function load() {
-  loading.value = true
-  setTimeout(() => {
-    // 模拟 6 条
-    const all = Array.from({ length: 6 }).map((_, i) => ({
-      id: 1000 + i,
-      title: `机械检修技工_SOP-0${i+1}设备检修标准作业卡`,
-      fileName: '准作业卡-钢板类.xlsx',
-      company: '合肥 XXX 厂',
-      dept: 'xxx 部门',
-      job: 'xxxx 工',
-      version: 'v1',
-      examLinkText: '机械检修技工_SOP-01设备检修标准作业卡 试题题目'
-    }))
-    // 简单过滤
-    const k = (q.keyword || '').trim()
-    const filtered = k ? all.filter(x =>
-      [x.title, x.company, x.dept, x.job].some(f => String(f).includes(k))
-    ) : all
+// 你的系统内的 user_id（后端默认 test_user，也可改从登录信息取）
+const userId = ref('test_user')
 
+// ===== 加载列表（对接 /v1/dataprep/sops）=====
+async function load() {
+  loading.value = true
+  try {
+    // 发起请求
+    const { data } = await getSops({ user_id: userId.value })
+
+    // 解析 results 字段（接口真实返回格式：{ status, message, results: [string] }）
+    let arr = []
+    try {
+      arr = Array.isArray(data?.results) ? data.results : []
+    } catch {
+      arr = []
+    }
+
+    // 映射到前端展示结构
+    const mapped = arr.map((fileName, idx) => {
+      const title = fileName.replace(/\.[^.]+$/, '') // 去掉 .xlsx 后缀
+      return {
+        id: idx + 1,
+        title,
+        fileName,
+        company: '—', // 默认值，可由后端返回后再替换
+        dept: '—',
+        job: '—',
+        version: 'v1',
+        examLinkText: `${title} 试题题目`
+      }
+    })
+
+    // 搜索关键词过滤
+    const keyword = q.keyword.trim()
+    const filtered = keyword
+      ? mapped.filter(x => [x.title, x.company, x.dept, x.job].some(field => field.includes(keyword)))
+      : mapped
+
+    // 分页逻辑
     pager.total = filtered.length
     const start = (pager.page - 1) * pager.pageSize
     list.value = filtered.slice(start, start + pager.pageSize)
+  } catch (e) {
+    console.error('[load error]', e)
+    ElMessage.error('SOP 列表加载失败')
+    // 加兜底 mock，避免页面空白
+    pager.total = 1
+    list.value = [{
+      id: 1,
+      title: '示例_SOP文件',
+      fileName: '示例_SOP文件.xlsx',
+      company: '示例公司',
+      dept: '示例部门',
+      job: '示例岗位',
+      version: 'v1',
+      examLinkText: '示例_SOP文件 试题题目'
+    }]
+  } finally {
     loading.value = false
-  }, 250)
+  }
 }
 
 onMounted(load)
@@ -129,89 +219,137 @@ const review = reactive({
     title: '',
     items: []
   },
-  currentRowId: null
+  currentRow: null
 })
 
-function openReview(row) {
-  review.currentRowId = row.id
-  review.data = {
-    title: row.title,
-    items: [
-      {
-        stage: '阶段《作业中》步骤5',
-        section: '作业量/任务分解 新需材料',
-        question: '问题 1 文本示例',
-        answer: '答案 1 文本示例'
-      },
-      {
-        stage: '阶段《作业后》步骤2',
-        section: '质量复核/交接',
-        question: '问题 2 文本示例',
-        answer: '答案 2 文本示例'
-      },
-      {
-        stage: '阶段《准备》步骤1',
-        section: '工具检查/安全确认',
-        question: '问题 3 文本示例',
-        answer: '答案 3 文本示例'
-      },
-      {
-        stage: '阶段《作业中》步骤9',
-        section: '记录/拍照归档',
-        question: '问题 4 文本示例',
-        answer: '答案 4 文本示例'
-      }
-    ]
-  }
+async function openReview(row) {
+  review.currentRow = row
+  review.data.title = row.title
   review.visible = true
+
+  try {
+    // const { data } = await getQaList({ file_name: row.fileName })
+    const fileName = review.currentRow?.fileName
+    const { data } = await getQaList(fileName)
+    const items = typeof data === 'string' ? JSON.parse(data) : data
+
+    // 确保结构合法
+    review.data.items = Array.isArray(items)
+      ? items.map((x, i) => ({
+          _key: i + '-' + Date.now(),
+          stage: x.stage || '',
+          section: x.section || '',
+          question: x.question || '',
+          answer: x.answer || ''
+        }))
+      : []
+
+  } catch (e) {
+    console.error('加载题目失败', e)
+    review.data.items = []
+    ElMessage.error('加载题目失败')
+  }
 }
 
-// dialog 事件回调（此处仅演示 - 你对接后端即可）
+
+// 复核弹窗事件（演示逻辑）
 function handleSaveReview(payload) {
-  // payload: { title, items, sync }
-  console.log('[SAVE REVIEW]', review.currentRowId, payload)
+  console.log('[SAVE REVIEW]', review.currentRow?.fileName, payload)
   ElMessage.success(payload.sync ? '已保存并同步知识库' : '保存成功')
   review.visible = false
 }
 function handleRename(newTitle) {
-  console.log('[RENAME]', review.currentRowId, newTitle)
+  if (!review.currentRow) return
+  review.currentRow.title = newTitle
   ElMessage.success('名称已更新')
 }
 function handleRegen() {
-  console.log('[REGEN]', review.currentRowId)
   ElMessage.success('已触发重新生成')
 }
 function handleAddDoc() {
-  console.log('[ADD DOC]', review.currentRowId)
   ElMessage.success('已添加到文档队列')
 }
 
-// ===== 行内操作（演示版）=====
-function onEdit(row) {
-  ElMessage.info(`编辑：${row.title}（自行实现表单/路由跳转）`)
-}
-function onDelete(row) {
-  ElMessageBox.confirm(`确定删除「${row.title}」？`, '提示', { type: 'warning' })
-    .then(() => {
-      list.value = list.value.filter(x => x.id !== row.id)
-      ElMessage.success('删除成功')
-    })
-    .catch(() => {})
+// ===== 行内操作（演示版/可对接 delete_sop）=====
+async function onDelete(row) {
+  await ElMessageBox.confirm(`确定删除「${row.title}」？`, '提示', { type: 'warning' })
+  try {
+    // 后端删除：/v1/dataprep/delete_sop { file_name }
+    await deleteSop(row.fileName)
+    ElMessage.success('删除成功')
+    pager.page = 1
+    await load()
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('删除失败')
+  }
 }
 function onBatchDelete() {
   if (!selection.value?.length) return
   ElMessageBox.confirm(`已选中 ${selection.value.length} 条，确定删除？`, '提示', { type: 'warning' })
-    .then(() => {
-      const ids = new Set(selection.value.map(x => x.id))
-      list.value = list.value.filter(x => !ids.has(x.id))
-      selection.value = []
-      ElMessage.success('批量删除成功')
+    .then(async () => {
+      try {
+        await Promise.all(selection.value.map(x => deleteSop(x.fileName)))
+        selection.value = []
+        ElMessage.success('批量删除成功')
+        pager.page = 1
+        await load()
+      } catch (e) {
+        console.error(e)
+        ElMessage.error('批量删除失败')
+      }
     })
-    .catch(() => {})
+}
+function onEdit(row) {
+  ElMessage.info(`编辑：${row.title}（自行实现表单/路由跳转）`)
 }
 
+// ===== 导入 SOP（上传 + 轮询）=====
+const importDlg = reactive({
+  visible: false,
+  files: [],        // Element Plus fileList
+  totalQa: 50,
+  running: false,
+  taskId: '',
+  status: '',
+})
+
 function onImport() {
-  ElMessage.info('导入 SOP（这里弹文件选择或跳转导入向导）')
+  importDlg.visible = true
+}
+function onUploadChange(file, fileList) {
+  importDlg.files = fileList
+}
+function onUploadRemove(file, fileList) {
+  importDlg.files = fileList
+}
+
+async function startImport() {
+  if (!importDlg.files.length) return ElMessage.warning('请先选择 Excel 文件')
+  importDlg.running = true
+  importDlg.taskId = ''
+  importDlg.status = 'PENDING'
+  try {
+    const realFiles = importDlg.files.map(f => f.raw).filter(Boolean)
+    const { data: taskId } = await generateQa(realFiles, importDlg.totalQa)
+    importDlg.taskId = taskId
+
+    const finalStatus = await pollTaskStatus(taskId, {
+      judge: (s) => !!s && String(s).toUpperCase() !== 'PENDING',
+      intervalMs: 2000,
+      maxTimes: 300
+    })
+    importDlg.status = finalStatus
+    ElMessage.success('导入并生成完成')
+    importDlg.visible = false
+    pager.page = 1
+    await load()
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('导入失败')
+  } finally {
+    importDlg.running = false
+  }
 }
 </script>
 
@@ -249,4 +387,8 @@ function onImport() {
   justify-content: flex-end;
   padding: 14px 0 4px;
 }
+
+.import-body { padding: 4px 4px 0; }
+.import-progress { margin-top: 10px; }
+.hint { margin-top: 8px; font-size: 12px; color: #778; }
 </style>
