@@ -21,7 +21,7 @@ export default defineConfig({
       '/chatapi': {
         target: 'http://14.103.223.101:9010',
         changeOrigin: true,
-        rewrite: path => path.replace(/^\/api-153/, ''),
+        rewrite: (path) => path.replace(/^\/chatapi/, '')
       }
     }
   }

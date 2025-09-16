@@ -1,4 +1,3 @@
-// src/services/chat.service.js
 import axios from 'axios'
 
 const chatApi = axios.create({

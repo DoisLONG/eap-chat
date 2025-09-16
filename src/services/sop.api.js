@@ -15,16 +15,12 @@ const api = axios.create({
 })
 
 // 生成 QA（支持多文件上传）
-export async function generateQa(files, totalQaNum = 50) {
-  const fd = new FormData()
-  files.forEach(f => fd.append('files', f))
-  fd.append('total_qa_num', totalQaNum)
+export async function generateQa(files, totalQaNum) {
+  const form = new FormData()
+  files.forEach(file => form.append('files', file))
+  form.append('total_qa_num', totalQaNum)
 
-  // 返回值 swagger 标成 string；后端一般会返回 task_id
-  const res = await api.post('/v1/dataprep/generate_qa', fd, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
-  return res // res.data 可能是任务ID
+  return axios.post('/sop-api/v1/dataprep/generate_qa', form)
 }
 
 // 轮询任务状态
@@ -67,17 +63,14 @@ export async function getSops({ user_id = 'test_user' } = {}) {
 
 // 拉取某个文件的 QA 列表（如果需要接入复核弹窗）
 export const getQaList = (fileName) => {
-    return api.post('/v1/dataprep/qa/list', JSON.stringify(fileName), {
-      headers: { 'Content-Type': 'application/json' }
-    })
-  }
+  return api.post('/v1/dataprep/qa/list', { file_name: fileName })
+}
 // 保存 QA（复核完成后）
 export async function saveQaList(fileName, records) {
-  const res = await api.post('/v1/dataprep/qa/save', {
+  return api.post('/v1/dataprep/qa/save', {
     file_name: fileName,
     records
   })
-  return res
 }
 
 // 删除某个 SOP 文件
