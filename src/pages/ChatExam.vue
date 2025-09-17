@@ -49,7 +49,10 @@
           </div>
           <div class="bubble">
             <div class="nick">{{ m.role === "user" ? "我" : "教练" }}</div>
-            <div class="text" v-html="md(m.content)" />
+            <div class="text">
+              <div v-if="m.role === 'user'">{{ m.content }}</div>
+              <MarkdownRenderer v-else :content="m.content" />
+            </div>
           </div>
         </div>
       </main>
@@ -81,9 +84,9 @@
 import { ref, reactive, onMounted, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { marked } from "marked";
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue';
 
-// 路由参数与变量
+// 路由参数
 const route = useRoute();
 const router = useRouter();
 const sopName = route.query.sopName || "";
@@ -106,21 +109,6 @@ const botAvatar = "/logo1.png";
 
 if (!sopId) router.replace("/chat/sop");
 
-// Markdown 渲染器
-function md(s) {
-  return marked
-    .parse(s || "")
-    .replaceAll("**", "")
-    .replaceAll("\\n", "<br>")
-    .replaceAll("### ", "<b>")
-    .replaceAll("[METADATA DONE]", "");
-}
-
-// 文件名后缀处理
-function ensureExcelFileName(name) {
-  return name.match(/\.(xls|xlsx)$/i) ? name : `${name}.xlsx`;
-}
-
 // 滚动到底
 function scrollBottom() {
   nextTick(() => {
@@ -129,7 +117,7 @@ function scrollBottom() {
   });
 }
 
-// 本地存储相关
+// 本地存储
 function persist() {
   const idx = sessions.value.findIndex((s) => s.id === sessionId.value);
   const title = (
@@ -162,7 +150,11 @@ function loadSession(id) {
   scrollBottom();
 }
 
-// 开启新考试对话
+function ensureExcelFileName(name) {
+  return name.match(/\.(xls|xlsx)$/i) ? name : `${name}.xlsx`;
+}
+
+// 新建对话
 function newSession() {
   sessionId.value = String(Date.now());
   messages.splice(0, messages.length, {
@@ -183,17 +175,13 @@ function newSession() {
     .then((res) => {
       examId.value = res?.result?.exams_id || "";
       ElMessage.success("考试已启动");
-      // ✅ 自动触发第一题
-      nextTick(() => {
-        send();
-      });
+      nextTick(() => send());
     })
     .catch(() => ElMessage.error("启动失败"));
 
   persist();
 }
 
-// 快捷键发送
 function onEnter(e) {
   if (e.shiftKey) input.value += "\n";
   else send();
@@ -210,7 +198,7 @@ async function send() {
   input.value = "";
   scrollBottom();
 
-  const replyMsg = { id: Date.now() + "bot", role: "assistant", content: "" };
+  const replyMsg = { id: Date.now() + "bot", role: "assistant", content: "", raw: "" };
   messages.push(replyMsg);
 
   try {
@@ -243,8 +231,13 @@ async function send() {
       const lines = chunk.split("\n").filter((line) => line.startsWith("data:"));
 
       for (const line of lines) {
-        const clean = line.replace(/^data:\s*/, "").trim();
-        if (clean === "[DONE]" || clean === "[METADATA DONE]") continue;
+        // const clean = line.replace(/^data:\s*/, "").trim();
+        // 去掉前缀 `data:`，**不要 trim()**，否则会吞掉 '### ' 的空格
+        let clean = line.replace(/^data:\s?/, "");
+        // SSE 行常见的 \r 结尾，去掉它避免残留
+        if (clean.endsWith("\r")) clean = clean.slice(0, -1);
+
+        if (!clean || clean === "[DONE]" || clean === "[METADATA DONE]") continue;
 
         try {
           const parsed = JSON.parse(clean);
@@ -252,21 +245,25 @@ async function send() {
             docs = parsed.documents.filter(d => d.metadata?.filename && d.metadata.filename !== "none");
             continue;
           }
-        } catch {}
-
-        replyMsg.content += clean + "\n";
+        } catch {
+          const text = clean.replace(/\\n/g, '\n');
+          replyMsg.raw += text;
+          replyMsg.content = replyMsg.raw;
+        }
       }
 
       scrollBottom();
     }
 
     if (docs.length > 0) {
-      replyMsg.content += `\n\n📄 来源文档：`;
+      replyMsg.raw += `\n\n<details><summary>📄 来源文档</summary>\n`;
       for (const d of docs) {
         const meta = d.metadata;
         const position = meta.position ? `（${meta.position}）` : "";
-        replyMsg.content += `\n- ${meta.filename}${position}`;
+        replyMsg.raw += `- ${meta.filename}${position}\n`;
       }
+      replyMsg.raw += `</details>\n`;
+      replyMsg.content = replyMsg.raw;
     }
 
     persist();
@@ -278,7 +275,6 @@ async function send() {
   }
 }
 
-// 结束考试
 function endExam() {
   persist();
   ElMessage.success("考试已结束");
