@@ -39,7 +39,7 @@
         <template #header>
           <div class="qa-header">
             <span class="qa-title">第 {{ idx + 1 }} 题（{{ r.type || '题型未知' }}）</span>
-            <el-tag size="small" type="info">{{ r.stage || '阶段未知' }} / {{ r.section || '模块未知' }}</el-tag>
+            <el-tag size="small" type="info">{{ r.section || '模块未知' }}</el-tag>
             <el-button size="small" type="danger" style="margin-left:auto" @click="remove(idx)">删除</el-button>
           </div>
         </template>
@@ -102,7 +102,7 @@ watchEffect(() => {
         _key: cryptoRandom(),
         id: x.id ?? Date.now() + Math.floor(Math.random() * 1000),
         row: x.row ?? 1,
-        position: x.position || `${x.stage || '未知阶段'}-${x.section || '未知模块'}`,
+        position: x.position || '未知阶段',
         stage: x.stage || '',
         section: x.section || '',
         type: x.type || '问答题',

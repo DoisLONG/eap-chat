@@ -3,18 +3,14 @@
     <!-- Header -->
     <header class="chat-header">
       <div class="left">
-        <img src="/logo2.png" class="logo" />
+        <img src="/logo1.png" class="logo" />
         <div class="meta">
           <div class="title ell">{{ sopName || "未选择 SOP" }}</div>
         </div>
       </div>
       <div class="right">
-        <el-switch
-          v-if="!isMobile"
-          v-model="showHistory"
-          active-text="历史对话"
-        />
-        <el-button size="small" @click="newSession">新建</el-button>
+        <el-switch v-if="!isMobile" v-model="showHistory" active-text="历史对话" />
+        <el-button v-if="!isMobile" size="small" @click="newSession" disabled>新建</el-button>
         <el-popconfirm title="确认结束考试？" @confirm="endExam">
           <template #reference>
             <el-button size="small" type="danger">结束</el-button>
@@ -84,27 +80,20 @@
 <script setup>
 import { ref, reactive, onMounted, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { marked } from "marked";
 import { ElMessage } from "element-plus";
+import { marked } from "marked";
 
-// 路由参数
+// 路由参数与变量
 const route = useRoute();
 const router = useRouter();
 const sopName = route.query.sopName || "";
 const sopId = route.query.sopId || "";
 const userId = "test_user";
-
-if (!sopId) router.replace("/chat/sop");
-
-// 基础变量
 const scrollBox = ref(null);
 const input = ref("");
 const sending = ref(false);
 const isMobile = ref(window.innerWidth <= 900);
 const showHistory = ref(!isMobile.value);
-
-const userAvatar = "/logo2.png";
-const botAvatar = "/logo2.png";
 
 const sessionId = ref("");
 const examId = ref("");
@@ -112,14 +101,24 @@ const messages = reactive([]);
 const sessions = ref([]);
 const storageKey = `chat_hist_${sopId}`;
 
-// Markdown 渲染
+const userAvatar = "/logo2.png";
+const botAvatar = "/logo1.png";
+
+if (!sopId) router.replace("/chat/sop");
+
+// Markdown 渲染器
 function md(s) {
   return marked
     .parse(s || "")
     .replaceAll("**", "")
     .replaceAll("\\n", "<br>")
-    .replaceAll("### ", "<b>") // 小标题加粗
+    .replaceAll("### ", "<b>")
     .replaceAll("[METADATA DONE]", "");
+}
+
+// 文件名后缀处理
+function ensureExcelFileName(name) {
+  return name.match(/\.(xls|xlsx)$/i) ? name : `${name}.xlsx`;
 }
 
 // 滚动到底
@@ -130,7 +129,7 @@ function scrollBottom() {
   });
 }
 
-// 存储历史对话
+// 本地存储相关
 function persist() {
   const idx = sessions.value.findIndex((s) => s.id === sessionId.value);
   const title = (
@@ -163,13 +162,13 @@ function loadSession(id) {
   scrollBottom();
 }
 
-// 开启新对话
+// 开启新考试对话
 function newSession() {
   sessionId.value = String(Date.now());
   messages.splice(0, messages.length, {
     id: sessionId.value,
     role: "assistant",
-    content: "你好，我是操作规程陪练。准备好了吗？我们开始练习！",
+    content: "你好，我是操作规程陪练系统。准备好了吗？我们开始练习！",
   });
 
   fetch("/chatapi/v1/exams/start", {
@@ -177,36 +176,33 @@ function newSession() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       user_id: userId,
-      file_name: sopName.endsWith(".xlsx") ? sopName : `${sopName}.xlsx`,
+      file_name: ensureExcelFileName(sopName),
     }),
   })
     .then((r) => r.json())
     .then((res) => {
       examId.value = res?.result?.exams_id || "";
       ElMessage.success("考试已启动");
+      // ✅ 自动触发第一题
+      nextTick(() => {
+        send();
+      });
     })
     .catch(() => ElMessage.error("启动失败"));
 
   persist();
 }
 
-// 结束考试
-function endExam() {
-  persist();
-  ElMessage.success("考试已结束");
-  router.replace("/chat/sop");
-}
-
-// 快捷发送
+// 快捷键发送
 function onEnter(e) {
   if (e.shiftKey) input.value += "\n";
   else send();
 }
 
-// 发送答案（流式 + 文档展示）
+// 发送答案
 async function send() {
   const text = input.value.trim();
-  if (!text || sending.value) return;
+  if (!text && messages.length > 1) return;
   sending.value = true;
 
   const userMsg = { id: Date.now() + "", role: "user", content: text };
@@ -224,16 +220,10 @@ async function send() {
       body: JSON.stringify({
         id: examId.value,
         session_id: examId.value,
-        source_file_name: sopName,
+        source_file_name: ensureExcelFileName(sopName),
         messages: (() => {
           const filtered = [...messages];
-          // 如果最后一条是 assistant，就移除
-          if (
-            filtered.length &&
-            filtered[filtered.length - 1].role === "assistant"
-          ) {
-            filtered.pop();
-          }
+          if (filtered[filtered.length - 1].role === "assistant") filtered.pop();
           return filtered.map(({ role, content }) => ({ role, content }));
         })(),
         streaming: true,
@@ -250,9 +240,7 @@ async function send() {
       if (done) break;
 
       const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk
-        .split("\n")
-        .filter((line) => line.startsWith("data:"));
+      const lines = chunk.split("\n").filter((line) => line.startsWith("data:"));
 
       for (const line of lines) {
         const clean = line.replace(/^data:\s*/, "").trim();
@@ -261,9 +249,7 @@ async function send() {
         try {
           const parsed = JSON.parse(clean);
           if (parsed.documents?.length) {
-            docs = parsed.documents.filter(
-              (d) => d.metadata?.filename && d.metadata?.filename !== "none"
-            );
+            docs = parsed.documents.filter(d => d.metadata?.filename && d.metadata.filename !== "none");
             continue;
           }
         } catch {}
@@ -274,7 +260,6 @@ async function send() {
       scrollBottom();
     }
 
-    // 追加文档来源
     if (docs.length > 0) {
       replyMsg.content += `\n\n📄 来源文档：`;
       for (const d of docs) {
@@ -293,6 +278,13 @@ async function send() {
   }
 }
 
+// 结束考试
+function endExam() {
+  persist();
+  ElMessage.success("考试已结束");
+  router.replace("/chat/sop");
+}
+
 onMounted(() => {
   loadSessions();
   newSession();
@@ -307,6 +299,9 @@ onMounted(() => {
   background: #f6f7fb;
 }
 .chat-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   justify-content: space-between;
   background: #fff;

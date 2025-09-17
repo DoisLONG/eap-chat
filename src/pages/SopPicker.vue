@@ -176,7 +176,7 @@ function goChat(row) {
     path: "/chat/exam",
     query: {
       sopId: row.id,
-      sopName: row.name,
+      sopName: row.id,
       sopVer: row.version,
     },
   });
