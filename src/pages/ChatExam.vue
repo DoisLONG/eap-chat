@@ -187,24 +187,37 @@ function onEnter(e) {
   else send();
 }
 
-// 发送答案
+// 让浏览器马上渲染一帧（解决“等全部出来才显示”）
+const raf = () => new Promise(resolve => requestAnimationFrame(() => resolve()));
+
+// 修正 Markdown：###标题 → ### 标题
+function normalizeMd(s = "") {
+  return s.replace(/^(\#{1,6})([^\s#])/gm, "$1 $2");
+}
+
 async function send() {
   const text = input.value.trim();
   if (!text && messages.length > 1) return;
   sending.value = true;
 
+  // 1) 追加用户消息
   const userMsg = { id: Date.now() + "", role: "user", content: text };
   messages.push(userMsg);
   input.value = "";
   scrollBottom();
 
+  // 2) 追加机器人气泡（流式写入）
   const replyMsg = { id: Date.now() + "bot", role: "assistant", content: "", raw: "" };
   messages.push(replyMsg);
 
   try {
     const res = await fetch("/chatapi/v1/exams/answer", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        // 告诉后端 & 中间层我们要 SSE
+        "Accept": "text/event-stream"
+      },
       body: JSON.stringify({
         id: examId.value,
         session_id: examId.value,
@@ -220,41 +233,69 @@ async function send() {
     });
 
     const reader = res.body.getReader();
-    const decoder = new TextDecoder("utf-8");
+    // 注意：开启 streaming 解码
+    const decoder = new TextDecoder("utf-8", { fatal: false });
     let docs = [];
+    let buffer = "";
 
+    // 3) 流式读取 + 立刻渲染
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
       const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split("\n").filter((line) => line.startsWith("data:"));
+      buffer += chunk;
 
-      for (const line of lines) {
-        // const clean = line.replace(/^data:\s*/, "").trim();
-        // 去掉前缀 `data:`，**不要 trim()**，否则会吞掉 '### ' 的空格
-        let clean = line.replace(/^data:\s?/, "");
-        // SSE 行常见的 \r 结尾，去掉它避免残留
-        if (clean.endsWith("\r")) clean = clean.slice(0, -1);
+      // 处理已完整的行（按 \n 分割，最后一段可能是不完整的，留到下次）
+      let parts = buffer.split("\n");
+      buffer = parts.pop() || "";
 
-        if (!clean || clean === "[DONE]" || clean === "[METADATA DONE]") continue;
+      for (let line of parts) {
+        if (!line.startsWith("data:")) continue;
 
+        // 只去掉 `data:` 前缀，保留可能用于 Markdown 的空格
+        line = line.replace(/^data:\s?/, "");
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (!line || line === "[DONE]" || line === "[METADATA DONE]") continue;
+
+        // 可能是 JSON（来源文档等），也可能是纯文本片段
         try {
-          const parsed = JSON.parse(clean);
+          const parsed = JSON.parse(line);
           if (parsed.documents?.length) {
             docs = parsed.documents.filter(d => d.metadata?.filename && d.metadata.filename !== "none");
             continue;
           }
         } catch {
-          const text = clean.replace(/\\n/g, '\n');
-          replyMsg.raw += text;
-          replyMsg.content = replyMsg.raw;
+          // 纯文本：反转义换行，累加并立即更新
+          const textFrag = line.replace(/\\n/g, "\n");
+          replyMsg.raw += textFrag;
+          replyMsg.content = normalizeMd(replyMsg.raw);
+
+          // 强制让浏览器“先渲染这一帧”
+          await raf();
+          scrollBottom();
         }
       }
-
-      scrollBottom();
     }
 
+    // 4) 处理最后残留（buffer 里若还剩下一行未处理）
+    if (buffer.startsWith("data:")) {
+      let tail = buffer.replace(/^data:\s?/, "");
+      if (tail && tail !== "[DONE]" && tail !== "[METADATA DONE]") {
+        try {
+          const parsed = JSON.parse(tail);
+          if (parsed.documents?.length) {
+            docs = parsed.documents.filter(d => d.metadata?.filename && d.metadata.filename !== "none");
+          }
+        } catch {
+          replyMsg.raw += tail.replace(/\\n/g, "\n");
+          replyMsg.content = normalizeMd(replyMsg.raw);
+        }
+      }
+      buffer = "";
+    }
+
+    // 5) 结束后再追加来源文档
     if (docs.length > 0) {
       replyMsg.raw += `\n\n<details><summary>📄 来源文档</summary>\n`;
       for (const d of docs) {
@@ -263,7 +304,7 @@ async function send() {
         replyMsg.raw += `- ${meta.filename}${position}\n`;
       }
       replyMsg.raw += `</details>\n`;
-      replyMsg.content = replyMsg.raw;
+      replyMsg.content = normalizeMd(replyMsg.raw);
     }
 
     persist();
@@ -274,6 +315,8 @@ async function send() {
     sending.value = false;
   }
 }
+
+
 
 function endExam() {
   persist();
