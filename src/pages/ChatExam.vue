@@ -14,6 +14,13 @@
           v-model="showHistory"
           active-text="历史对话"
         />
+        <el-button
+          v-if="isMobile"
+          size="small"
+          @click="showHistory = !showHistory"
+        >
+          {{ showHistory ? "关闭历史" : "历史对话" }}
+        </el-button>
         <el-button v-if="!isMobile" size="small" @click="newSession" disabled
           >新建</el-button
         >
@@ -35,10 +42,13 @@
             :key="s.id"
             class="hist-item"
             :class="{ active: s.id === sessionId }"
-            @click="loadSession(s.id)"
+            @click="
+              loadSession(s.id);
+              showHistory = false;
+            "
           >
-            <div class="line1 ell">{{ s.title }}</div>
-            <div class="line2">{{ s.time }}</div>
+            <div class="hist-title ell">{{ s.title }}</div>
+            <div class="hist-time">{{ s.time }}</div>
           </div>
         </div>
       </aside>
@@ -89,6 +99,30 @@
         {{ messages.length <= 1 ? "开始" : "发送" }}
       </el-button>
     </footer>
+
+    <el-drawer
+      v-if="isMobile"
+      v-model="showHistory"
+      title="历史对话"
+      size="80%"
+      direction="ltr"
+    >
+      <div class="hist-list">
+        <div
+          v-for="s in sessions"
+          :key="s.id"
+          class="hist-item"
+          :class="{ active: s.id === sessionId }"
+          @click="
+            loadSession(s.id);
+            showHistory = false;
+          "
+        >
+          <div class="hist-title ell">{{ s.title }}</div>
+          <div class="hist-time">{{ s.time }}</div>
+        </div>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -242,7 +276,7 @@ async function send() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Accept": "text/event-stream",
+        Accept: "text/event-stream",
       },
       body: JSON.stringify({
         id: examId.value,
@@ -250,7 +284,8 @@ async function send() {
         source_file_name: ensureExcelFileName(sopName),
         messages: (() => {
           const filtered = [...messages];
-          if (filtered[filtered.length - 1].role === "assistant") filtered.pop();
+          if (filtered[filtered.length - 1].role === "assistant")
+            filtered.pop();
           return filtered.map(({ role, content }) => ({ role, content }));
         })(),
         streaming: true,
@@ -260,7 +295,7 @@ async function send() {
 
     if (!res.body) throw new Error("SSE body missing");
 
-        if (!res.body) throw new Error("SSE body missing");
+    if (!res.body) throw new Error("SSE body missing");
 
     // === SSE 解析开始（替换为这一段） ===
     const reader = res.body.getReader();
@@ -360,7 +395,6 @@ async function send() {
     scrollBottom();
     persist();
     // === SSE 解析结束 ===
-
   } catch (err) {
     console.error("SSE error", err);
     replyMsg.content = "❌ 出错了，请稍后重试";
@@ -370,8 +404,6 @@ async function send() {
     scrollBottom();
   }
 }
-
-
 
 function endExam() {
   persist();
@@ -393,9 +425,11 @@ onMounted(() => {
   background: #f6f7fb;
 }
 .chat-header {
-  position: sticky;
+  position: fixed; /* 改成 fixed */
   top: 0;
-  z-index: 10;
+  left: 0;
+  right: 0;
+  z-index: 1000; /* 确保在最上层 */
   display: flex;
   justify-content: space-between;
   background: #fff;
@@ -429,6 +463,8 @@ onMounted(() => {
   grid-template-columns: 260px 1fr;
   gap: 10px;
   padding: 10px;
+  margin-top: 56px; /* 给 header 留位置 */
+  overflow-y: auto; /* 内容区域可滚动 */
 }
 .history {
   background: #fff;
@@ -476,8 +512,45 @@ onMounted(() => {
   .content {
     grid-template-columns: 1fr;
   }
-  .history {
+  /* .history {
     display: none;
-  }
+  } */
 }
+.hist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+
+.hist-item {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.hist-item:hover {
+  background: #f5f7fa;
+}
+
+.hist-item.active {
+  border-color: #409eff;
+  background: #ecf5ff;
+}
+
+.hist-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.hist-time {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
+
 </style>
