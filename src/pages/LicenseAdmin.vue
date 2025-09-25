@@ -108,6 +108,7 @@
       title="导入 SOP"
       width="60%"
       :close-on-click-modal="false"
+      @close="resetImportDlg"
     >
       <div class="import-body">
         <el-form label-width="110px">
@@ -225,6 +226,11 @@ async function load() {
   } finally {
     loading.value = false;
   }
+}
+
+function resetImportDlg() {
+  importDlg.files = [];
+  importDlg.totalQa = 10;  // 可以顺便重置输入框
 }
 
 onMounted(load);
@@ -384,9 +390,19 @@ async function startImport() {
   if (!importDlg.files.length) return ElMessage.warning("请先选择文件");
   const realFiles = importDlg.files.map((f) => f.raw).filter(Boolean);
   if (!realFiles.length) return ElMessage.warning("文件格式异常");
+
   importDlg.running = true;
   try {
-    await generateQa(realFiles, importDlg.totalQa);
+    const res = await generateQa(realFiles, importDlg.totalQa);
+
+
+    console.log('generateQa',res)
+
+    // ✅ 后端返回非200/201时，主动抛错
+    if (res?.data.status !== 200 && res?.data.status !== 201) {
+      throw new Error(res?.data.message || "上传失败");
+    }
+
     ElMessage.success("上传并生成题目完成");
     importDlg.visible = false;
     pager.page = 1;
@@ -398,6 +414,7 @@ async function startImport() {
     importDlg.running = false;
   }
 }
+
 </script>
 
 <style scoped>

@@ -68,7 +68,7 @@
     <template #footer>
       <div class="foot">
         <el-button @click="$emit('update:modelValue', false)">取消</el-button>
-        <el-button type="primary" :disabled="local.saving" @click="onSave()">保存</el-button>
+        <!-- <el-button type="primary" :disabled="local.saving" @click="onSave()">保存</el-button> -->
       </div>
     </template>
   </el-dialog>
