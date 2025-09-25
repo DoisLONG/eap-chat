@@ -260,48 +260,93 @@ async function send() {
 
     if (!res.body) throw new Error("SSE body missing");
 
+        if (!res.body) throw new Error("SSE body missing");
+
+    // === SSE 解析开始（替换为这一段） ===
     const reader = res.body.getReader();
     const decoder = new TextDecoder("utf-8");
     let docs = [];
+    let pending = ""; // 临时缓冲，防止频繁重绘
+
+    const flush = async () => {
+      if (!pending) return;
+      replyMsg.raw += pending.replace(/\\n/g, "\n");
+      pending = "";
+      await nextTick();
+      scrollBottom();
+    };
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
       const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split(/\r?\n/).filter(Boolean);
+      const lines = chunk.split(/\r?\n/);
 
-      for (let line of lines) {
-        if (!line.startsWith("data:")) continue;
-        console.log("[SSE line]", line);
+      for (let raw of lines) {
+        if (!raw || !raw.startsWith("data:")) continue;
+        let line = raw.slice(5).trim(); // 去掉 "data: "
 
-        line = line.replace(/^data:\s?/, "");
+        // 跳过结束/元数据结束标记
         if (!line || line === "[DONE]" || line === "[METADATA DONE]") continue;
 
-        // 文档/元数据
-        try {
-          const parsed = JSON.parse(line);
-          if (parsed.documents?.length) {
-            docs = parsed.documents.filter(
-              (d) => d.metadata?.filename && d.metadata.filename !== "none"
-            );
+        // 只有“对象 JSON”（以 { 开头）才解析，避免 '1' 被 JSON.parse 吞掉
+        if (line[0] === "{") {
+          try {
+            const parsed = JSON.parse(line);
+
+            // 1) 文档元数据
+            if (Array.isArray(parsed?.documents) && parsed.documents.length) {
+              docs = parsed.documents.filter(
+                (d) => d?.metadata?.filename && d.metadata.filename !== "none"
+              );
+              continue;
+            }
+
+            // 2) 兼容常见增量字段
+            if (parsed?.choices?.[0]?.delta?.content) {
+              pending += parsed.choices[0].delta.content;
+              await flush();
+              continue;
+            }
+            if (typeof parsed?.delta === "string") {
+              pending += parsed.delta;
+              await flush();
+              continue;
+            }
+            if (typeof parsed?.content === "string") {
+              pending += parsed.content;
+              await flush();
+              continue;
+            }
+
+            // 3) 其他对象结构忽略（不当作纯文本）
+            continue;
+          } catch {
+            // 形如 "{...}" 但解析失败：当作普通文本
+            pending += line;
+            await flush();
             continue;
           }
-        } catch {
-          // 文本流：累加到 raw（注意：此处操作的是“代理对象”）
-          replyMsg.raw += line.replace(/\\n/g, "\n");
-          // 让出一帧，立刻可见
-          await nextTick();
-          scrollBottom();
         }
+
+        // 非对象 JSON：一律当作纯文本（包含单个数字、true/false、null、未加引号的中文片段等）
+        pending += line;
+        await flush();
       }
+    }
+
+    // 冲掉尾部缓冲
+    if (pending) {
+      replyMsg.raw += pending.replace(/\\n/g, "\n");
+      pending = "";
     }
 
     // 结束后：追加来源文档，再一次性转 Markdown
     if (docs.length > 0) {
       replyMsg.raw += `\n\n<details><summary>📄 来源文档</summary>\n`;
       for (const d of docs) {
-        const meta = d.metadata;
+        const meta = d.metadata || {};
         const position = meta.position ? `（${meta.position}）` : "";
         replyMsg.raw += `- ${meta.filename}${position}\n`;
       }
@@ -314,6 +359,8 @@ async function send() {
     await nextTick();
     scrollBottom();
     persist();
+    // === SSE 解析结束 ===
+
   } catch (err) {
     console.error("SSE error", err);
     replyMsg.content = "❌ 出错了，请稍后重试";
