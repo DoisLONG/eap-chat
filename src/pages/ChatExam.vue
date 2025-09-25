@@ -9,8 +9,14 @@
         </div>
       </div>
       <div class="right">
-        <el-switch v-if="!isMobile" v-model="showHistory" active-text="历史对话" />
-        <el-button v-if="!isMobile" size="small" @click="newSession" disabled>新建</el-button>
+        <el-switch
+          v-if="!isMobile"
+          v-model="showHistory"
+          active-text="历史对话"
+        />
+        <el-button v-if="!isMobile" size="small" @click="newSession" disabled
+          >新建</el-button
+        >
         <el-popconfirm title="确认结束考试？" @confirm="endExam">
           <template #reference>
             <el-button size="small" type="danger">结束</el-button>
@@ -51,7 +57,13 @@
             <div class="nick">{{ m.role === "user" ? "我" : "教练" }}</div>
             <div class="text">
               <div v-if="m.role === 'user'">{{ m.content }}</div>
-              <MarkdownRenderer v-else :content="m.content" />
+              <!-- <MarkdownRenderer v-else :content="m.content" /> -->
+              <!-- <MarkdownRenderer v-else :content="m.content" :key="m.id + '-' + (m.content?.length || 0)" /> -->
+              <!-- 助手消息：流式时显示 raw，结束后显示 Markdown -->
+              <template v-else>
+                <div v-if="!m.done" class="streaming-text">{{ m.raw }}</div>
+                <MarkdownRenderer v-else :content="m.content" />
+              </template>
             </div>
           </div>
         </div>
@@ -84,7 +96,7 @@
 import { ref, reactive, onMounted, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import MarkdownRenderer from '@/components/MarkdownRenderer.vue';
+import MarkdownRenderer from "@/components/MarkdownRenderer.vue";
 
 // 路由参数
 const route = useRoute();
@@ -108,6 +120,13 @@ const userAvatar = "/logo2.png";
 const botAvatar = "/logo1.png";
 
 if (!sopId) router.replace("/chat/sop");
+
+// 让出主线程并触发一次绘制：nextTick(微任务) → setTimeout(宏任务) → requestAnimationFrame(下一帧)
+const flushFrame = async () => {
+  await nextTick(); // 刷新 Vue 响应式
+  await new Promise((r) => setTimeout(r, 0)); // 让出一次宏任务，给浏览器机会做布局
+  await new Promise((r) => requestAnimationFrame(r)); // 等下一帧真正绘制
+};
 
 // 滚动到底
 function scrollBottom() {
@@ -188,7 +207,8 @@ function onEnter(e) {
 }
 
 // 让浏览器马上渲染一帧（解决“等全部出来才显示”）
-const raf = () => new Promise(resolve => requestAnimationFrame(() => resolve()));
+const raf = () =>
+  new Promise((resolve) => requestAnimationFrame(() => resolve()));
 
 // 修正 Markdown：###标题 → ### 标题
 function normalizeMd(s = "") {
@@ -201,22 +221,28 @@ async function send() {
   sending.value = true;
 
   // 1) 追加用户消息
-  const userMsg = { id: Date.now() + "", role: "user", content: text };
-  messages.push(userMsg);
+  messages.push({ id: Date.now() + "", role: "user", content: text });
   input.value = "";
+  await nextTick();
   scrollBottom();
 
-  // 2) 追加机器人气泡（流式写入）
-  const replyMsg = { id: Date.now() + "bot", role: "assistant", content: "", raw: "" };
-  messages.push(replyMsg);
+  // 2) 追加机器人气泡（先 push，再通过数组拿“代理对象”）
+  messages.push({
+    id: Date.now() + "bot",
+    role: "assistant",
+    raw: "",
+    content: "",
+    done: false,
+  });
+  // ⬇️ 关键！从 reactive 数组里拿到“代理对象”（不要再用 push 前创建的原始对象）
+  const replyMsg = messages[messages.length - 1];
 
   try {
     const res = await fetch("/chatapi/v1/exams/answer", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // 告诉后端 & 中间层我们要 SSE
-        "Accept": "text/event-stream"
+        "Accept": "text/event-stream",
       },
       body: JSON.stringify({
         id: examId.value,
@@ -232,70 +258,46 @@ async function send() {
       }),
     });
 
-    const reader = res.body.getReader();
-    // 注意：开启 streaming 解码
-    const decoder = new TextDecoder("utf-8", { fatal: false });
-    let docs = [];
-    let buffer = "";
+    if (!res.body) throw new Error("SSE body missing");
 
-    // 3) 流式读取 + 立刻渲染
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let docs = [];
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
       const chunk = decoder.decode(value, { stream: true });
-      buffer += chunk;
+      const lines = chunk.split(/\r?\n/).filter(Boolean);
 
-      // 处理已完整的行（按 \n 分割，最后一段可能是不完整的，留到下次）
-      let parts = buffer.split("\n");
-      buffer = parts.pop() || "";
-
-      for (let line of parts) {
+      for (let line of lines) {
         if (!line.startsWith("data:")) continue;
+        console.log("[SSE line]", line);
 
-        // 只去掉 `data:` 前缀，保留可能用于 Markdown 的空格
         line = line.replace(/^data:\s?/, "");
-        if (line.endsWith("\r")) line = line.slice(0, -1);
         if (!line || line === "[DONE]" || line === "[METADATA DONE]") continue;
 
-        // 可能是 JSON（来源文档等），也可能是纯文本片段
+        // 文档/元数据
         try {
           const parsed = JSON.parse(line);
           if (parsed.documents?.length) {
-            docs = parsed.documents.filter(d => d.metadata?.filename && d.metadata.filename !== "none");
+            docs = parsed.documents.filter(
+              (d) => d.metadata?.filename && d.metadata.filename !== "none"
+            );
             continue;
           }
         } catch {
-          // 纯文本：反转义换行，累加并立即更新
-          const textFrag = line.replace(/\\n/g, "\n");
-          replyMsg.raw += textFrag;
-          replyMsg.content = normalizeMd(replyMsg.raw);
-
-          // 强制让浏览器“先渲染这一帧”
-          await raf();
+          // 文本流：累加到 raw（注意：此处操作的是“代理对象”）
+          replyMsg.raw += line.replace(/\\n/g, "\n");
+          // 让出一帧，立刻可见
+          await nextTick();
           scrollBottom();
         }
       }
     }
 
-    // 4) 处理最后残留（buffer 里若还剩下一行未处理）
-    if (buffer.startsWith("data:")) {
-      let tail = buffer.replace(/^data:\s?/, "");
-      if (tail && tail !== "[DONE]" && tail !== "[METADATA DONE]") {
-        try {
-          const parsed = JSON.parse(tail);
-          if (parsed.documents?.length) {
-            docs = parsed.documents.filter(d => d.metadata?.filename && d.metadata.filename !== "none");
-          }
-        } catch {
-          replyMsg.raw += tail.replace(/\\n/g, "\n");
-          replyMsg.content = normalizeMd(replyMsg.raw);
-        }
-      }
-      buffer = "";
-    }
-
-    // 5) 结束后再追加来源文档
+    // 结束后：追加来源文档，再一次性转 Markdown
     if (docs.length > 0) {
       replyMsg.raw += `\n\n<details><summary>📄 来源文档</summary>\n`;
       for (const d of docs) {
@@ -304,15 +306,21 @@ async function send() {
         replyMsg.raw += `- ${meta.filename}${position}\n`;
       }
       replyMsg.raw += `</details>\n`;
-      replyMsg.content = normalizeMd(replyMsg.raw);
     }
 
+    replyMsg.content = normalizeMd(replyMsg.raw);
+    replyMsg.done = true;
+
+    await nextTick();
+    scrollBottom();
     persist();
   } catch (err) {
+    console.error("SSE error", err);
     replyMsg.content = "❌ 出错了，请稍后重试";
-    console.error(err);
+    replyMsg.done = true;
   } finally {
     sending.value = false;
+    scrollBottom();
   }
 }
 
@@ -405,6 +413,9 @@ onMounted(() => {
   width: 30px;
   height: 30px;
   border-radius: 6px;
+}
+.streaming-text {
+  white-space: pre-wrap; /* \n 可见 */
 }
 .chat-input {
   background: #fff;
