@@ -8,8 +8,8 @@
           placeholder="搜索规程名称 / 公司 / 部门 / 岗位"
           clearable
           style="width: 320px"
-          @clear="load"
-          @keyup.enter="load"
+          @clear="() => { pager.page = 1; load(); }" 
+          @keyup.enter="() => { pager.page = 1; load(); }"
         />
         <el-button class="ml8" @click="load">查询</el-button>
       </div>
@@ -18,7 +18,7 @@
         <el-button
           type="danger"
           @click="onBatchDelete"
-          :disabled="!selection.length"
+          :disabled="!(selection.value?.length > 0)"
           >删除</el-button
         >
       </div>
@@ -29,8 +29,8 @@
       :data="list"
       v-loading="loading"
       style="width: 100%"
-      @selection-change="(val) => (selection = val)"
-      row-key="id"
+      @selection-change="(val) => (selection.value = val)"
+      row-key="fileName"
       border
     >
       <el-table-column type="selection" width="50" />
@@ -82,13 +82,8 @@
         layout="prev, pager, next, total"
         :total="pager.total"
         :page-size="pager.pageSize"
-        :current-page="pager.page"
-        @current-change="
-          (p) => {
-            pager.page = p;
-            load();
-          }
-        "
+        v-model:current-page="pager.page"
+        @current-change="load"
       />
     </div>
 
@@ -96,7 +91,7 @@
     <ReviewDialog
       v-model="review.visible"
       :data="review.data"
-      @save="handleSaveReview"
+      @after-save="load"
       @rename="handleRename"
       @regen="handleRegen"
       @add-doc="handleAddDoc"
@@ -168,8 +163,10 @@ const q = reactive({ keyword: "" });
 const pager = reactive({ page: 1, pageSize: 10, total: 0 });
 const loading = ref(false);
 const list = ref([]);
-let selection = ref([]);
+const selection = ref([]);
 const userId = ref("test_user");
+
+const ALLOW_RE = /\.(xlsx|xls)$/i;
 
 async function load() {
   loading.value = true;
@@ -289,6 +286,8 @@ async function openReview(row) {
     // ✅ 成功后加载题目
     review.currentRow = row;
     review.data.title = row.title;
+    review.data.fileName = row.fileName;
+
     review.visible = true;
 
     const { data } = await getQaList(row.fileName);
@@ -300,16 +299,14 @@ async function openReview(row) {
     } else {
       review.data.items = items.map((x, i) => ({
         _key: `${i}-${Date.now()}`,
-        stage: "", // 原始数据没有该字段，可空着
-        section: x.position || "", // 你原来的 section 应该是 position
-        question: x.question || "",
-        answer: x.answer || "",
-        content: x.content || "",
-        type: x.type || "",
-
-        // 如你后续会支持复核修改，也可以提前加上 editable 字段
-        // editable: true
+        position: x.position ?? "",
+        question: x.question ?? "",
+        answer: x.answer ?? "",
+        content: x.content ?? "",
+        type: x.type ?? "",
       }));
+
+
 
       ElMessage.success(`✅ 成功加载 ${items.length} 条题目`);
     }
@@ -321,10 +318,30 @@ async function openReview(row) {
   }
 }
 
-function handleSaveReview(payload) {
-  console.log("[SAVE REVIEW]", review.currentRow?.fileName, payload);
-  // ElMessage.success(payload.sync ? "已保存并同步知识库" : "保存成功");
-  review.visible = false;
+async function handleSaveReview(payload) {
+  try {
+     const filename = review.data.fileName || review.currentRow?.fileName;
+     const items = Array.isArray(payload?.items) ? payload.items : review.data.items;
+     const body = {
+       filename,
+       results: items.map(({ question, answer, position, content, type }) => ({
+         question,
+         answer,
+         position,
+         content,
+         type,
+       })),
+       sync: !!payload?.sync,
+       user_id: userId.value,
+     };
+     await saveQaList(body);
+     ElMessage.success(payload?.sync ? "已保存并同步知识库" : "保存成功");
+     review.visible = false;
+     await load();
+   } catch (e) {
+     console.error("[保存失败]", e);
+     ElMessage.error("保存失败");
+   }
 }
 function handleRename(newTitle) {
   if (review.currentRow) review.currentRow.title = newTitle;
@@ -380,7 +397,12 @@ function onImport() {
   importDlg.visible = true;
 }
 function onUploadChange(file, fileList) {
-  importDlg.files = fileList;
+  // importDlg.files = fileList;
+  const valid = fileList.filter((f) => ALLOW_RE.test(f.name));
+  if (valid.length !== fileList.length) {
+    ElMessage.error("仅支持 .xlsx / .xls 文件");
+  }
+  importDlg.files = valid;
 }
 function onUploadRemove(file, fileList) {
   importDlg.files = fileList;
@@ -388,6 +410,11 @@ function onUploadRemove(file, fileList) {
 
 async function startImport() {
   if (!importDlg.files.length) return ElMessage.warning("请先选择文件");
+  // const realFiles = importDlg.files.map((f) => f.raw).filter(Boolean);
+  // if (!realFiles.length) return ElMessage.warning("文件格式异常");
+  if (importDlg.files.some((f) => !ALLOW_RE.test(f.name))) {
+    return ElMessage.error("仅支持 .xlsx / .xls 文件");
+  }
   const realFiles = importDlg.files.map((f) => f.raw).filter(Boolean);
   if (!realFiles.length) return ElMessage.warning("文件格式异常");
 

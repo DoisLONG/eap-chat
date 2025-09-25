@@ -39,7 +39,7 @@
         <template #header>
           <div class="qa-header">
             <span class="qa-title">第 {{ idx + 1 }} 题（{{ r.type || '题型未知' }}）</span>
-            <el-tag size="small" type="info">{{ r.section || '模块未知' }}</el-tag>
+            <el-tag size="small" type="info">{{ r.position || '模块未知' }}</el-tag>
             <el-button size="small" type="danger" style="margin-left:auto" @click="remove(idx)">删除</el-button>
           </div>
         </template>
@@ -188,8 +188,10 @@ async function onSave(sync = false) {
     } else {
       ElMessage.success('✅ 保存成功')
     }
-    emit('save', { title: cleanTitle, items: payload.records, sync })
-    if (!sync) emit('update:modelValue', false)
+    // emit('save', { title: cleanTitle, items: payload.records, sync })
+    // if (!sync) emit('update:modelValue', false)
+    emit('after-save', { title: cleanTitle, sync })
+    emit('update:modelValue', false)
   } catch (e) {
     console.error('[保存失败]', e)
     ElMessage.error(`❌ 保存失败：${e?.response?.data?.detail || e.message}`)
