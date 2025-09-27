@@ -1,0 +1,104 @@
+user  nginx;
+worker_processes  auto;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;
+
+    sendfile        on;
+    keepalive_timeout  65;
+
+    server {
+        listen 80;
+        server_name _;
+
+        root /usr/share/nginx/html;
+        index index.html;
+
+        # 静态资源缓存（按需）
+        location ~* \.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?)$ {
+            try_files $uri =404;
+            access_log off;
+            expires 7d;
+            add_header Cache-Control "public, max-age=604800";
+        }
+
+        # SPA history：其余路径都回到 index.html
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+
+        # 反代：SOP 服务
+        location /sop-api/ {
+            proxy_pass http://$SOP_API_HOST/;
+            proxy_http_version 1.1;
+            proxy_read_timeout 60s;
+            proxy_connect_timeout 5s;
+            proxy_send_timeout 60s;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # 反代：考试/对话服务
+        location /chatapi/ {
+            proxy_pass http://$CHAT_API_HOST/;
+            proxy_http_version 1.1;
+            proxy_read_timeout 60s;
+            proxy_connect_timeout 5s;
+            proxy_send_timeout 60s;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # 反代：监控服务（Node，端口 8080）
+        location /monitor-api/ {
+            proxy_pass http://153.35.82.15:8080/api/;
+            proxy_http_version 1.1;
+            proxy_read_timeout 60s;
+            proxy_connect_timeout 5s;
+            proxy_send_timeout 60s;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # 反代：License 管理（Java）
+        location /api-153/ {
+            proxy_pass http://153.35.82.15:31117/;
+            proxy_http_version 1.1;
+            proxy_read_timeout 60s;
+            proxy_connect_timeout 5s;
+            proxy_send_timeout 60s;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # 可选：上传较大文件（比如上传 license 文件）
+        client_max_body_size 20m;
+
+        # 可选：gzip
+        gzip on;
+        gzip_comp_level 5;
+        gzip_types text/plain text/css application/json application/javascript application/xml+rss application/xml application/octet-stream image/svg+xml;
+    }
+}
