@@ -8,8 +8,18 @@
           placeholder="搜索规程名称 / 公司 / 部门 / 岗位"
           clearable
           style="width: 320px"
-          @clear="() => { pager.page = 1; load(); }" 
-          @keyup.enter="() => { pager.page = 1; load(); }"
+          @clear="
+            () => {
+              pager.page = 1;
+              load();
+            }
+          "
+          @keyup.enter="
+            () => {
+              pager.page = 1;
+              load();
+            }
+          "
         />
         <el-button class="ml8" @click="load">查询</el-button>
       </div>
@@ -18,7 +28,7 @@
         <el-button
           type="danger"
           @click="onBatchDelete"
-          :disabled="!(selection.value?.length > 0)"
+          :disabled="!hasSelection"
           >删除</el-button
         >
       </div>
@@ -29,8 +39,8 @@
       :data="list"
       v-loading="loading"
       style="width: 100%"
-      @selection-change="(val) => (selection.value = val)"
-      row-key="fileName"
+      @selection-change="onSelectionChange"
+      row-key="id"
       border
     >
       <el-table-column type="selection" width="50" />
@@ -67,7 +77,7 @@
       </el-table-column>
       <el-table-column label="操作" width="160" fixed="right">
         <template #default="{ row }">
-          <el-button size="small" @click="onEdit(row)" disabled>编辑</el-button>
+          <el-button size="small" @click="onEdit(row)">编辑</el-button>
           <el-button size="small" @click="onDelete(row)" type="danger" plain
             >删除</el-button
           >
@@ -79,11 +89,13 @@
     <div class="pager">
       <el-pagination
         background
-        layout="prev, pager, next, total"
+        layout="total, sizes, prev, pager, next"
         :total="pager.total"
         :page-size="pager.pageSize"
+        :page-sizes="[5, 10, 20, 50, 100]"
         v-model:current-page="pager.page"
-        @current-change="load"
+        @current-change="onPageChange"
+        @size-change="onPageSizeChange"
       />
     </div>
 
@@ -143,10 +155,54 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 编辑弹窗 -->
+    <el-dialog
+      v-model="editDlg.visible"
+      width="480px"
+      :close-on-click-modal="false"
+      :show-close="false"
+      class="edit-title-dialog"
+    >
+      <template #header>
+        <div class="dlg-header">
+          <el-icon><EditPen /></el-icon>
+          <span class="dlg-title">修改 SOP 标题</span>
+        </div>
+      </template>
+
+      <div class="dlg-body">
+        <el-form label-position="top">
+          <el-form-item label="新标题" required>
+            <el-input
+              v-model="editDlg.title"
+              placeholder="请输入新的标题"
+              clearable
+              maxlength="100"
+              show-word-limit
+            />
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <template #footer>
+        <div class="dlg-footer">
+          <el-button @click="editDlg.visible = false">取消</el-button>
+          <el-button
+            type="primary"
+            :loading="editDlg.loading"
+            @click="submitEditTitle"
+          >
+            保存
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { EditPen } from '@element-plus/icons-vue'
 import { ref, reactive, onMounted } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import ReviewDialog from "@/components/exam/ReviewDialog.vue";
@@ -157,7 +213,12 @@ import {
   getQaList,
   saveQaList,
   pollTaskStatus,
+  updateSopTitle,
 } from "@/services/sop.api";
+
+import { computed } from "vue";
+
+const hasSelection = computed(() => selection.value.length > 0);
 
 const q = reactive({ keyword: "" });
 const pager = reactive({ page: 1, pageSize: 10, total: 0 });
@@ -179,9 +240,12 @@ async function load() {
     const mapped = arr.map((item, idx) => {
       const fileName = typeof item === "string" ? item : item.filename || "";
       const taskId = typeof item === "object" ? item.task_id : "";
-      const title = fileName.replace(/\.[^.]+$/, "");
+      const title =
+        typeof item === "object"
+          ? item.title
+          : fileName.replace(/\.[^.]+$/, "");
       return {
-        id: idx + 1,
+        id: item.id,
         title,
         fileName,
         task_id: taskId,
@@ -227,7 +291,7 @@ async function load() {
 
 function resetImportDlg() {
   importDlg.files = [];
-  importDlg.totalQa = 10;  // 可以顺便重置输入框
+  importDlg.totalQa = 10; // 可以顺便重置输入框
 }
 
 onMounted(load);
@@ -239,77 +303,71 @@ const review = reactive({
   loading: false,
 });
 
+function onPageChange(val) {
+  pager.page = val;
+  load();
+}
+
+function onPageSizeChange(size) {
+  pager.pageSize = size;
+  pager.page = 1;
+  load();
+}
+
+function onSelectionChange(val) {
+  selection.value.splice(0, selection.value.length, ...val);
+}
+
+const editDlg = reactive({
+  visible: false,
+  record_id: null,
+  title: "",
+  loading: false,
+});
+
 async function openReview(row) {
   review.loading = true;
+  review.currentRow = row;
+  review.data.title = row.title;
+  review.data.fileName = row.fileName;
+  review.data.items = [];
+
   try {
     const taskId = row.task_id || "";
     if (!taskId) throw new Error("❌ 当前记录缺少任务 ID，无法进行复核");
-    console.log("[复核流程] 开始轮询任务状态，taskId =", taskId);
 
-    const pollTaskStatus = async (taskId, maxTimes = 60, interval = 2000) => {
-      let attempt = 0;
-      while (attempt < maxTimes) {
-        attempt++;
-        try {
-          const res = await fetch("/sop-api/v1/dataprep/task_status", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ task_id: taskId }),
-          });
+    const res = await fetch("/sop-api/v1/dataprep/task_status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ task_id: taskId }),
+    });
 
-          const json = await res.json();
-          console.log(`[轮询第 ${attempt} 次返回]`, json);
+    const json = await res.json();
+    const state = json?.results?.state || json?.state || "";
+    const normalized = state.toUpperCase();
 
-          const state = json?.results?.state || json?.state;
-          const normalized = state?.toUpperCase?.();
-          console.log("[轮询状态判定]", normalized);
-
-          if (normalized && normalized !== "PENDING") return json;
-        } catch (err) {
-          console.warn(`[轮询异常 - 第 ${attempt} 次]`, err);
-        }
-
-        await new Promise((r) => setTimeout(r, interval));
-      }
-
-      throw new Error("⏱️ 轮询超时，任务状态未完成");
-    };
-
-    const result = await pollTaskStatus(taskId);
-    const state = result?.results?.state || result?.state;
-    const normalized = state?.toUpperCase?.();
-
+    // ✅ 如果不是 SUCCESS，提示后不再继续加载题目
     if (normalized !== "SUCCESS") {
-      throw new Error(`❌ 当前任务状态为 ${normalized || "未知"}，暂无法复核`);
+      ElMessage.warning(`任务状态为 ${normalized}，请稍后再试`);
+      return;
     }
 
-    // ✅ 成功后加载题目
-    review.currentRow = row;
-    review.data.title = row.title;
-    review.data.fileName = row.fileName;
+    review.visible = true; // ✅ 弹窗提前展示
 
-    review.visible = true;
-
+    // ✅ 成功才继续加载题目列表
     const { data } = await getQaList(row.fileName);
     const items = Array.isArray(data?.results) ? data.results : [];
 
-    if (items.length === 0) {
-      ElMessage.warning("⚠️ 该 SOP 暂无题目数据");
-      review.data.items = [];
-    } else {
-      review.data.items = items.map((x, i) => ({
-        _key: `${i}-${Date.now()}`,
-        position: x.position ?? "",
-        question: x.question ?? "",
-        answer: x.answer ?? "",
-        content: x.content ?? "",
-        type: x.type ?? "",
-      }));
+    review.data.items = items.map((x, i) => ({
+      _key: `${i}-${Date.now()}`,
+      position: x.position ?? "",
+      question: x.question ?? "",
+      answer: x.answer ?? "",
+      content: x.content ?? "",
+      type: x.type ?? "",
+    }));
 
-
-
-      ElMessage.success(`✅ 成功加载 ${items.length} 条题目`);
-    }
+    ElMessage.success(`✅ 成功加载 ${items.length} 条题目`);
   } catch (e) {
     console.error("[复核失败]", e);
     ElMessage.warning(e.message || "复核失败，请稍后再试");
@@ -320,28 +378,30 @@ async function openReview(row) {
 
 async function handleSaveReview(payload) {
   try {
-     const filename = review.data.fileName || review.currentRow?.fileName;
-     const items = Array.isArray(payload?.items) ? payload.items : review.data.items;
-     const body = {
-       filename,
-       results: items.map(({ question, answer, position, content, type }) => ({
-         question,
-         answer,
-         position,
-         content,
-         type,
-       })),
-       sync: !!payload?.sync,
-       user_id: userId.value,
-     };
-     await saveQaList(body);
-     ElMessage.success(payload?.sync ? "已保存并同步知识库" : "保存成功");
-     review.visible = false;
-     await load();
-   } catch (e) {
-     console.error("[保存失败]", e);
-     ElMessage.error("保存失败");
-   }
+    const filename = review.data.fileName || review.currentRow?.fileName;
+    const items = Array.isArray(payload?.items)
+      ? payload.items
+      : review.data.items;
+    const body = {
+      filename,
+      results: items.map(({ question, answer, position, content, type }) => ({
+        question,
+        answer,
+        position,
+        content,
+        type,
+      })),
+      sync: !!payload?.sync,
+      user_id: userId.value,
+    };
+    await saveQaList(body);
+    ElMessage.success(payload?.sync ? "已保存并同步知识库" : "保存成功");
+    review.visible = false;
+    await load();
+  } catch (e) {
+    console.error("[保存失败]", e);
+    ElMessage.error("保存失败");
+  }
 }
 function handleRename(newTitle) {
   if (review.currentRow) review.currentRow.title = newTitle;
@@ -355,18 +415,27 @@ function handleAddDoc() {
 }
 
 async function onDelete(row) {
-  await ElMessageBox.confirm(`确定删除「${row.title}」？`, "提示", {
-    type: "warning",
-  });
   try {
-    await deleteSop(row.fileName);
+    await ElMessageBox.confirm(`确定删除「${row.title}」？`, "提示", {
+      type: "warning",
+    });
+
+    const res = await deleteSop(row.fileName);
+
+    // ✅ 判断后端自定义状态
+    if (res?.data?.status !== 200) {
+      throw new Error(res?.data?.message || "删除失败");
+    }
+
     ElMessage.success("删除成功");
     pager.page = 1;
     await load();
   } catch (e) {
-    ElMessage.error("删除失败");
+    // ❗注意：catch 现在用于处理逻辑异常或 throw 抛出的错误
+    ElMessage.error(e.message || "删除失败");
   }
 }
+
 function onBatchDelete() {
   if (!selection.value.length) return;
   ElMessageBox.confirm(
@@ -384,7 +453,39 @@ function onBatchDelete() {
     .catch(() => {});
 }
 function onEdit(row) {
-  ElMessage.info(`编辑：${row.title}（自行实现表单/跳转）`);
+  console.log("row", row);
+  // ElMessage.info(`编辑：${row.title}（自行实现表单/跳转）`);
+  editDlg.record_id = row.id;
+  editDlg.title = row.title;
+  editDlg.visible = true;
+}
+
+async function submitEditTitle() {
+  if (!editDlg.title.trim()) {
+    ElMessage.warning("标题不能为空");
+    return;
+  }
+
+  editDlg.loading = true;
+  try {
+    const { data } = await updateSopTitle(
+      editDlg.record_id,
+      editDlg.title.trim()
+    );
+
+    if (data?.status === 200) {
+      ElMessage.success(data.message || "标题更新成功");
+      editDlg.visible = false;
+      await load(); // 刷新列表
+    } else {
+      throw new Error(data?.message || "更新失败");
+    }
+  } catch (e) {
+    console.error("[更新标题失败]", e);
+    ElMessage.error(e.message || "请求失败");
+  } finally {
+    editDlg.loading = false;
+  }
 }
 
 const importDlg = reactive({
@@ -422,8 +523,7 @@ async function startImport() {
   try {
     const res = await generateQa(realFiles, importDlg.totalQa);
 
-
-    console.log('generateQa',res)
+    console.log("generateQa", res);
 
     // ✅ 后端返回非200/201时，主动抛错
     if (res?.data.status !== 200 && res?.data.status !== 201) {
@@ -441,7 +541,6 @@ async function startImport() {
     importDlg.running = false;
   }
 }
-
 </script>
 
 <style scoped>
@@ -499,5 +598,29 @@ async function startImport() {
 }
 .import-body {
   padding: 4px 4px 0;
+}
+
+/* 编辑弹窗 */
+.edit-title-dialog :deep(.el-dialog__body) {
+  padding-top: 10px;
+}
+
+.dlg-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #2b3a55;
+}
+
+.dlg-title {
+  flex: 1;
+}
+
+.dlg-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 </style>

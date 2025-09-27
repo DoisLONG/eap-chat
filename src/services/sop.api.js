@@ -78,3 +78,11 @@ export async function deleteSop(fileName) {
   const res = await api.post('/v1/dataprep/delete_sop', { file_name: fileName })
   return res
 }
+
+// 更新 SOP 标题
+export async function updateSopTitle(recordId, newTitle) {
+  return api.post('/v1/dataprep/sops/record/update', {
+    record_id: recordId,
+    title: newTitle
+  })
+}
