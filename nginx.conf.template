@@ -94,7 +94,7 @@ http {
         }
 
         # 可选：上传较大文件（比如上传 license 文件）
-        client_max_body_size 20m;
+        client_max_body_size 1024m;
 
         # 可选：gzip
         gzip on;

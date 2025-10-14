@@ -11,4 +11,4 @@ Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://
 
 #### 镜像构建是在15机器上，容器部署也在15机器上。端口31118
 
-docker run -d -p 35173:80 -e SOP_API_HOST=14.103.223.101:6007 -e CHAT_API_HOST=14.103.223.101:9010 yourname/chatui:1.0
+docker run -d -p 35173:80 -e SOP_API_HOST=14.103.223.101:6007 -e CHAT_API_HOST=14.103.223.101:9010 registry.cn-hangzhou.aliyuncs.com/jilimoxing/test:chatui1.6
