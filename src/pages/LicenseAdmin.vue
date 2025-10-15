@@ -239,39 +239,25 @@ async function load() {
       keyword: q.keyword.trim()
     });
 
-    // ✅ 兼容 results 为字符串数组或对象数组
-    const arr = Array.isArray(data?.results) ? data.results : [];
+    const arr = Array.isArray(data?.results?.data) ? data.results.data : [];
 
-    const mapped = arr.map((item, idx) => {
-      const fileName = typeof item === "string" ? item : item.filename || "";
-      const taskId = typeof item === "object" ? item.task_id : "";
-      const title =
-        typeof item === "object"
-          ? item.title
-          : fileName.replace(/\.[^.]+$/, "");
+    pager.total = data?.results?.total || 0;
+    list.value = arr.map((item) => {
+      const fileName = item.filename || "";
+      const title = item.title || fileName.replace(/\.[^.]+$/, "");
       return {
         id: item.id,
         title,
         fileName,
-        task_id: taskId,
-        company: "—",
-        dept: "—",
-        job: "—",
-        version: "v1",
+        task_id: item.task_id,
+        company: item.company || "—",
+        dept: item.dept || "—",
+        job: item.job || "—",
+        version: item.version || "v1",
         examLinkText: `${title} 试题题目`,
       };
     });
 
-    const keyword = q.keyword.trim();
-    const filtered = keyword
-      ? mapped.filter((x) =>
-          [x.title, x.company, x.dept, x.job].some((f) => f.includes(keyword))
-        )
-      : mapped;
-
-    pager.total = filtered.length;
-    const start = (pager.page - 1) * pager.pageSize;
-    list.value = filtered.slice(start, start + pager.pageSize);
   } catch (e) {
     console.error("[load error]", e);
     ElMessage.error("SOP 列表加载失败");

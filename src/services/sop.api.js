@@ -56,21 +56,20 @@ export function pollTaskStatus(taskId, opt = {}) {
 }
 
 // 拉取 SOP 列表（POST /v1/dataprep/sops?user_id=xxx）
+
+// 拉取 SOP 列表（POST /v1/dataprep/sops）
 export async function getSops({
   user_id = 'test_user',
   page = 1,
   pageSize = 10,
   keyword = ''
 } = {}) {
-  // 所有参数拼接成 query string（全部放 URL 上）
-  const query = new URLSearchParams({
+  return api.post('/v1/dataprep/sops', {
     user_id,
-    page: String(page),
-    page_size: String(pageSize),
-    keyword: keyword.trim(),
-  }).toString();
-
-  return api.post(`/v1/dataprep/sops?${query}`);
+    page,
+    page_size: pageSize,
+    keyword: keyword.trim()
+  });
 }
 
 // 拉取某个文件的 QA 列表（如果需要接入复核弹窗）
