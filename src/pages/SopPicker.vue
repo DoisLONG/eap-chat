@@ -135,20 +135,28 @@ const total = ref(0);
 async function fetchList() {
   loading.value = true;
   try {
-    const { data } = await getSops({ user_id: "test_user" }); // 可根据需要设置 user_id
-    const raw = Array.isArray(data?.results) ? data.results : [];
+    const { data } = await getSops({
+      user_id: "test_user",
+      page: query.page,
+      pageSize: query.pageSize,
+      keyword: query.kw.trim(),
+    });
+    const raw = Array.isArray(data?.results?.data) ? data.results.data : [];
 
-    const mapped = raw.map((item, i) => {
-      const fileName = typeof item === "string" ? item : item.filename;
-      const title = fileName.replace(/\.[^.]+$/, "");
+    const mapped = raw.map((item) => {
+      const fileName = item.filename || "";
+      const title = item.title || fileName.replace(/\.[^.]+$/, "");
       return {
         id: fileName,
         name: title,
         env: "prod",
         version: "v1",
-        task_id: typeof item === "object" ? item.task_id : "",
+        task_id: item.task_id || "",
       };
     });
+
+    items.value = mapped;
+    total.value = data?.results?.total || 0;
 
     // 前端关键词/环境过滤
     const kw = query.kw.trim();
