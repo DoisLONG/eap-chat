@@ -232,7 +232,11 @@ const ALLOW_RE = /\.(xlsx|xls)$/i;
 async function load() {
   loading.value = true;
   try {
-    const { data } = await getSops({ user_id: userId.value });
+    const { data } = await getSops({ 
+      user_id: userId.value,
+      page: pager.page,
+      pageSize: pager.pageSize
+    });
 
     // ✅ 兼容 results 为字符串数组或对象数组
     const arr = Array.isArray(data?.results) ? data.results : [];
