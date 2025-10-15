@@ -235,7 +235,8 @@ async function load() {
     const { data } = await getSops({ 
       user_id: userId.value,
       page: pager.page,
-      pageSize: pager.pageSize
+      pageSize: pager.pageSize,
+      keyword: q.keyword.trim()
     });
 
     // ✅ 兼容 results 为字符串数组或对象数组
