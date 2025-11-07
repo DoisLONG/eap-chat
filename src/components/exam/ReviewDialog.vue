@@ -34,67 +34,69 @@
       </div>
     </template>
 
-    <div class="qa-list">
-      <el-card
-        v-for="(r, idx) in local.items"
-        :key="r._key"
-        class="qa-card"
-        shadow="hover"
-      >
-        <template #header>
-          <div class="qa-header">
-            <span class="qa-title"
-              >第 {{ idx + 1 }} 题（{{ r.type || "题型未知" }}）</span
-            >
-            <el-tag size="small" type="info">{{
-              r.position || "模块未知"
-            }}</el-tag>
-            <el-button
-              size="small"
-              type="danger"
-              style="margin-left: auto"
-              @click="remove(idx)"
-              >删除</el-button
-            >
-          </div>
-        </template>
+    <div class="qa-list-container">
+      <div class="qa-list">
+        <el-card
+          v-for="(r, idx) in local.items"
+          :key="r._key"
+          class="qa-card"
+          shadow="hover"
+        >
+          <template #header>
+            <div class="qa-header">
+              <span class="qa-title"
+                >第 {{ idx + 1 }} 题（{{ r.type || "题型未知" }}）</span
+              >
+              <el-tag size="small" type="info">{{
+                r.position || "模块未知"
+              }}</el-tag>
+              <el-button
+                size="small"
+                type="danger"
+                style="margin-left: auto"
+                @click="remove(idx)"
+                >删除</el-button
+              >
+            </div>
+          </template>
 
-        <div class="qa-body">
-          <div class="qa-field">
-            <label>题目：</label>
-            <el-input
-              v-model="r.question"
-              type="textarea"
-              :maxlength="200"
-              autosize
-              clearable
-            />
+          <div class="qa-body">
+            <div class="qa-field">
+              <label>题目：</label>
+              <el-input
+                v-model="r.question"
+                type="textarea"
+                :maxlength="200"
+                autosize
+                clearable
+              />
+            </div>
+            <div class="qa-field">
+              <label>参考答案：</label>
+              <el-input
+                v-model="r.answer"
+                type="textarea"
+                :maxlength="200"
+                autosize
+                clearable
+              />
+            </div>
+            <div class="qa-field">
+              <label>解析说明：</label>
+              <el-input
+                v-model="r.content"
+                type="textarea"
+                :maxlength="1000"
+                autosize
+                clearable
+              />
+            </div>
           </div>
-          <div class="qa-field">
-            <label>参考答案：</label>
-            <el-input
-              v-model="r.answer"
-              type="textarea"
-              :maxlength="200"
-              autosize
-              clearable
-            />
-          </div>
-          <div class="qa-field">
-            <label>解析说明：</label>
-            <el-input
-              v-model="r.content"
-              type="textarea"
-              :maxlength="1000"
-              autosize
-              clearable
-            />
-          </div>
+        </el-card>
+
+        <div class="add-line">
+          <el-button @click="addOne" plain>+ 新增一题</el-button>
         </div>
-      </el-card>
-
-      <div class="add-line">
-        <el-button @click="addOne" plain>+ 新增一题</el-button>
       </div>
     </div>
 
@@ -229,9 +231,9 @@ async function onSave(sync = false) {
   try {
     await saveQaList(payload.file_name, payload.records);
     if (sync) {
-      ElMessage.success("✅ 已保存并同步知识库");
+      ElMessage.success("已保存并同步知识库");
     } else {
-      ElMessage.success("✅ 保存成功");
+      ElMessage.success("保存成功");
     }
     // emit('save', { title: cleanTitle, items: payload.records, sync })
     // if (!sync) emit('update:modelValue', false)
@@ -239,7 +241,7 @@ async function onSave(sync = false) {
     emit("update:modelValue", false);
   } catch (e) {
     console.error("[保存失败]", e);
-    ElMessage.error(`❌ 保存失败：${e?.response?.data?.detail || e.message}`);
+    ElMessage.error(`保存失败：${e?.response?.data?.detail || e.message}`);
   } finally {
     local.saving = false;
   }
@@ -250,6 +252,7 @@ async function onSave(sync = false) {
   margin: 0;
   padding: 14px 16px 0 16px;
 }
+
 .review-dialog :deep(.el-dialog__body) {
   padding: 12px 16px;
   max-height: 70vh;
@@ -260,6 +263,7 @@ async function onSave(sync = false) {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  padding: 20px 20px 0 0;
 }
 .title-wrap {
   display: flex;
@@ -280,8 +284,14 @@ async function onSave(sync = false) {
   align-items: center;
   gap: 8px;
 }
-.qa-list {
+.qa-list-container {
+  height: calc(70vh - 100px);
   padding: 12px 0;
+  overflow: hidden;
+}
+.qa-list {
+  height: 100%;
+  overflow-y: auto;
 }
 .qa-card {
   margin-bottom: 16px;
