@@ -1,104 +1,82 @@
 <template>
-  <div class="page">
-    <!-- 工具条 -->
-    <div class="toolbar">
-      <div class="left">
-        <el-input
-          v-model="q.keyword"
-          placeholder="搜索规程名称 / 公司 / 部门 / 岗位"
-          clearable
-          style="width: 320px"
-          @clear="
-            () => {
-              pager.page = 1;
-              load();
-            }
-          "
-          @keyup.enter="
-            () => {
-              pager.page = 1;
-              load();
-            }
-          "
-        />
-        <el-button class="ml8" @click="load">查询</el-button>
-      </div>
-      <div class="right">
-        <el-button @click="onImport">导入 SOP</el-button>
+  <div class="table-box">
+    <ProTable
+      ref="proTable"
+      :columns="columns"
+      :request-api="getTableList"
+      :init-param="initParam"
+      :data-callback="dataCallback"
+    >
+      <template #searchForm>
+        <searchForm @search="handleSearch" />
+      </template>
+      <!-- 表格 header 按钮 -->
+      <template #tableHeader="scope">
+        <el-button
+          v-auth="'add'"
+          type="primary"
+          :icon="CirclePlus"
+          @click="onImport"
+          >导入SOP</el-button
+        >
         <el-button
           type="danger"
-          @click="onBatchDelete"
-          :disabled="!hasSelection"
-          >删除</el-button
+          :icon="Delete"
+          plain
+          :disabled="!scope.isSelected"
+          @click="batchDelete(scope.selectedListIds, scope.selectedList)"
         >
-      </div>
-    </div>
-
-    <!-- 列表 -->
-    <el-table
-      :data="list"
-      v-loading="loading"
-      style="width: 100%"
-      @selection-change="onSelectionChange"
-      row-key="id"
-      border
-    >
-      <el-table-column type="selection" width="50" />
-      <el-table-column label="规程名称" min-width="280">
-        <template #default="{ row }">
-          <div class="doc-cell">
-            <div class="thumb"></div>
-            <div class="meta">
-              <div class="name ellipsis" :title="row.title">
-                {{ row.title }}
-              </div>
-              <div class="sub ellipsis" :title="row.fileName">
-                {{ row.fileName }}
-              </div>
+          批量删除
+        </el-button>
+      </template>
+      <template #keyword="{ row }">
+        <div class="doc-cell">
+          <!-- <div class="thumb"></div> -->
+          <div class="meta">
+            <div class="name ellipsis" :title="row.title">
+              {{ row.title }}
+            </div>
+            <div class="sub ellipsis" :title="row.fileName">
+              {{ row.filename || "-" }}
             </div>
           </div>
-        </template>
-      </el-table-column>
-      <el-table-column prop="company" label="公司" width="120" />
-      <el-table-column prop="dept" label="部门" width="120" />
-      <el-table-column prop="job" label="岗位" width="120" />
-      <el-table-column prop="version" label="版本号" width="100" />
-      <el-table-column label="复核题目" width="200">
-        <template #default="{ row }">
-          <el-link
-            type="primary"
-            :loading="review.loading"
-            :disabled="review.loading"
-            @click="openReview(row)"
-          >
-            {{ row.examLinkText }}
-          </el-link>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="160" fixed="right">
-        <template #default="{ row }">
-          <el-button size="small" @click="onEdit(row)">编辑</el-button>
-          <el-button size="small" @click="onDelete(row)" type="danger" plain
-            >删除</el-button
-          >
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <!-- 分页 -->
-    <div class="pager">
-      <el-pagination
-        background
-        layout="total, sizes, prev, pager, next"
-        :total="pager.total"
-        :page-size="pager.pageSize"
-        :page-sizes="[5, 10, 20, 50, 100]"
-        v-model:current-page="pager.page"
-        @current-change="onPageChange"
-        @size-change="onPageSizeChange"
-      />
-    </div>
-
+        </div>
+      </template>
+      <template #examLinkText="{ row }">
+        <el-link
+          type="primary"
+          :loading="review.loading"
+          :disabled="review.loading"
+          @click="openReview(row)"
+        >
+          {{ row.examLinkText }}
+        </el-link>
+      </template>
+      <!-- 表格操作 -->
+      <template #operation="scope">
+        <!-- <el-button
+          type="primary"
+          link
+          :icon="View"
+          @click="openDrawer('复核', scope.row)"
+          >复核</el-button
+        > -->
+        <el-button
+          type="primary"
+          link
+          :icon="EditPen"
+          @click="onEdit(scope.row)"
+          >编辑</el-button
+        >
+        <el-button
+          type="danger"
+          link
+          :icon="Delete"
+          @click="onDelete(scope.row)"
+          >删除</el-button
+        >
+      </template>
+    </ProTable>
     <!-- 复核弹窗 -->
     <ReviewDialog
       v-model="review.visible"
@@ -122,7 +100,7 @@
           <el-form-item label="生成题目数">
             <el-input-number v-model="importDlg.totalQa" :min="1" :max="200" />
           </el-form-item>
-          <el-form-item label="选择文件">
+          <el-form-item label="选择文件" class="upload-file">
             <el-upload
               drag
               multiple
@@ -156,56 +134,25 @@
       </template>
     </el-dialog>
 
-    <!-- 编辑弹窗 -->
-    <el-dialog
-      v-model="editDlg.visible"
-      width="480px"
-      :close-on-click-modal="false"
-      :show-close="false"
-      class="edit-title-dialog"
-    >
-      <template #header>
-        <div class="dlg-header">
-          <el-icon><EditPen /></el-icon>
-          <span class="dlg-title">修改 SOP 标题</span>
-        </div>
-      </template>
-
-      <div class="dlg-body">
-        <el-form label-position="top">
-          <el-form-item label="新标题" required>
-            <el-input
-              v-model="editDlg.title"
-              placeholder="请输入新的标题"
-              clearable
-              maxlength="100"
-              show-word-limit
-            />
-          </el-form-item>
-        </el-form>
-      </div>
-
-      <template #footer>
-        <div class="dlg-footer">
-          <el-button @click="editDlg.visible = false">取消</el-button>
-          <el-button
-            type="primary"
-            :loading="editDlg.loading"
-            @click="submitEditTitle"
-          >
-            保存
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
+    <editDrawer
+      v-if="editDlg.visible"
+      :rowInfo="rowInfo"
+      @refresh="handleUpate"
+      @close="editDlg.visible = false"
+    />
   </div>
 </template>
 
-<script setup>
-import { EditPen } from '@element-plus/icons-vue'
-import { ref, reactive, onMounted } from "vue";
-import { ElMessageBox, ElMessage } from "element-plus";
+<script setup lang="tsx" name="useProTable">
+import { ref, reactive } from "vue";
+import searchForm from "./components/licenseAdmin/searchForm.vue";
 import ReviewDialog from "@/components/exam/ReviewDialog.vue";
+// import editDialog from "./components/licenseAdmin/editDialog.vue";
+import editDrawer from "./components/licenseAdmin/editDrawer.vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import ProTable from "@/components/ProTable/index.vue";
+import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
+import { CirclePlus, Delete, EditPen } from "@element-plus/icons-vue";
 import {
   getSops,
   generateQa,
@@ -213,101 +160,83 @@ import {
   getQaList,
   saveQaList,
   pollTaskStatus,
-  updateSopTitle,
 } from "@/services/sop.api";
 
-import { computed } from "vue";
-
-const hasSelection = computed(() => selection.value.length > 0);
-
-const q = reactive({ keyword: "" });
-const pager = reactive({ page: 1, pageSize: 10, total: 0 });
-const loading = ref(false);
-const list = ref([]);
-const selection = ref([]);
 const userId = ref("test_user");
-
 const ALLOW_RE = /\.(xlsx|xls)$/i;
 
-async function load() {
-  loading.value = true;
-  try {
-    const { data } = await getSops({ 
-      user_id: userId.value,
-      page: pager.page,
-      pageSize: pager.pageSize,
-      keyword: q.keyword.trim()
-    });
+const proTable = ref<ProTableInstance>();
+const initParam = reactive({});
 
-    const arr = Array.isArray(data?.results?.data) ? data.results.data : [];
+const handleSearch = (params: any) => {
+  proTable.value?.handleAlignsearch(params);
+};
+const dataCallback = (data: any) => {
+  const arr = Array.isArray(data?.results?.records) ? data.results.records : [];
+  const list = arr.map((item) => {
+    const fileName = item.filename || "";
+    const title = item.title || fileName.replace(/\.[^.]+$/, "");
+    return {
+      title,
+      task_id: item.task_id,
+      version: item.sop_version || "v1",
+      examLinkText: `${title} 试题题目`,
+      ...item,
+    };
+  });
+  return {
+    list: list,
+    total: data?.results?.total || 0,
+  };
+};
 
-    pager.total = data?.results?.total || 0;
-    list.value = arr.map((item) => {
-      const fileName = item.filename || "";
-      const title = item.title || fileName.replace(/\.[^.]+$/, "");
-      return {
-        id: item.id,
-        title,
-        fileName,
-        task_id: item.task_id,
-        company: item.company || "—",
-        dept: item.dept || "—",
-        job: item.job || "—",
-        version: item.version || "v1",
-        examLinkText: `${title} 试题题目`,
-      };
-    });
-
-  } catch (e) {
-    console.error("[load error]", e);
-    ElMessage.error("SOP 列表加载失败");
-    pager.total = 1;
-    list.value = [
-      {
-        id: 1,
-        title: "示例_SOP文件",
-        fileName: "示例_SOP文件.xlsx",
-        company: "示例公司",
-        dept: "示例部门",
-        job: "示例岗位",
-        version: "v1",
-        examLinkText: "示例_SOP文件 试题题目",
-        task_id: "",
-      },
-    ];
-  } finally {
-    loading.value = false;
-  }
-}
+const getTableList = (params: any) => {
+  console.warn("getTableList", params);
+  let newParams = JSON.parse(JSON.stringify(params));
+  newParams.user_id = userId.value;
+  return getSops(newParams);
+};
+// 表格配置项
+const columns = reactive<ColumnProps[]>([
+  { type: "selection", fixed: "left", width: 70 },
+  {
+    prop: "keyword",
+    label: "规程名称",
+    minWidth: 250,
+    search: {
+      el: "input",
+    },
+  },
+  {
+    prop: "company_name",
+    label: "公司",
+    width: 120,
+  },
+  {
+    prop: "department_name",
+    label: "部门",
+    width: 120,
+  },
+  {
+    prop: "position_name",
+    label: "岗位",
+    width: 120,
+  },
+  { prop: "version", label: "版本号", width: 100 },
+  { prop: "examLinkText", label: "复核题目", minWidth: 250 },
+  { prop: "operation", label: "操作", fixed: "right", width: 200 },
+]);
 
 function resetImportDlg() {
   importDlg.files = [];
   importDlg.totalQa = 10; // 可以顺便重置输入框
 }
-
-onMounted(load);
-
 const review = reactive({
   visible: false,
   data: { title: "", items: [] },
   currentRow: null,
   loading: false,
 });
-
-function onPageChange(val) {
-  pager.page = val;
-  load();
-}
-
-function onPageSizeChange(size) {
-  pager.pageSize = size;
-  pager.page = 1;
-  load();
-}
-
-function onSelectionChange(val) {
-  selection.value.splice(0, selection.value.length, ...val);
-}
 
 const editDlg = reactive({
   visible: false,
@@ -358,7 +287,7 @@ async function openReview(row) {
       type: x.type ?? "",
     }));
 
-    ElMessage.success(`✅ 成功加载 ${items.length} 条题目`);
+    ElMessage.success(`成功加载 ${items.length} 条题目`);
   } catch (e) {
     console.error("[复核失败]", e);
     ElMessage.warning(e.message || "复核失败，请稍后再试");
@@ -419,65 +348,37 @@ async function onDelete(row) {
     }
 
     ElMessage.success("删除成功");
-    pager.page = 1;
-    await load();
+    proTable.value?.getTableList();
   } catch (e) {
     // ❗注意：catch 现在用于处理逻辑异常或 throw 抛出的错误
-    ElMessage.error(e.message || "删除失败");
+    console.error("[删除失败]", e);
+    // ElMessage.error(e.message || "删除失败");
   }
 }
-
-function onBatchDelete() {
-  if (!selection.value.length) return;
-  ElMessageBox.confirm(
-    `已选中 ${selection.value.length} 条，确定删除？`,
-    "提示",
-    { type: "warning" }
-  )
+const batchDelete = async (id: string[], list: any[]) => {
+  if (!list.length) return;
+  ElMessageBox.confirm(`已选中 ${list.length} 条，确定删除？`, "提示", {
+    type: "warning",
+  })
     .then(async () => {
-      await Promise.all(selection.value.map((x) => deleteSop(x.fileName)));
-      selection.value = [];
+      await Promise.all(list.map((x) => deleteSop(x.fileName)));
       ElMessage.success("批量删除成功");
-      pager.page = 1;
-      await load();
+      proTable.value?.clearSelection();
+      proTable.value?.getTableList();
     })
     .catch(() => {});
-}
+};
+
+const rowInfo = ref<any>({});
 function onEdit(row) {
-  console.log("row", row);
-  // ElMessage.info(`编辑：${row.title}（自行实现表单/跳转）`);
   editDlg.record_id = row.id;
-  editDlg.title = row.title;
   editDlg.visible = true;
+  rowInfo.value = row;
 }
-
-async function submitEditTitle() {
-  if (!editDlg.title.trim()) {
-    ElMessage.warning("标题不能为空");
-    return;
-  }
-
-  editDlg.loading = true;
-  try {
-    const { data } = await updateSopTitle(
-      editDlg.record_id,
-      editDlg.title.trim()
-    );
-
-    if (data?.status === 200) {
-      ElMessage.success(data.message || "标题更新成功");
-      editDlg.visible = false;
-      await load(); // 刷新列表
-    } else {
-      throw new Error(data?.message || "更新失败");
-    }
-  } catch (e) {
-    console.error("[更新标题失败]", e);
-    ElMessage.error(e.message || "请求失败");
-  } finally {
-    editDlg.loading = false;
-  }
-}
+// 更新后刷新表格
+const handleUpate = () => {
+  proTable.value?.getTableList();
+};
 
 const importDlg = reactive({
   visible: false,
@@ -523,8 +424,7 @@ async function startImport() {
 
     ElMessage.success("上传并生成题目完成");
     importDlg.visible = false;
-    pager.page = 1;
-    await load();
+    proTable.value?.getTableList();
   } catch (e) {
     console.error("[导入失败]", e);
     ElMessage.error(`导入失败：${e.message || "未知错误"}`);
@@ -533,27 +433,7 @@ async function startImport() {
   }
 }
 </script>
-
 <style scoped>
-.page {
-  padding: 20px;
-}
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-.left {
-  display: flex;
-  align-items: center;
-}
-.right {
-  display: flex;
-  gap: 8px;
-}
-.ml8 {
-  margin-left: 8px;
-}
 .doc-cell {
   display: flex;
   align-items: center;
@@ -568,6 +448,7 @@ async function startImport() {
 }
 .meta {
   min-width: 0;
+  text-align: left;
 }
 .name {
   font-weight: 600;
@@ -582,11 +463,7 @@ async function startImport() {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.pager {
-  display: flex;
-  justify-content: flex-end;
-  padding: 14px 0 4px;
-}
+
 .import-body {
   padding: 4px 4px 0;
 }
@@ -595,7 +472,6 @@ async function startImport() {
 .edit-title-dialog :deep(.el-dialog__body) {
   padding-top: 10px;
 }
-
 .dlg-header {
   display: flex;
   align-items: center;
@@ -613,5 +489,8 @@ async function startImport() {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+.upload-file :deep(.el-form-item__content) div:nth-of-type(1) {
+  width: 100%;
 }
 </style>

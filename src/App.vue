@@ -1,10 +1,20 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <router-view />
+  <el-config-provider :locale="zhCn" :size="assemblySize">
+    <router-view></router-view>
+  </el-config-provider>
 </template>
+<script setup>
+import { computed } from "vue";
+import { useTheme } from "@/hooks/useTheme";
+import { useGlobalStore } from "@/stores/modules/global";
+import zhCn from "element-plus/es/locale/lang/zh-cn";
+
+const { initTheme } = useTheme();
+initTheme();
+
+const globalStore = useGlobalStore();
+const assemblySize = computed(() => globalStore.assemblySize);
+</script>
 
 <style scoped>
 .logo {
