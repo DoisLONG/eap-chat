@@ -221,7 +221,8 @@ function newSession() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       user_id: userId,
-      file_name: ensureExcelFileName(sopName),
+      sop_id: sopId,
+      // file_name: ensureExcelFileName(sopName),
     }),
   })
     .then((r) => r.json())
@@ -552,5 +553,4 @@ onMounted(() => {
   color: #999;
   margin-top: 2px;
 }
-
 </style>

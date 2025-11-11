@@ -141,13 +141,16 @@ async function fetchList() {
       pageSize: query.pageSize,
       keyword: query.kw.trim(),
     });
-    const raw = Array.isArray(data?.results?.data) ? data.results.data : [];
+    const raw = Array.isArray(data?.results?.records)
+      ? data.results.records
+      : [];
 
     const mapped = raw.map((item) => {
       const fileName = item.filename || "";
       const title = item.title || fileName.replace(/\.[^.]+$/, "");
       return {
-        id: fileName,
+        id: item.id,
+        fileName,
         name: title,
         env: "prod",
         version: "v1",
@@ -184,7 +187,7 @@ function goChat(row) {
     path: "/chat/exam",
     query: {
       sopId: row.id,
-      sopName: row.id,
+      sopName: row.fileName,
       sopVer: row.version,
     },
   });
@@ -192,7 +195,6 @@ function goChat(row) {
 
 onMounted(fetchList);
 </script>
-
 
 <style scoped>
 /* 容器宽度：大屏居中，移动端全宽 */

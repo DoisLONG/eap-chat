@@ -96,9 +96,20 @@
       @close="resetImportDlg"
     >
       <div class="import-body">
-        <el-form label-width="110px">
-          <el-form-item label="生成题目数">
-            <el-input-number v-model="importDlg.totalQa" :min="1" :max="200" />
+        <el-form label-width="110px" :rules="rules" :model="importDlg">
+          <el-form-item label="上传类型" prop="file_type">
+            <el-select
+              v-model="importDlg!.file_type"
+              placeholder="请选择上传类型"
+              @change="changeFileType"
+            >
+              <el-option
+                v-for="oitem in uploadTypeList"
+                :key="oitem.value"
+                :label="oitem.label"
+                :value="oitem.value"
+              />
+            </el-select>
           </el-form-item>
           <el-form-item label="选择文件" class="upload-file">
             <el-upload
@@ -108,12 +119,53 @@
               :file-list="importDlg.files"
               :on-change="onUploadChange"
               :on-remove="onUploadRemove"
-              accept=".xlsx,.xls"
+              :accept="importFileType"
             >
               <div class="el-upload__text">
                 拖拽或 <em>点击选择</em> 上传 .xlsx/.xls 文件
               </div>
             </el-upload>
+          </el-form-item>
+          <el-form-item label="公司" prop="company_id">
+            <el-select
+              v-model="importDlg!.company_id"
+              placeholder="请选择公司"
+              @change="changeCompany"
+            >
+              <el-option
+                v-for="oitem in companyList"
+                :key="oitem.value"
+                :label="oitem.label"
+                :value="oitem.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="部门" prop="department_id">
+            <el-select
+              v-model="importDlg!.department_id"
+              placeholder="请选择部门"
+              @change="changeDept"
+            >
+              <el-option
+                v-for="oitem in deptList"
+                :key="oitem.value"
+                :label="oitem.label"
+                :value="oitem.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="岗位" prop="position_id">
+            <el-select
+              v-model="importDlg!.position_id"
+              placeholder="请选择岗位"
+            >
+              <el-option
+                v-for="oitem in postList"
+                :key="oitem.value"
+                :label="oitem.label"
+                :value="oitem.value"
+              />
+            </el-select>
           </el-form-item>
         </el-form>
       </div>
@@ -161,9 +213,13 @@ import {
   saveQaList,
   pollTaskStatus,
 } from "@/services/sop.api";
+import {
+  getCompanyList,
+  getPostList,
+  getDeptList,
+} from "@/services/company.service";
 
 const userId = ref("test_user");
-const ALLOW_RE = /\.(xlsx|xls)$/i;
 
 const proTable = ref<ProTableInstance>();
 const initParam = reactive({});
@@ -178,6 +234,7 @@ const dataCallback = (data: any) => {
     const title = item.title || fileName.replace(/\.[^.]+$/, "");
     return {
       title,
+      fileName,
       task_id: item.task_id,
       version: item.sop_version || "v1",
       examLinkText: `${title} 试题题目`,
@@ -227,10 +284,6 @@ const columns = reactive<ColumnProps[]>([
   { prop: "operation", label: "操作", fixed: "right", width: 200 },
 ]);
 
-function resetImportDlg() {
-  importDlg.files = [];
-  importDlg.totalQa = 10; // 可以顺便重置输入框
-}
 const review = reactive({
   visible: false,
   data: { title: "", items: [] },
@@ -246,6 +299,7 @@ const editDlg = reactive({
 });
 
 async function openReview(row) {
+  console.log("openReview", row);
   review.loading = true;
   review.currentRow = row;
   review.data.title = row.title;
@@ -275,7 +329,7 @@ async function openReview(row) {
     review.visible = true; // ✅ 弹窗提前展示
 
     // ✅ 成功才继续加载题目列表
-    const { data } = await getQaList(row.fileName);
+    const { data } = await getQaList({ id: row.id });
     const items = Array.isArray(data?.results) ? data.results : [];
 
     review.data.items = items.map((x, i) => ({
@@ -383,19 +437,123 @@ const handleUpate = () => {
 const importDlg = reactive({
   visible: false,
   files: [],
-  totalQa: 10,
+  file_type: "",
+  position_id: "",
+  company_id: "",
+  department_id: "",
   running: false,
 });
-function onImport() {
-  importDlg.visible = true;
+
+const rules = reactive({
+  file_type: [{ required: true, message: "请选择文件类型" }],
+  position_id: [{ required: true, message: "请选择岗位" }],
+});
+
+// sop文件（excel、pdf），操作规程（word、pdf）、应急演练（word、pdf），风险识别卡（excel）
+const uploadTypeList = [
+  { label: "sop文件", value: "sop" },
+  { label: "操作规程", value: "operation" },
+  { label: "应急演练", value: "emergency_drill" },
+  { label: "风险识别卡", value: "risk" },
+];
+// 公司部门岗位
+const companyList = ref<{ label: string; value: string }[]>([]);
+const deptList = ref<{ label: string; value: string }[]>([]);
+const postList = ref<{ label: string; value: string }[]>([]);
+const queryCompany = () => {
+  const params: any = {};
+  getCompanyList(params).then((res) => {
+    const data = res.data.results || [];
+    companyList.value = data.map((item: any) => ({
+      label: item.company_name,
+      value: item.company_id,
+    }));
+  });
+};
+queryCompany();
+const queryDept = () => {
+  const params: any = {};
+  if (importDlg?.company_id) {
+    params.company_id = importDlg.company_id;
+  }
+  getDeptList(params).then((res) => {
+    const data = res.data.results || [];
+    deptList.value = data.map((item: any) => ({
+      label: item.department_name,
+      value: item.department_id,
+    }));
+  });
+};
+queryDept();
+
+const queryPost = () => {
+  const params: any = {};
+  if (importDlg?.company_id) {
+    params.company_id = importDlg.company_id;
+  }
+  if (importDlg?.department_id) {
+    params.department_id = importDlg.department_id;
+  }
+  getPostList(params).then((res) => {
+    const data = res.data.results || [];
+    postList.value = data.map((item: any) => ({
+      label: item.position_name,
+      value: item.position_id,
+    }));
+  });
+};
+queryPost();
+
+const changeCompany = () => {
+  queryDept();
+  postList.value = [];
+  importDlg.department_id = "";
+  importDlg.position_id = "";
+};
+const changeDept = () => {
+  queryPost();
+  importDlg.position_id = "";
+};
+function resetImportDlg() {
+  importDlg.files = [];
+  importDlg.file_type = "";
+  importDlg.company_id = "";
+  importDlg.department_id = "";
+  importDlg.position_id = "";
 }
+
+const ALLOW_RE = ref<RegExp>(/\.(xlsx|xls)$/i);
+const importFileType = ref(".xlsx,.xls");
+const importTip = ref("SOP文件仅支持 .xlsx / .xls / .pdf 文件");
+const changeFileType = (val) => {
+  importDlg.files = [];
+  if (val === "sop") {
+    importFileType.value = ".xlsx,.xls,.pdf";
+    ALLOW_RE.value = /\.(xlsx|xls|pdf)$/i;
+    importTip.value = "SOP文件仅支持 .xlsx / .xls / .pdf 文件";
+  } else if (val === "operation" || val === "risk") {
+    importFileType.value = ".doc,.docx,.pdf";
+    ALLOW_RE.value = /\.(doc|docx|pdf)$/i;
+    importTip.value = `${
+      val === "operation" ? "操作规程" : "应急演练"
+    }仅支持 .doc / .docx / .pdf 文件`;
+  } else {
+    importFileType.value = ".xlsx,.xls";
+    ALLOW_RE.value = /\.(xlsx|xls)$/i;
+    importTip.value = "风险识别卡仅支持 .xlsx / .xls 文件";
+  }
+};
 function onUploadChange(file, fileList) {
-  // importDlg.files = fileList;
-  const valid = fileList.filter((f) => ALLOW_RE.test(f.name));
+  // sop文件（excel、pdf），操作规程（word、pdf）、应急演练（word、pdf），风险识别卡（excel）
+  const valid = fileList.filter((f) => ALLOW_RE.value.test(f.name));
   if (valid.length !== fileList.length) {
-    ElMessage.error("仅支持 .xlsx / .xls 文件");
+    ElMessage.error(`${importTip.value}`);
   }
   importDlg.files = valid;
+}
+
+function onImport() {
+  importDlg.visible = true;
 }
 function onUploadRemove(file, fileList) {
   importDlg.files = fileList;
@@ -405,15 +563,19 @@ async function startImport() {
   if (!importDlg.files.length) return ElMessage.warning("请先选择文件");
   // const realFiles = importDlg.files.map((f) => f.raw).filter(Boolean);
   // if (!realFiles.length) return ElMessage.warning("文件格式异常");
-  if (importDlg.files.some((f) => !ALLOW_RE.test(f.name))) {
-    return ElMessage.error("仅支持 .xlsx / .xls 文件");
+  if (importDlg.files.some((f) => !ALLOW_RE.value.test(f.name))) {
+    return ElMessage.error(`${importTip.value}`);
   }
   const realFiles = importDlg.files.map((f) => f.raw).filter(Boolean);
   if (!realFiles.length) return ElMessage.warning("文件格式异常");
 
   importDlg.running = true;
   try {
-    const res = await generateQa(realFiles, importDlg.totalQa);
+    const res = await generateQa(
+      realFiles,
+      importDlg.file_type,
+      importDlg.position_id
+    );
 
     console.log("generateQa", res);
 

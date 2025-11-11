@@ -42,10 +42,11 @@ api.interceptors.response.use(
   }
 );
 // 生成 QA（支持多文件上传）
-export async function generateQa(files, totalQaNum) {
+export async function generateQa(files, file_type, position_id) {
   const form = new FormData();
   files.forEach((file) => form.append("files", file));
-  form.append("total_qa_num", totalQaNum);
+  form.append("file_type", file_type);
+  form.append("position_id", position_id);
 
   return axios.post("/sop-api/v1/dataprep/generate_qa", form);
 }
@@ -114,8 +115,8 @@ export async function getSops(parmas) {
 }
 
 // 拉取某个文件的 QA 列表（如果需要接入复核弹窗）
-export const getQaList = (fileName) => {
-  return api.post("/v1/dataprep/qa/list", { file_name: fileName });
+export const getQaList = (params) => {
+  return api.post("/v1/dataprep/qa/list", params);
 };
 // 保存 QA（复核完成后）
 export async function saveQaList(fileName, records) {

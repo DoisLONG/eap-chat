@@ -94,7 +94,6 @@ const props = defineProps<{
 const { rowInfo } = toRefs(props);
 
 const operateInfo = ref<any>({ ...rowInfo.value });
-console.log("1111", operateInfo.value);
 const drawerVisible = ref(true);
 
 // 公司部门岗位
