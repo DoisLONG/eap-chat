@@ -137,6 +137,7 @@ const route = useRoute();
 const router = useRouter();
 const sopName = route.query.sopName || "";
 const sopId = route.query.sopId || "";
+const position_id = route.query.position_id || "";
 const userId = "test_user";
 const scrollBox = ref(null);
 const input = ref("");
@@ -153,7 +154,7 @@ const storageKey = `chat_hist_${sopId}`;
 const userAvatar = "/logo2.png";
 const botAvatar = "/logo1.png";
 
-if (!sopId) router.replace("/chat/sop");
+if (!sopId && !position_id) router.replace("/chat/sop");
 
 // 让出主线程并触发一次绘制：nextTick(微任务) → setTimeout(宏任务) → requestAnimationFrame(下一帧)
 const flushFrame = async () => {
@@ -215,19 +216,29 @@ function newSession() {
     role: "assistant",
     content: "你好，我是操作规程陪练系统。准备好了吗？我们开始练习！",
   });
-
+  let params = {
+    user_id: userId,
+    sop_id: sopId,
+    username: "",
+    conversation_id: "",
+    // file_name: ensureExcelFileName(sopName),
+  };
+  if (position_id) {
+    params = {
+      user_id: userId,
+      position_id: position_id,
+      username: "",
+      conversation_id: "",
+    };
+  }
   fetch("/chatapi/v1/exams/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      user_id: userId,
-      sop_id: sopId,
-      // file_name: ensureExcelFileName(sopName),
-    }),
+    body: JSON.stringify(params),
   })
     .then((r) => r.json())
     .then((res) => {
-      examId.value = res?.result?.exams_id || "";
+      examId.value = res?.results?.exams_id || "";
       ElMessage.success("考试已启动");
       nextTick(() => send());
     })

@@ -122,7 +122,7 @@
               :accept="importFileType"
             >
               <div class="el-upload__text">
-                拖拽或 <em>点击选择</em> 上传 .xlsx/.xls 文件
+                拖拽或 <em>点击选择</em> 上传 {{ importFileType }} 文件
               </div>
             </el-upload>
           </el-form-item>

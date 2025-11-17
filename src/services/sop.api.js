@@ -138,3 +138,8 @@ export async function deleteSop(fileName) {
 export async function updateSopTitle(params) {
   return api.post("/v1/dataprep/sops/record/update", params);
 }
+
+// 获取有sop的公司部门岗位列表
+export function getCascaderList(id) {
+  return api.get(`/v1/dataprep/organization/${id}`);
+}

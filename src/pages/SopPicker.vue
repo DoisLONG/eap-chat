@@ -16,7 +16,7 @@
           clearable
           @keyup.enter="reload"
         />
-        <el-select
+        <!-- <el-select
           v-model="query.env"
           class="f-item env"
           placeholder="环境"
@@ -25,10 +25,18 @@
           <el-option label="prod" value="prod" />
           <el-option label="test" value="test" />
           <el-option label="dev" value="dev" />
-        </el-select>
-        <el-button class="f-item btn" type="primary" @click="reload"
-          >搜索</el-button
+        </el-select> -->
+        <el-button class="f-item env" type="primary" @click="reload">
+          搜索
+        </el-button>
+        <el-button
+          class="f-item btn"
+          style="margin-left: 0"
+          type="primary"
+          @click="toMixTest"
         >
+          混合出题
+        </el-button>
       </div>
     </header>
 
@@ -96,6 +104,13 @@
     </footer>
 
     <p class="tips">选择一个 SOP 后进入“对话/考试”页面。</p>
+
+    <!-- 混合出题 -->
+    <MixTest
+      v-if="mixVisible"
+      @confirm="handleConfirmMix"
+      @close="mixVisible = false"
+    />
   </div>
 </template>
 
@@ -103,6 +118,7 @@
 import { ref, reactive, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { getSops } from "@/services/sop.api"; // 请确认已定义该接口方法
+import MixTest from "@/pages/components/SopPicker/mixTest.vue";
 
 const router = useRouter();
 
@@ -194,6 +210,20 @@ function goChat(row) {
 }
 
 onMounted(fetchList);
+
+// 混合出题
+const mixVisible = ref(false);
+const toMixTest = () => {
+  mixVisible.value = true;
+};
+const handleConfirmMix = (position_id) => {
+  router.push({
+    path: "/chat/exam",
+    query: {
+      position_id,
+    },
+  });
+};
 </script>
 
 <style scoped>
