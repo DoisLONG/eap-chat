@@ -303,7 +303,7 @@ async function openReview(row) {
   review.loading = true;
   review.currentRow = row;
   review.data.title = row.title;
-  review.data.fileName = row.fileName;
+  review.data.id = row.id;
   review.data.items = [];
 
   try {
@@ -333,6 +333,7 @@ async function openReview(row) {
     const items = Array.isArray(data?.results) ? data.results : [];
 
     review.data.items = items.map((x, i) => ({
+      ...x,
       _key: `${i}-${Date.now()}`,
       position: x.position ?? "",
       question: x.question ?? "",
@@ -340,7 +341,7 @@ async function openReview(row) {
       content: x.content ?? "",
       type: x.type ?? "",
     }));
-
+    // console.log("QA 列表", review.data.items);
     ElMessage.success(`成功加载 ${items.length} 条题目`);
   } catch (e) {
     console.error("[复核失败]", e);
@@ -394,7 +395,7 @@ async function onDelete(row) {
       type: "warning",
     });
 
-    const res = await deleteSop(row.fileName);
+    const res = await deleteSop(row.id);
 
     // ✅ 判断后端自定义状态
     if (res?.data?.status !== 200) {
@@ -410,12 +411,13 @@ async function onDelete(row) {
   }
 }
 const batchDelete = async (id: string[], list: any[]) => {
+  // console.log("batch delete ids:", id, list);
   if (!list.length) return;
   ElMessageBox.confirm(`已选中 ${list.length} 条，确定删除？`, "提示", {
     type: "warning",
   })
     .then(async () => {
-      await Promise.all(list.map((x) => deleteSop(x.fileName)));
+      await Promise.all(id.map((x) => deleteSop(x)));
       ElMessage.success("批量删除成功");
       proTable.value?.clearSelection();
       proTable.value?.getTableList();

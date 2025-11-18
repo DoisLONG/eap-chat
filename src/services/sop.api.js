@@ -119,17 +119,17 @@ export const getQaList = (params) => {
   return api.post("/v1/dataprep/qa/list", params);
 };
 // 保存 QA（复核完成后）
-export async function saveQaList(fileName, records) {
+export async function saveQaList(sop_info_id, records) {
   return api.post("/v1/dataprep/qa/save", {
-    file_name: fileName,
+    sop_info_id,
     records,
   });
 }
 
 // 删除某个 SOP 文件
-export async function deleteSop(fileName) {
+export async function deleteSop(sop_record_id) {
   const res = await api.post("/v1/dataprep/delete_sop", {
-    file_name: fileName,
+    sop_record_id: sop_record_id,
   });
   return res;
 }

@@ -120,6 +120,7 @@ const props = defineProps({
   data: { type: Object, default: () => ({ title: "", items: [] }) },
 });
 
+// console.log("props.data", props.data);
 const emit = defineEmits(["update:modelValue", "save"]);
 
 const local = reactive({
@@ -134,6 +135,7 @@ watchEffect(() => {
   local.title = v?.title || "";
   local.items = Array.isArray(v?.items)
     ? v.items.map((x) => ({
+        ...x,
         _key: cryptoRandom(),
         id: x.id ?? Date.now() + Math.floor(Math.random() * 1000),
         row: x.row ?? 1,
@@ -215,21 +217,28 @@ async function onSave(sync = false) {
     return;
   }
   const payload = {
-    file_name: fileName,
-    records: local.items.map((item) => ({
-      id: item.id,
-      row: item.row,
-      position: item.position,
-      question: item.question?.trim() || "",
-      answer: String(item.answer ?? "").trim(), // 后端要求是 string
-      content: item.content ?? "",
-      type: item.type ?? "问答题",
-    })),
+    // file_name: fileName,
+    sop_info_id: props.data?.id,
+    records: local.items.map((item) => {
+      const params = {
+        // id: item.id,
+        ...item,
+        row: item.row,
+        position: item.position,
+        question: item.question?.trim() || "",
+        answer: String(item.answer ?? "").trim(), // 后端要求是 string
+        content: item.content ?? "",
+        type: item.type ?? "问答题",
+      };
+      delete params.id;
+      return params;
+    }),
   };
 
   local.saving = true;
+  // console.log("payload", payload);
   try {
-    await saveQaList(payload.file_name, payload.records);
+    await saveQaList(payload.sop_info_id, payload.records);
     if (sync) {
       ElMessage.success("已保存并同步知识库");
     } else {
