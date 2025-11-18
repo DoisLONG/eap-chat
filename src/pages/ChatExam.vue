@@ -5,7 +5,9 @@
       <div class="left">
         <img src="/logo1.png" class="logo" />
         <div class="meta">
-          <div class="title ell">{{ sopName || "未选择 SOP" }}</div>
+          <div class="title ell">
+            {{ position_id ? "混合出题" : sopName || "未选择 SOP" }}
+          </div>
         </div>
       </div>
       <div class="right">
