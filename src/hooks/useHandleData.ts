@@ -25,11 +25,20 @@ export const useHandleData = (
     })
       .then(async () => {
         const res = await api(params);
+        // console.log(res);
         if (!res) return reject(false);
-        ElMessage({
-          type: "success",
-          message: successMessage ? `${successMessage}成功!` : "操作成功!",
-        });
+        if (res.data.status !== 200) {
+          ElMessage({
+            type: "error",
+            message: res.data.message,
+          });
+        } else {
+          ElMessage({
+            type: "success",
+            message: successMessage ? `${successMessage}成功!` : "操作成功!",
+          });
+        }
+
         resolve(true);
       })
       .catch(() => {

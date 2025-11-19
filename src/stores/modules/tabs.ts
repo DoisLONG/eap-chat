@@ -86,5 +86,5 @@ export const useTabsStore = defineStore("sopai-tabs", {
       });
     },
   },
-  persist: piniaPersistConfig("sopapitabs"),
+  // persist: piniaPersistConfig("sopapitabs"),
 });

@@ -40,13 +40,52 @@ companyApi.interceptors.response.use(
   }
 );
 
+// 新增公司
+export function addCompany(params) {
+  return companyApi.post("/v1/company/add", { ...params });
+}
+// 删除公司
+export function deleteCompany(params) {
+  return companyApi.post("/v1/company/delete", { ...params });
+}
+// 编辑公司
+export function updateCompany(params) {
+  return companyApi.post("/v1/company/update", { ...params });
+}
+
 // 获取公司列表
 export function getCompanyList(parmas) {
   return companyApi.post("/v1/company/query", { ...parmas });
 }
+
+// 新增部门
+export function addDept(params) {
+  return companyApi.post("/v1/department/add", { ...params });
+}
+// 删除部门
+export function deleteDept(params) {
+  return companyApi.post("/v1/department/delete", { ...params });
+}
+// 编辑部门
+export function updateDept(params) {
+  return companyApi.post("/v1/department/update", { ...params });
+}
 // 获取部门列表
 export function getDeptList(parmas) {
   return companyApi.post("/v1/department/query", { ...parmas });
+}
+// 新增岗位
+export function addPost(params) {
+  return companyApi.post("/v1/position/add", { ...params });
+}
+
+// 删除岗位
+export function deletePost(params) {
+  return companyApi.post("/v1/position/delete", { ...params });
+}
+// 编辑岗位
+export function updatePost(params) {
+  return companyApi.post("/v1/position/update", { ...params });
 }
 // 获取岗位列表
 export function getPostList(parmas) {

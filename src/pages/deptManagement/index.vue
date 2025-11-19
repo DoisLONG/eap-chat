@@ -6,6 +6,7 @@
       :request-api="getTableList"
       :init-param="initParam"
       :data-callback="dataCallback"
+      rowKey="department_id"
     >
       <!-- 表格 header 按钮 -->
       <template #tableHeader="scope">
@@ -14,7 +15,7 @@
           type="primary"
           :icon="CirclePlus"
           @click="openDrawer('create')"
-          >新增用户</el-button
+          >新增部门</el-button
         >
         <el-button
           type="danger"
@@ -60,12 +61,12 @@
         >
       </template>
     </ProTable>
-    <UserDrawer
-      v-if="userDrawerVisible"
+    <OperateDrawer
+      v-if="operateDrawerVisible"
       :rowInfo="userInfo"
       :type="drawerType"
       @refresh="refreshTable"
-      @close="userDrawerVisible = false"
+      @close="operateDrawerVisible = false"
       ref="drawerRef"
     />
   </div>
@@ -74,11 +75,11 @@
 <script setup lang="tsx" name="useProTable">
 import { ref, reactive } from "vue";
 import ProTable from "@/components/ProTable/index.vue";
-import UserDrawer from "./components/UserDrawer.vue";
+import OperateDrawer from "./components/operateDrawer.vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
 import { CirclePlus, Delete, EditPen, View } from "@element-plus/icons-vue";
-import { getUserList, deleteUser } from "@/services/user.service";
+import { getDeptList, deleteDept } from "@/services/company.service";
 import { useHandleData } from "@/hooks/useHandleData";
 
 const proTable = ref<ProTableInstance>();
@@ -86,43 +87,43 @@ const proTable = ref<ProTableInstance>();
 const initParam = reactive({});
 const dataCallback = (data: any) => {
   return {
-    list: data.data.data,
-    total: data.data.total,
+    list: data.results,
+    total: data.results.length,
   };
 };
 
 const getTableList = (params: any) => {
   let newParams = JSON.parse(JSON.stringify(params));
-  return getUserList(newParams);
+  return getDeptList(newParams);
 };
 
 // 表格配置项
 const columns = reactive<ColumnProps[]>([
   { type: "selection", fixed: "left", width: 70 },
+  { prop: "company_name", label: "公司名称", minWidth: 150 },
   {
-    prop: "name",
-    label: "用户名称",
+    prop: "department_name",
+    label: "部门名称",
     minWidth: 120,
     search: {
       el: "input",
-      props: { clearable: true, placeholder: "请输入用户名称" },
+      props: { clearable: true, placeholder: "部门名称" },
     },
   },
-  { prop: "email", label: "邮箱", minWidth: 200 },
-  { prop: "telephone", label: "手机号", minWidth: 120 },
-  { prop: "department", label: "部门", minWidth: 120 },
-  { prop: "role", label: "角色", width: 120 },
-  { prop: "position", label: "岗位", width: 120 },
+  { prop: "manager", label: "部门负责人", minWidth: 150 },
+  { prop: "manager_phone", label: "负责人电话", minWidth: 150 },
+  { prop: "remark", label: "备注", width: 120 },
   { prop: "operation", label: "操作", fixed: "right", width: 280 },
 ]);
 
 // 删除用户信息
 const deleteAccount = async (params) => {
   await useHandleData(
-    deleteUser,
-    { id: params.id },
-    `是否确认删除【${params.name}】用户`
+    deleteDept,
+    { department_id: params.department_id },
+    `是否确认删除【${params.department_name}】`
   );
+
   proTable.value?.getTableList();
 };
 
@@ -133,7 +134,7 @@ const batchDelete = async (ids) => {
     type: "warning",
   })
     .then(async () => {
-      await Promise.all(ids.map((id) => deleteUser({ id })));
+      await Promise.all(ids.map((id) => deleteDept({ department_id: id })));
       ElMessage.success("批量删除成功");
       proTable.value?.clearSelection();
       proTable.value?.getTableList();
@@ -142,7 +143,7 @@ const batchDelete = async (ids) => {
 };
 
 // 打开 drawer(新增、查看、编辑)
-const userDrawerVisible = ref(false);
+const operateDrawerVisible = ref(false);
 const userInfo = ref<any>({});
 const drawerType = ref<string>("check");
 const openDrawer = (type: string, row?: any) => {
@@ -152,7 +153,7 @@ const openDrawer = (type: string, row?: any) => {
     userInfo.value = {};
   }
   drawerType.value = type;
-  userDrawerVisible.value = true;
+  operateDrawerVisible.value = true;
 };
 const refreshTable = () => {
   proTable.value?.getTableList();
