@@ -4,7 +4,7 @@ import piniaPersistConfig from "@/stores/helper/persist";
 export const useUserStore = defineStore("sopai-user", {
   state: () => ({
     token: "",
-    userInfo: { name: "admin" },
+    userInfo: {},
   }),
   getters: {},
   actions: {

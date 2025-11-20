@@ -85,6 +85,7 @@
       @rename="handleRename"
       @regen="handleRegen"
       @add-doc="handleAddDoc"
+      @refresh="handleUpate"
     />
 
     <!-- 导入 SOP 弹窗 -->
@@ -218,6 +219,7 @@ import {
   getPostList,
   getDeptList,
 } from "@/services/company.service";
+import { de } from "element-plus/es/locale";
 
 const userId = ref("test_user");
 
@@ -448,6 +450,8 @@ const importDlg = reactive({
 
 const rules = reactive({
   file_type: [{ required: true, message: "请选择文件类型" }],
+  company_id: [{ required: true, message: "请选择公司" }],
+  department_id: [{ required: true, message: "请选择部门" }],
   position_id: [{ required: true, message: "请选择岗位" }],
 });
 
@@ -534,11 +538,11 @@ const changeFileType = (val) => {
     ALLOW_RE.value = /\.(xlsx|xls|pdf)$/i;
     importTip.value = "SOP文件仅支持 .xlsx / .xls / .pdf 文件";
   } else if (val === "operation" || val === "risk") {
-    importFileType.value = ".doc,.docx,.pdf";
-    ALLOW_RE.value = /\.(doc|docx|pdf)$/i;
+    importFileType.value = ".doc,.docs,.pdf";
+    ALLOW_RE.value = /\.(doc|docs|pdf)$/i;
     importTip.value = `${
       val === "operation" ? "操作规程" : "应急演练"
-    }仅支持 .doc / .docx / .pdf 文件`;
+    }仅支持 .doc / .docs / .pdf 文件`;
   } else {
     importFileType.value = ".xlsx,.xls";
     ALLOW_RE.value = /\.(xlsx|xls)$/i;

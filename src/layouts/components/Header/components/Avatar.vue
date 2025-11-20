@@ -2,7 +2,7 @@
   <el-dropdown>
     <div class="avatar">
       <img src="@/assets/images/user.png" alt="avatar" />
-      <el-text>admin</el-text>
+      <el-text>{{ userInfo.name }}</el-text>
     </div>
     <template #dropdown>
       <el-dropdown-menu>
@@ -23,11 +23,14 @@ import { ref } from "vue";
 import UpdatePwd from "./UpdatePwd.vue";
 import { useRouter } from "vue-router";
 import { ElMessageBox, ElMessage } from "element-plus";
+import { useUserStore } from "@/stores/modules/user";
+import { storeToRefs } from "pinia";
 
 const router = useRouter();
 const showPwdDrawer = ref(false);
-
-// 退出登录
+const userStore = useUserStore();
+const { userInfo } = storeToRefs(userStore);
+console.log(userInfo); // 退出登录
 const logout = () => {
   ElMessageBox.confirm("您是否确认退出登录?", "温馨提示", {
     confirmButtonText: "确定",

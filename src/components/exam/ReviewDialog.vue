@@ -121,7 +121,7 @@ const props = defineProps({
 });
 
 // console.log("props.data", props.data);
-const emit = defineEmits(["update:modelValue", "save"]);
+const emit = defineEmits(["update:modelValue", "save", "refresh"]);
 
 const local = reactive({
   title: "",
@@ -184,6 +184,7 @@ function addOne() {
     id: Date.now(),
     row: 1,
     position: "新阶段-新模块",
+    position_id: local.items[0].position_id,
     stage: "新阶段",
     section: "新模块",
     type: "问答题",
@@ -248,6 +249,7 @@ async function onSave(sync = false) {
     // if (!sync) emit('update:modelValue', false)
     emit("after-save", { title: cleanTitle, sync });
     emit("update:modelValue", false);
+    emit("refresh");
   } catch (e) {
     console.error("[保存失败]", e);
     ElMessage.error(`保存失败：${e?.response?.data?.detail || e.message}`);

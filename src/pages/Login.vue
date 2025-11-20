@@ -48,9 +48,11 @@ import { reactive, ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { login } from "@/services/user.service";
+import { useUserStore } from "@/stores/modules/user";
 
 const router = useRouter();
 const route = useRoute();
+const userStore = useUserStore();
 
 const loginForm = ref<any>();
 const loading = ref(false);
@@ -79,6 +81,7 @@ const onLogin = async () => {
         if (res.data.http_status_code === 200) {
           const token = res.data.data.token;
           localStorage.setItem("token", token);
+          userStore.setUserInfo(res.data.data.data);
           // 2) 支持 redirect 回跳
           const redirect = (route.query.redirect as string) || "/license/admin";
           router.replace(redirect);

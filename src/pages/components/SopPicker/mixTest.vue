@@ -75,8 +75,8 @@ import { getCascaderList } from "@/services/sop.api";
 const emits = defineEmits(["close", "confirm"]);
 
 const rules = reactive({
-  company_id: [{ required: false, message: "请选择公司" }],
-  department_id: [{ required: false, message: "请选择部门" }],
+  company_id: [{ required: true, message: "请选择公司" }],
+  department_id: [{ required: true, message: "请选择部门" }],
   position_id: [{ required: true, message: "请选择岗位" }],
 });
 

@@ -133,6 +133,7 @@ import { updateUser, createUser } from "@/services/user.service";
 const emits = defineEmits(["close", "refresh"]);
 const rules = reactive({
   name: [{ required: true, message: "请填写用户名称" }],
+  company_id: [{ required: true, message: "请选择公司" }],
   telephone: [
     { required: false, message: "请填写手机号" },
     {

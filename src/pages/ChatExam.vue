@@ -240,9 +240,13 @@ function newSession() {
   })
     .then((r) => r.json())
     .then((res) => {
-      examId.value = res?.results?.exams_id || "";
-      ElMessage.success("考试已启动");
-      nextTick(() => send());
+      if (res?.results?.exams_id) {
+        examId.value = res?.results?.exams_id || "";
+        ElMessage.success("考试已启动");
+        nextTick(() => send());
+      } else {
+        ElMessage.error(res?.message || "启动失败");
+      }
     })
     .catch(() => ElMessage.error("启动失败"));
 
