@@ -23,12 +23,13 @@
           clearable
         ></el-input>
       </el-form-item>
-      <el-form-item label="成立时间" prop="stablish_time">
+      <el-form-item label="成立时间" prop="establish_time">
         <el-date-picker
-          v-model="operateInfo!.stablish_time"
+          style="width: 100%"
+          v-model="operateInfo!.establish_time"
           placeholder="请选择成立时间"
           type="date"
-          value-format="yyyy-MM-dd"
+          value-format="YYYY-MM-DD"
           clearable
         ></el-date-picker>
       </el-form-item>

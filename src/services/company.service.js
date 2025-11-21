@@ -91,3 +91,37 @@ export function updatePost(params) {
 export function getPostList(parmas) {
   return companyApi.post("/v1/position/query", { ...parmas });
 }
+
+// 获取公司列表
+export function getCompanyPageList(parmas) {
+  const upParams = {
+    ...parmas,
+    page: parmas.pageNum,
+    page_size: parmas.pageSize,
+  };
+  delete upParams.pageNum;
+  delete upParams.pageSize;
+  return companyApi.post("/v1/company/paginated", { ...upParams });
+}
+// 获取部门列表
+export function getDeptPageList(parmas) {
+  const upParams = {
+    ...parmas,
+    page: parmas.pageNum,
+    page_size: parmas.pageSize,
+  };
+  delete upParams.pageNum;
+  delete upParams.pageSize;
+  return companyApi.post("/v1/department/paginated", { ...upParams });
+}
+// 获取岗位列表
+export function getPostPageList(parmas) {
+  const upParams = {
+    ...parmas,
+    page: parmas.pageNum,
+    page_size: parmas.pageSize,
+  };
+  delete upParams.pageNum;
+  delete upParams.pageSize;
+  return companyApi.post("/v1/position/paginated", { ...upParams });
+}

@@ -71,6 +71,11 @@
 import { ref, reactive, onMounted } from "vue";
 import { FormInstance } from "element-plus";
 import { getCascaderList } from "@/services/sop.api";
+import { useUserStore } from "@/stores/modules/user";
+import { storeToRefs } from "pinia";
+
+const userStore = useUserStore();
+const { userInfo } = storeToRefs(userStore);
 
 const emits = defineEmits(["close", "confirm"]);
 
@@ -245,7 +250,7 @@ const handleDepartmentChange = (deptId: string | number) => {
  */
 const fetchCascaderData = async () => {
   try {
-    const res = await getCascaderList("test_user");
+    const res = await getCascaderList(String(userInfo.value.id));
     cascaderData.value = res.data.results || [];
     convertCascaderToArrays(cascaderData.value);
   } catch (error) {

@@ -119,6 +119,11 @@ import { ref, reactive, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { getSops } from "@/services/sop.api"; // 请确认已定义该接口方法
 import MixTest from "@/pages/components/SopPicker/mixTest.vue";
+import { useUserStore } from "@/stores/modules/user";
+import { storeToRefs } from "pinia";
+
+const userStore = useUserStore();
+const { userInfo } = storeToRefs(userStore);
 
 const router = useRouter();
 
@@ -152,7 +157,7 @@ async function fetchList() {
   loading.value = true;
   try {
     const { data } = await getSops({
-      user_id: "test_user",
+      user_id: String(userInfo.value.id),
       page: query.page,
       pageSize: query.pageSize,
       keyword: query.kw.trim(),

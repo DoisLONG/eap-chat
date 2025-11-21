@@ -79,7 +79,7 @@ import OperateDrawer from "./components/operateDrawer.vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
 import { CirclePlus, Delete, EditPen, View } from "@element-plus/icons-vue";
-import { getCompanyList, deleteCompany } from "@/services/company.service";
+import { getCompanyPageList, deleteCompany } from "@/services/company.service";
 import { useHandleData } from "@/hooks/useHandleData";
 
 const proTable = ref<ProTableInstance>();
@@ -87,14 +87,14 @@ const proTable = ref<ProTableInstance>();
 const initParam = reactive({});
 const dataCallback = (data: any) => {
   return {
-    list: data.results,
-    total: data.results.length,
+    list: data.results.records || [],
+    total: data?.results?.total || 0,
   };
 };
 
 const getTableList = (params: any) => {
   let newParams = JSON.parse(JSON.stringify(params));
-  return getCompanyList(newParams);
+  return getCompanyPageList(newParams);
 };
 
 // 表格配置项
@@ -109,7 +109,7 @@ const columns = reactive<ColumnProps[]>([
       props: { clearable: true, placeholder: "请输入公司名称" },
     },
   },
-  { prop: "stablish_time", label: "成立时间", minWidth: 200 },
+  { prop: "establish_time", label: "成立时间", minWidth: 200 },
   { prop: "address", label: "公司地址", minWidth: 200 },
   { prop: "contact_phone", label: "联系电话", minWidth: 120 },
   { prop: "remark", label: "备注", width: 120 },
@@ -129,7 +129,6 @@ const deleteAccount = async (params) => {
 
 // 批量删除用户信息
 const batchDelete = async (ids) => {
-  console.log(1111, ids);
   if (!ids.length) return;
   ElMessageBox.confirm(`已选中 ${ids.length} 条，确定删除？`, "提示", {
     type: "warning",

@@ -133,6 +133,11 @@ import { ref, reactive, onMounted, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import MarkdownRenderer from "@/components/MarkdownRenderer.vue";
+import { useUserStore } from "@/stores/modules/user";
+import { storeToRefs } from "pinia";
+
+const userStore = useUserStore();
+const { userInfo } = storeToRefs(userStore);
 
 // 路由参数
 const route = useRoute();
@@ -219,7 +224,7 @@ function newSession() {
     content: "你好，我是操作规程陪练系统。准备好了吗？我们开始练习！",
   });
   let params = {
-    user_id: userId,
+    user_id: String(userInfo.value.id),
     sop_id: sopId,
     username: "",
     conversation_id: "",
@@ -227,7 +232,7 @@ function newSession() {
   };
   if (position_id) {
     params = {
-      user_id: userId,
+      user_id: String(userInfo.value.id),
       position_id: position_id,
       username: "",
       conversation_id: "",

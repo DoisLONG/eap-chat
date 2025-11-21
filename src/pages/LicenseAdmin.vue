@@ -219,7 +219,11 @@ import {
   getPostList,
   getDeptList,
 } from "@/services/company.service";
-import { de } from "element-plus/es/locale";
+import { useUserStore } from "@/stores/modules/user";
+import { storeToRefs } from "pinia";
+
+const userStore = useUserStore();
+const { userInfo } = storeToRefs(userStore);
 
 const userId = ref("test_user");
 
@@ -252,7 +256,7 @@ const dataCallback = (data: any) => {
 const getTableList = (params: any) => {
   console.warn("getTableList", params);
   let newParams = JSON.parse(JSON.stringify(params));
-  newParams.user_id = userId.value;
+  newParams.user_id = String(userInfo.value.id);
   return getSops(newParams);
 };
 // 表格配置项
@@ -369,7 +373,7 @@ async function handleSaveReview(payload) {
         type,
       })),
       sync: !!payload?.sync,
-      user_id: userId.value,
+      user_id: String(userInfo.value.id),
     };
     await saveQaList(body);
     ElMessage.success(payload?.sync ? "已保存并同步知识库" : "保存成功");
@@ -532,17 +536,18 @@ const ALLOW_RE = ref<RegExp>(/\.(xlsx|xls)$/i);
 const importFileType = ref(".xlsx,.xls");
 const importTip = ref("SOP文件仅支持 .xlsx / .xls / .pdf 文件");
 const changeFileType = (val) => {
+  console.log("changeFileType", val);
   importDlg.files = [];
   if (val === "sop") {
     importFileType.value = ".xlsx,.xls,.pdf";
     ALLOW_RE.value = /\.(xlsx|xls|pdf)$/i;
     importTip.value = "SOP文件仅支持 .xlsx / .xls / .pdf 文件";
-  } else if (val === "operation" || val === "risk") {
-    importFileType.value = ".doc,.docs,.pdf";
-    ALLOW_RE.value = /\.(doc|docs|pdf)$/i;
+  } else if (val === "operation" || val === "emergency_drill") {
+    importFileType.value = ".doc,.docx,.pdf";
+    ALLOW_RE.value = /\.(doc|docx|pdf)$/i;
     importTip.value = `${
       val === "operation" ? "操作规程" : "应急演练"
-    }仅支持 .doc / .docs / .pdf 文件`;
+    }仅支持 .doc / .docx / .pdf 文件`;
   } else {
     importFileType.value = ".xlsx,.xls";
     ALLOW_RE.value = /\.(xlsx|xls)$/i;

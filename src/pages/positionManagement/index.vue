@@ -79,7 +79,7 @@ import OperateDrawer from "./components/operateDrawer.vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
 import { CirclePlus, Delete, EditPen, View } from "@element-plus/icons-vue";
-import { getPostList, deletePost } from "@/services/company.service";
+import { getPostPageList, deletePost } from "@/services/company.service";
 import { useHandleData } from "@/hooks/useHandleData";
 
 const proTable = ref<ProTableInstance>();
@@ -87,14 +87,14 @@ const proTable = ref<ProTableInstance>();
 const initParam = reactive({});
 const dataCallback = (data: any) => {
   return {
-    list: data.results,
-    total: data.results.length,
+    list: data.results.records || [],
+    total: data?.results?.total || 0,
   };
 };
 
 const getTableList = (params: any) => {
   let newParams = JSON.parse(JSON.stringify(params));
-  return getPostList(newParams);
+  return getPostPageList(newParams);
 };
 
 // 表格配置项
