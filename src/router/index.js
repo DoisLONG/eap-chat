@@ -46,6 +46,20 @@ const routes = [
           isKeepAlive: false,
         },
       },
+      // {
+      //   path: "testCenter",
+      //   name: "TestCenter",
+      //   component: () => import("@/pages/testCenter/index.vue"),
+      //   meta: {
+      //     icon: "Histogram",
+      //     title: "考试中心",
+      //     isLink: "",
+      //     isHide: false,
+      //     isFull: false,
+      //     isAffix: false,
+      //     isKeepAlive: false,
+      //   },
+      // },
       {
         path: "/system",
         name: "system",
@@ -65,7 +79,7 @@ const routes = [
             name: "User",
             component: () => import("@/pages/userManagement/index.vue"),
             meta: {
-              icon: "UserFilled",
+              icon: "User",
               title: "用户管理",
               isLink: "",
               isHide: false,

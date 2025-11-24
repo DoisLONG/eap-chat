@@ -19,9 +19,22 @@ export const useAuthStore = defineStore("sopai-auth", {
           isHide: false,
           isFull: false,
           isAffix: true,
-          isKeepAlive: true,
+          isKeepAlive: false,
         },
       },
+      // {
+      //   path: "testCenter",
+      //   name: "TestCenter",
+      //   meta: {
+      //     icon: "Histogram",
+      //     title: "考试中心",
+      //     isLink: "",
+      //     isHide: false,
+      //     isFull: false,
+      //     isAffix: false,
+      //     isKeepAlive: false,
+      //   },
+      // },
       {
         path: "/system",
         name: "system",
@@ -39,7 +52,7 @@ export const useAuthStore = defineStore("sopai-auth", {
             path: "/system/user",
             name: "User",
             meta: {
-              icon: "UserFilled",
+              icon: "User",
               title: "用户管理",
               isLink: "",
               isHide: false,

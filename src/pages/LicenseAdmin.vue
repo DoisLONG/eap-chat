@@ -44,6 +44,7 @@
       </template>
       <template #examLinkText="{ row }">
         <el-link
+          v-if="row.percent >= 100"
           type="primary"
           :loading="review.loading"
           :disabled="review.loading"
@@ -51,6 +52,7 @@
         >
           {{ row.examLinkText }}
         </el-link>
+        <el-progress v-else :percentage="row.percent" />
       </template>
       <!-- 表格操作 -->
       <template #operation="scope">
@@ -197,7 +199,7 @@
 </template>
 
 <script setup lang="tsx" name="useProTable">
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted, onUnmounted } from "vue";
 import searchForm from "./components/licenseAdmin/searchForm.vue";
 import ReviewDialog from "@/components/exam/ReviewDialog.vue";
 // import editDialog from "./components/licenseAdmin/editDialog.vue";
@@ -605,6 +607,16 @@ async function startImport() {
     importDlg.running = false;
   }
 }
+// 5s轮询接口
+const listTimer = ref();
+onMounted(() => {
+  listTimer.value = setInterval(() => {
+    proTable.value?.getTableList();
+  }, 5000);
+});
+onUnmounted(() => {
+  clearInterval(listTimer.value);
+});
 </script>
 <style scoped>
 .doc-cell {
