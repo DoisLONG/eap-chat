@@ -6,7 +6,11 @@
         <img src="/logo1.png" class="logo" />
         <div class="meta">
           <div class="title ell">
-            {{ position_id ? "混合出题" : sopName || "未选择 SOP" }}
+            {{
+              position_id
+                ? $t("SopPicker.mixMode")
+                : sopName || $t("ChatExam.noSelectSop")
+            }}
           </div>
         </div>
       </div>
@@ -14,21 +18,27 @@
         <el-switch
           v-if="!isMobile"
           v-model="showHistory"
-          active-text="历史对话"
+          :active-text="$t('ChatExam.historyChat')"
         />
         <el-button
           v-if="isMobile"
           size="small"
           @click="showHistory = !showHistory"
         >
-          {{ showHistory ? "关闭历史" : "历史对话" }}
+          {{
+            showHistory
+              ? $t("ChatExam.closeHistory")
+              : $t("ChatExam.historyChat")
+          }}
         </el-button>
-        <el-button v-if="!isMobile" size="small" @click="newSession" disabled
-          >新建</el-button
-        >
-        <el-popconfirm title="确认结束考试？" @confirm="endExam">
+        <el-button v-if="!isMobile" size="small" @click="newSession" disabled>{{
+          $t("ChatExam.add")
+        }}</el-button>
+        <el-popconfirm :title="$t('ChatExam.confirmOver')" @confirm="endExam">
           <template #reference>
-            <el-button size="small" type="danger">结束</el-button>
+            <el-button size="small" type="danger">{{
+              $t("ChatExam.over")
+            }}</el-button>
           </template>
         </el-popconfirm>
       </div>
@@ -37,7 +47,7 @@
     <!-- Main -->
     <div class="content">
       <aside v-if="showHistory && !isMobile" class="history">
-        <div class="hist-head">历史对话</div>
+        <div class="hist-head">{{ $t("ChatExam.historyChat") }}</div>
         <div class="hist-list">
           <div
             v-for="s in sessions"
@@ -66,7 +76,9 @@
             <img :src="m.role === 'user' ? userAvatar : botAvatar" />
           </div>
           <div class="bubble">
-            <div class="nick">{{ m.role === "user" ? "我" : "教练" }}</div>
+            <div class="nick">
+              {{ m.role === "user" ? $t("ChatExam.me") : $t("ChatExam.coach") }}
+            </div>
             <div class="text">
               <div v-if="m.role === 'user'">{{ m.content }}</div>
               <!-- <MarkdownRenderer v-else :content="m.content" /> -->
@@ -88,7 +100,7 @@
         v-model="input"
         type="textarea"
         :autosize="{ minRows: 1, maxRows: isMobile ? 4 : 6 }"
-        placeholder="输入答案或提问..."
+        :placeholder="$t('ChatExam.tip')"
         @keydown.enter.prevent="onEnter"
         @keydown.shift.enter.stop
       />
@@ -98,14 +110,14 @@
         :disabled="!input.trim()"
         @click="send"
       >
-        {{ messages.length <= 1 ? "开始" : "发送" }}
+        {{ messages.length <= 1 ? $t("ChatExam.begin") : $t("ChatExam.send") }}
       </el-button>
     </footer>
 
     <el-drawer
       v-if="isMobile"
       v-model="showHistory"
-      title="历史对话"
+      :title="$t('ChatExam.historyChat')"
       size="80%"
       direction="ltr"
     >
@@ -135,6 +147,8 @@ import { ElMessage } from "element-plus";
 import MarkdownRenderer from "@/components/MarkdownRenderer.vue";
 import { useUserStore } from "@/stores/modules/user";
 import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 
 const userStore = useUserStore();
 const { userInfo } = storeToRefs(userStore);
@@ -221,7 +235,7 @@ function newSession() {
   messages.splice(0, messages.length, {
     id: sessionId.value,
     role: "assistant",
-    content: "你好，我是操作规程陪练系统。准备好了吗？我们开始练习！",
+    content: t("ChatExam.beginTip"),
   });
   let params = {
     user_id: String(userInfo.value.id),
@@ -247,13 +261,13 @@ function newSession() {
     .then((res) => {
       if (res?.results?.exams_id) {
         examId.value = res?.results?.exams_id || "";
-        ElMessage.success("考试已启动");
+        ElMessage.success(t("ChatExam.beginTest"));
         nextTick(() => send());
       } else {
-        ElMessage.error(res?.message || "启动失败");
+        ElMessage.error(res?.message || t("ChatExam.startError"));
       }
     })
-    .catch(() => ElMessage.error("启动失败"));
+    .catch(() => ElMessage.error(t("ChatExam.startError")));
 
   persist();
 }
@@ -402,7 +416,9 @@ async function send() {
 
     // 结束后：追加来源文档，再一次性转 Markdown
     if (docs.length > 0) {
-      replyMsg.raw += `\n\n<details><summary>📄 来源文档</summary>\n`;
+      replyMsg.raw += `\n\n<details><summary>📄 ${t(
+        "ChatExam.fromDoc"
+      )}</summary>\n`;
       for (const d of docs) {
         const meta = d.metadata || {};
         const position = meta.position ? `（${meta.position}）` : "";
@@ -420,7 +436,7 @@ async function send() {
     // === SSE 解析结束 ===
   } catch (err) {
     console.error("SSE error", err);
-    replyMsg.content = "❌ 出错了，请稍后重试";
+    replyMsg.content = t("ChatExam.errorTip");
     replyMsg.done = true;
   } finally {
     sending.value = false;
@@ -430,7 +446,7 @@ async function send() {
 
 function endExam() {
   persist();
-  ElMessage.success("考试已结束");
+  ElMessage.success(t("ChatExam.testOver"));
   router.replace("/chat/sop");
 }
 
@@ -471,7 +487,7 @@ onMounted(() => {
 }
 .meta .title {
   font-weight: bold;
-  max-width: 45vw;
+  max-width: 35vw;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;

@@ -53,7 +53,7 @@
     >
       <!-- 默认插槽 -->
       <slot />
-      <template v-for="item in tableColumns" :key="item">
+      <template v-for="item in processedColumns" :key="item">
         <!-- selection || radio || index || expand || sort -->
         <el-table-column
           v-if="item.type && columnTypes.includes(item.type)"
@@ -115,7 +115,16 @@
 </template>
 
 <script setup lang="ts" name="ProTable">
-import { ref, watch, provide, onMounted, unref, computed, reactive } from "vue";
+import {
+  ref,
+  watch,
+  provide,
+  onMounted,
+  unref,
+  computed,
+  reactive,
+  toRefs,
+} from "vue";
 import { ElTable } from "element-plus";
 import { useTable } from "@/hooks/useTable";
 import { useSelection } from "@/hooks/useSelection";
@@ -126,6 +135,8 @@ import { generateUUID, handleProp } from "@/utils";
 import SearchForm from "@/components/SearchForm/index.vue";
 import Pagination from "./components/Pagination.vue";
 import TableColumn from "./components/TableColumn.vue";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 
 export interface ProTableProps {
   columns: ColumnProps[]; // 列配置项  ==> 必传
@@ -154,6 +165,7 @@ const props = withDefaults(defineProps<ProTableProps>(), {
   searchCol: () => ({ xs: 1, sm: 2, md: 2, lg: 3, xl: 4 }),
 });
 
+const { columns } = toRefs(props);
 const tableRef = ref<InstanceType<typeof ElTable>>();
 
 // 生成组件唯一id
@@ -228,10 +240,36 @@ const processTableData = computed(() => {
 watch(() => props.initParam, getTableList, { deep: true });
 
 // 接收 columns 并设置为响应式
-const tableColumns = reactive<ColumnProps[]>(props.columns);
+const tableColumns = ref<ColumnProps[]>(columns.value);
+
+// 处理国际化后的列配置
+const processedColumns = computed(() => {
+  return tableColumns.value.map((col) => {
+    // 如果列有 i18nKey 属性，则使用国际化
+    if (col?.i18nKey) {
+      return {
+        ...col,
+        label: t(col.i18nKey),
+      };
+    }
+    if (col?.search?.props?.placeholder) {
+      return {
+        ...col,
+        search: {
+          ...col.search,
+          props: {
+            ...col.search?.props,
+            placeholder: t(col.search.props.placeholder),
+          },
+        },
+      };
+    }
+    return col;
+  });
+});
 
 // 扁平化 columns
-const flatColumns = computed(() => flatColumnsFunc(tableColumns));
+const flatColumns = computed(() => flatColumnsFunc(processedColumns.value));
 
 // 定义 enumMap 存储 enum 值（避免异步请求无法格式化单元格内容 || 无法填充搜索下拉选择）
 const enumMap = ref(new Map<string, { [key: string]: any }[]>());
@@ -254,7 +292,6 @@ const setEnumMap = async ({ prop, enum: enumValue }: ColumnProps) => {
 
   // 当前 enum 为后台数据需要请求数据，则调用该请求接口，并存储到 enumMap
   const { data } = await enumValue();
-  // console.log("data", data);
   enumMap.value.set(prop!, data?.results || data);
 };
 
@@ -301,7 +338,7 @@ searchColumns.value?.forEach((column, index) => {
 
 // 列设置 ==> 需要过滤掉不需要设置的列
 const colRef = ref();
-const colSetting = tableColumns!.filter((item) => {
+const colSetting = processedColumns.value!.filter((item) => {
   const { type, prop, isSetting } = item;
   return !columnTypes.includes(type!) && prop !== "operation" && isSetting;
 });

@@ -7,10 +7,10 @@
     <template #dropdown>
       <el-dropdown-menu>
         <el-dropdown-item @click="showPwdDrawer = true">
-          <el-icon><Edit /></el-icon>修改密码
+          <el-icon><Edit /></el-icon>{{ $t("header.changePassword") }}
         </el-dropdown-item>
         <el-dropdown-item @click="logout">
-          <el-icon><SwitchButton /></el-icon>退出登录
+          <el-icon><SwitchButton /></el-icon>{{ $t("header.logout") }}
         </el-dropdown-item>
       </el-dropdown-menu>
     </template>
@@ -25,6 +25,8 @@ import { useRouter } from "vue-router";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { useUserStore } from "@/stores/modules/user";
 import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 
 const router = useRouter();
 const showPwdDrawer = ref(false);
@@ -32,16 +34,16 @@ const userStore = useUserStore();
 const { userInfo } = storeToRefs(userStore);
 console.log(userInfo); // 退出登录
 const logout = () => {
-  ElMessageBox.confirm("您是否确认退出登录?", "温馨提示", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
+  ElMessageBox.confirm(t("header.logoutTip"), t("header.tip"), {
+    confirmButtonText: t("common.confirm"),
+    cancelButtonText: t("common.cancel"),
     type: "warning",
   }).then(async () => {
     localStorage.removeItem("token");
     setTimeout(() => {
       window.location.href = "/login";
     }, 500);
-    ElMessage.success("退出登录成功！");
+    ElMessage.success(t("header.logoutSuccess"));
   });
 };
 </script>

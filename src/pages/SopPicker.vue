@@ -4,61 +4,97 @@
     <header class="bar">
       <div class="brand">
         <img src="/logo2.png" class="logo" alt="logo" />
-        <h1 class="title">SOP 选择</h1>
+        <h1 class="title">{{ $t("SopPicker.select") }}</h1>
       </div>
 
-      <!-- 过滤区：自动响应式网格 -->
-      <div class="filters">
-        <el-input
-          v-model="query.kw"
-          class="f-item kw"
-          :placeholder="isMobile ? '搜索 SOP…' : '搜索 SOP 名称…'"
-          clearable
-          @keyup.enter="reload"
-        />
-        <!-- <el-select
-          v-model="query.env"
-          class="f-item env"
-          placeholder="环境"
-          clearable
-        >
-          <el-option label="prod" value="prod" />
-          <el-option label="test" value="test" />
-          <el-option label="dev" value="dev" />
-        </el-select> -->
-        <el-button class="f-item env" type="primary" @click="reload">
-          搜索
-        </el-button>
-        <el-button
-          class="f-item btn"
-          style="margin-left: 0"
-          type="primary"
-          @click="toMixTest"
-        >
-          混合出题
-        </el-button>
+      <div class="actions">
+        <el-dropdown trigger="click" @command="changeLanguage">
+          <div class="language-switch">
+            <img :src="globalIcon" alt="language" class="language-icon" />
+          </div>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item
+                v-for="item in languageList"
+                :key="item.value"
+                :command="item.value"
+                :disabled="language === item.value"
+              >
+                {{ item.label }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </header>
 
+    <!-- 过滤区 -->
+    <div class="filters">
+      <el-input
+        v-model="query.kw"
+        class="f-item kw"
+        style="max-width: 500px"
+        :placeholder="
+          isMobile ? $t('SopPicker.sopSearch') : $t('SopPicker.sopSearchPc')
+        "
+        clearable
+        @keyup.enter="reload"
+      />
+      <!-- <el-select
+        v-model="query.env"
+        class="f-item env"
+        :placeholder="$t('SopPicker.env')"
+        clearable
+      >
+        <el-option label="prod" value="prod" />
+        <el-option label="test" value="test" />
+        <el-option label="dev" value="dev" />
+      </el-select> -->
+      <el-button class="f-item env" type="primary" @click="reload">
+        {{ $t("common.search") }}
+      </el-button>
+      <el-button
+        class="f-item btn"
+        :class="!isMobile ? 'btn-pc' : ''"
+        style="margin-left: 0"
+        type="primary"
+        @click="toMixTest"
+      >
+        {{ $t("SopPicker.mixMode") }}
+      </el-button>
+    </div>
+
     <!-- 内容：桌面表格 / 平板&手机卡片 -->
-    <section v-loading="loading">
+    <section v-loading="loading" class="content-section">
       <!-- 桌面端：表格 -->
       <el-card v-show="!isTabletOrDown" class="desk-card">
         <el-table :data="items" stripe height="auto">
           <el-table-column type="index" label="#" width="60" />
           <el-table-column
             prop="name"
-            label="SOP 名称"
+            :label="$t('SopPicker.sopName')"
             min-width="380"
             show-overflow-tooltip
           />
-          <el-table-column prop="env" label="环境" width="120" />
-          <el-table-column prop="version" label="版本" width="120" />
-          <el-table-column label="操作" width="180" fixed="right">
+          <el-table-column
+            prop="env"
+            :label="$t('SopPicker.env')"
+            width="120"
+          />
+          <el-table-column
+            prop="version"
+            :label="$t('SpPicker.version')"
+            width="120"
+          />
+          <el-table-column
+            :label="$t('common.operate')"
+            width="180"
+            fixed="right"
+          >
             <template #default="{ row }">
-              <el-button type="primary" size="small" @click="goChat(row)"
-                >开始练习</el-button
-              >
+              <el-button type="primary" size="small" @click="goChat(row)">{{
+                $t("SopPicker.beginTest")
+              }}</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -66,7 +102,10 @@
 
       <!-- 平板/手机：卡片列表 -->
       <div v-show="isTabletOrDown" class="card-grid">
-        <el-empty v-if="!items.length && !loading" description="暂无数据" />
+        <el-empty
+          v-if="!items.length && !loading"
+          :description="$t('SopPicker.noData')"
+        />
         <el-card
           v-for="it in items"
           :key="it.id"
@@ -78,10 +117,16 @@
             <div class="c-title" :title="it.name">{{ it.name }}</div>
           </div>
           <div class="c-meta">
-            <el-tag size="small" type="info">环境：{{ it.env }}</el-tag>
-            <el-tag size="small" class="ml8">版本：{{ it.version }}</el-tag>
+            <el-tag size="small" type="info"
+              >{{ $t("SopPicker.env") }}：{{ it.env }}</el-tag
+            >
+            <el-tag size="small" class="ml8"
+              >{{ $t("SopPicker.version") }}：{{ it.version }}</el-tag
+            >
           </div>
-          <el-button class="c-btn" type="primary" round>开始练习</el-button>
+          <el-button class="c-btn" type="primary" round>{{
+            $t("SopPicker.beginTest")
+          }}</el-button>
         </el-card>
       </div>
     </section>
@@ -103,7 +148,7 @@
       />
     </footer>
 
-    <p class="tips">选择一个 SOP 后进入“对话/考试”页面。</p>
+    <p class="tips">{{ $t("SopPicker.selectOne") }}</p>
 
     <!-- 混合出题 -->
     <MixTest
@@ -115,17 +160,34 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount } from "vue";
+import { ref, reactive, onMounted, onBeforeUnmount, computed } from "vue";
 import { useRouter } from "vue-router";
 import { getSops } from "@/services/sop.api"; // 请确认已定义该接口方法
 import MixTest from "@/pages/components/SopPicker/mixTest.vue";
 import { useUserStore } from "@/stores/modules/user";
 import { storeToRefs } from "pinia";
+import globalIcon from "@/assets/images/global.png";
+import { useGlobalStore } from "@/stores/modules/global";
+import { useI18n } from "vue-i18n";
 
 const userStore = useUserStore();
 const { userInfo } = storeToRefs(userStore);
 
 const router = useRouter();
+
+const i18n = useI18n();
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
+
+const languageList = [
+  { label: "简体中文", value: "zh" },
+  { label: "ภาษาไทย", value: "th" },
+];
+
+const changeLanguage = (lang) => {
+  i18n.locale.value = lang;
+  globalStore.setGlobalState("language", lang);
+};
 
 // —— 响应式断点 —— //
 const isMobile = ref(false);
@@ -242,25 +304,30 @@ const handleConfirmMix = (position_id) => {
 
 /* 顶栏 */
 .bar {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
+
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
+
 .logo {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  object-fit: contain;
 }
+
 .title {
-  font-size: clamp(18px, 2.2vw, 22px);
+  font-size: clamp(20px, 3vw, 24px);
   margin: 0;
   color: #1f2a44;
   font-weight: 800;
@@ -268,39 +335,84 @@ const handleConfirmMix = (position_id) => {
   white-space: nowrap;
 }
 
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.language-switch {
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.language-switch:hover {
+  background-color: #f5f7fa;
+}
+
+.language-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
 /* 过滤区：自适应网格 */
 .filters {
   display: grid;
   grid-template-columns: 1fr 140px 110px; /* kw | env | btn */
-  gap: 10px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
+
 .f-item {
   width: 100%;
 }
+
 .f-item.btn {
   white-space: nowrap;
+}
+.btn-pc {
+  min-width: 170px;
+}
+/* 内容区域 */
+.content-section {
+  margin-bottom: 20px;
 }
 
 /* 内容卡片 */
 .desk-card {
-  border-radius: 14px;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
 /* 平板/手机：自适应网格卡片 */
 .card-grid {
   display: grid;
-  gap: 12px;
+  gap: 16px;
   grid-template-columns: repeat(2, minmax(0, 1fr)); /* 平板双列 */
 }
+
 .sop-card {
-  border-radius: 14px;
+  border-radius: 16px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid #ebeef5;
 }
+
+.sop-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
 .c-header {
-  margin-bottom: 6px;
+  margin-bottom: 12px;
+  padding: 16px 16px 0;
 }
+
 .c-title {
   font-weight: 700;
   color: #1f2a44;
@@ -309,42 +421,108 @@ const handleConfirmMix = (position_id) => {
   -webkit-line-clamp: 2; /* 最多两行，溢出省略 */
   -webkit-box-orient: vertical;
   overflow: hidden;
+  font-size: 16px;
 }
+
 .c-meta {
-  margin: 6px 0 12px;
+  margin: 0 16px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
+
 .ml8 {
   margin-left: 8px;
 }
+
 .c-btn {
-  width: 100%;
+  width: calc(100% - 32px);
+  margin: 0 16px 16px;
+  height: 40px;
 }
 
 /* 分页/说明 */
 .pager {
-  margin-top: 14px;
+  margin: 20px 0;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
 }
+
 .tips {
   color: #9aa3ad;
-  margin-top: 10px;
-  font-size: 12px;
+  text-align: center;
+  margin: 10px 0 30px;
+  font-size: 14px;
 }
 
 /* —— 断点优化 —— */
 
-/* <1280：隐藏表格，用卡片 */
-@media (max-width: 1279px) {
+/* 移动端布局调整 */
+@media (max-width: 767px) {
+  .sop-picker {
+    padding: 16px 12px;
+  }
+
+  .bar {
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr; /* 手机单列 */
+    gap: 12px;
+  }
+
+  .c-header {
+    padding: 12px 12px 0;
+  }
+
+  .c-title {
+    font-size: 15px;
+  }
+
+  .c-meta {
+    margin: 0 12px 12px;
+    gap: 6px;
+  }
+
+  .c-btn {
+    width: calc(100% - 24px);
+    margin: 0 12px 12px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .pager {
+    margin: 16px 0;
+  }
+
+  .tips {
+    font-size: 13px;
+    margin: 8px 0 20px;
+  }
+}
+
+/* 平板布局调整 */
+@media (min-width: 768px) and (max-width: 1279px) {
   .sop-picker {
     --maxw: 980px;
   }
+
   .desk-card {
     display: none;
   }
 }
 
-/* <900：过滤区变 2 行，卡片边距更紧凑 */
+/* <900：过滤区变 2 行 */
 @media (max-width: 900px) {
   .filters {
     grid-template-columns: 1fr 1fr; /* 第一行：kw、env */
@@ -359,39 +537,21 @@ const handleConfirmMix = (position_id) => {
   .filters .btn {
     grid-column: 2 / 3;
   }
-
-  .card-grid {
-    grid-template-columns: 1fr; /* 手机单列 */
-  }
 }
 
-/* <768：更紧凑、分页居中 */
-@media (max-width: 767px) {
-  .sop-picker {
-    padding: 12px;
-  }
-  .title {
-    font-size: 18px;
-  }
-  .filters {
-    gap: 8px;
-  }
-  .c-btn {
-    height: 40px;
-    font-size: 15px;
-  }
-  .pager {
-    justify-content: center;
-  }
-}
-
-/* 深色模式友好（可选） */
+/* 深色模式友好 */
 @media (prefers-color-scheme: dark) {
   .title {
     color: #e7ecf5;
   }
   .tips {
     color: #b9c0ca;
+  }
+  .language-switch:hover {
+    background-color: #2d3a4b;
+  }
+  .sop-card {
+    border-color: #434b5a;
   }
 }
 </style>

@@ -15,6 +15,7 @@ export const useAuthStore = defineStore("sopai-auth", {
         meta: {
           icon: "Menu",
           title: "sop管理",
+          i18nKey: "menu.sopManagement",
           isLink: "",
           isHide: false,
           isFull: false,
@@ -41,6 +42,7 @@ export const useAuthStore = defineStore("sopai-auth", {
         meta: {
           icon: "Tools",
           title: "系统管理",
+          i18nKey: "menu.system",
           isLink: "",
           isHide: false,
           isFull: false,
@@ -54,6 +56,7 @@ export const useAuthStore = defineStore("sopai-auth", {
             meta: {
               icon: "User",
               title: "用户管理",
+              i18nKey: "menu.userManagement",
               isLink: "",
               isHide: false,
               isFull: false,
@@ -67,6 +70,7 @@ export const useAuthStore = defineStore("sopai-auth", {
             meta: {
               icon: "School",
               title: "公司管理",
+              i18nKey: "menu.companyManagement",
               isLink: "",
               isHide: false,
               isFull: false,
@@ -80,6 +84,7 @@ export const useAuthStore = defineStore("sopai-auth", {
             meta: {
               icon: "SetUp",
               title: "部门管理",
+              i18nKey: "menu.deptment",
               isLink: "",
               isHide: false,
               isFull: false,
@@ -93,6 +98,7 @@ export const useAuthStore = defineStore("sopai-auth", {
             meta: {
               icon: "WindPower",
               title: "岗位管理",
+              i18nKey: "menu.position",
               isLink: "",
               isHide: false,
               isFull: false,

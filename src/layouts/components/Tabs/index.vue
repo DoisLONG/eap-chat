@@ -18,7 +18,7 @@
             <el-icon v-if="item.icon && tabsIcon" class="tabs-icon">
               <component :is="item.icon"></component>
             </el-icon>
-            {{ item.title }}
+            {{ item.i18nKey ? $t(item.i18nKey) : item.title }}
           </template>
         </el-tab-pane>
       </el-tabs>
@@ -57,6 +57,7 @@ watch(
     tabsMenuValue.value = route.fullPath;
     const tabsParams = {
       icon: route.meta.icon,
+      i18nKey: route.meta.i18nKey,
       title: route.meta.title,
       path: route.fullPath,
       name: route.name,
@@ -74,6 +75,7 @@ const initTabs = () => {
     if (item.meta.isAffix && !item.meta.isHide && !item.meta.isFull) {
       const tabsParams = {
         icon: item.meta.icon,
+        i18nKey: route.meta.i18nKey,
         title: item.meta.title,
         path: item.path,
         name: item.name,

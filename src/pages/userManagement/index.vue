@@ -14,7 +14,7 @@
           type="primary"
           :icon="CirclePlus"
           @click="openDrawer('create')"
-          >新增用户</el-button
+          >{{ $t("userManagement.add") }}</el-button
         >
         <el-button
           type="danger"
@@ -23,7 +23,7 @@
           :disabled="!scope.isSelected"
           @click="batchDelete(scope.selectedListIds)"
         >
-          批量删除
+          {{ $t("common.batchDelete") }}
         </el-button>
       </template>
       <template #role="scope">
@@ -42,21 +42,21 @@
           link
           :icon="View"
           @click="openDrawer('check', scope.row)"
-          >查看</el-button
+          >{{ $t("common.check") }}</el-button
         >
         <el-button
           type="primary"
           link
           :icon="EditPen"
           @click="openDrawer('update', scope.row)"
-          >编辑</el-button
+          >{{ $t("common.edit") }}</el-button
         >
         <el-button
           type="danger"
           link
           :icon="Delete"
           @click="deleteAccount(scope.row)"
-          >删除</el-button
+          >{{ $t("common.delete") }}</el-button
         >
       </template>
     </ProTable>
@@ -80,6 +80,8 @@ import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
 import { CirclePlus, Delete, EditPen, View } from "@element-plus/icons-vue";
 import { getUserList, deleteUser } from "@/services/user.service";
 import { useHandleData } from "@/hooks/useHandleData";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 
 const proTable = ref<ProTableInstance>();
 
@@ -102,18 +104,48 @@ const columns = reactive<ColumnProps[]>([
   {
     prop: "name",
     label: "用户名称",
+    i18nKey: "userManagement.name",
     minWidth: 120,
     search: {
       el: "input",
-      props: { clearable: true, placeholder: "请输入用户名称" },
+      props: {
+        clearable: true,
+        // placeholder: "userManagement.namePlaceholder",
+      },
     },
   },
-  { prop: "email", label: "邮箱", minWidth: 200 },
-  { prop: "telephone", label: "手机号", minWidth: 120 },
-  { prop: "department", label: "部门", minWidth: 120 },
-  { prop: "role", label: "角色", width: 120 },
-  { prop: "position", label: "岗位", width: 120 },
-  { prop: "operation", label: "操作", fixed: "right", width: 280 },
+  {
+    prop: "email",
+    label: "邮箱",
+    i18nKey: "userManagement.email",
+    minWidth: 200,
+  },
+  {
+    prop: "telephone",
+    label: "手机号",
+    i18nKey: "userManagement.phone",
+    minWidth: 120,
+  },
+  {
+    prop: "department",
+    label: "部门",
+    i18nKey: "companyManagement.deptment",
+    minWidth: 120,
+  },
+  { prop: "role", label: "角色", i18nKey: "userManagement.role", width: 120 },
+  {
+    prop: "position",
+    label: "岗位",
+    i18nKey: "companyManagement.position",
+    width: 120,
+  },
+  {
+    prop: "operation",
+    label: "操作",
+    i18nKey: "common.operate",
+    fixed: "right",
+    width: 280,
+  },
 ]);
 
 // 删除用户信息
@@ -121,7 +153,8 @@ const deleteAccount = async (params) => {
   await useHandleData(
     deleteUser,
     { id: params.id },
-    `是否确认删除【${params.name}】用户`
+    t("userManagement.deleteTip", { name: params.name }),
+    t
   );
   proTable.value?.getTableList();
 };
@@ -129,12 +162,18 @@ const deleteAccount = async (params) => {
 // 批量删除用户信息
 const batchDelete = async (ids) => {
   if (!ids.length) return;
-  ElMessageBox.confirm(`已选中 ${ids.length} 条，确定删除？`, "提示", {
-    type: "warning",
-  })
+  ElMessageBox.confirm(
+    t("common.batchDeleteTip", { num: ids.length }),
+    t("header.tip"),
+    {
+      type: "warning",
+      confirmButtonText: t("common.confirm"),
+      cancelButtonText: t("common.cancel"),
+    }
+  )
     .then(async () => {
       await Promise.all(ids.map((id) => deleteUser({ id })));
-      ElMessage.success("批量删除成功");
+      ElMessage.success(t("common.batchDeleteSuccess"));
       proTable.value?.clearSelection();
       proTable.value?.getTableList();
     })

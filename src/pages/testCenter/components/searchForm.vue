@@ -49,11 +49,9 @@
         <GridItem suffix>
           <div class="operation">
             <el-button type="primary" :icon="Search" @click="search">
-              {{ $t("common.search") }}
+              搜索
             </el-button>
-            <el-button :icon="Delete" @click="reset">
-              {{ $t("common.reset") }}
-            </el-button>
+            <el-button :icon="Delete" @click="reset"> 重置 </el-button>
             <el-button
               v-if="showCollapse"
               type="primary"
@@ -61,7 +59,7 @@
               class="search-isOpen"
               @click="collapsed = !collapsed"
             >
-              {{ collapsed ? $t("common.expand") : $t("common.collapse") }}
+              {{ collapsed ? "展开" : "收缩" }}
               <el-icon class="el-icon--right">
                 <component :is="collapsed ? ArrowDown : ArrowUp"></component>
               </el-icon>
@@ -85,8 +83,6 @@ import {
   getPostList,
   getDeptList,
 } from "@/services/company.service";
-import { useI18n } from "vue-i18n";
-const { t } = useI18n();
 
 const searchCol = { xs: 1, sm: 2, md: 2, lg: 3, xl: 4 };
 
@@ -147,16 +143,16 @@ const columns = computed(() => {
   return [
     {
       prop: "keyword",
-      label: t("licenseAdmin.keyword"),
-      placeholder: t("licenseAdmin.keywordPlaceholder"),
+      label: "用户名称",
+      placeholder: "请输入用户名称",
       search: {
         el: "input",
       },
     },
     {
       prop: "company_id",
-      label: t("licenseAdmin.company"),
-      placeholder: t("licenseAdmin.companyPlaceholder"),
+      label: "公司",
+      placeholder: "请选择公司",
       enum: companyList.value,
       change: () => {
         queryDept();
@@ -170,8 +166,8 @@ const columns = computed(() => {
     },
     {
       prop: "department_id",
-      label: t("licenseAdmin.deptment"),
-      placeholder: t("licenseAdmin.deptmentPlaceholder"),
+      label: "部门",
+      placeholder: "请选择部门",
       enum: deptList.value,
       change: () => {
         queryPost();
@@ -183,8 +179,8 @@ const columns = computed(() => {
     },
     {
       prop: "position_id",
-      label: t("licenseAdmin.position"),
-      placeholder: t("licenseAdmin.positionPlaceholder"),
+      label: "岗位",
+      placeholder: "请选择岗位",
       enum: postList.value,
       search: {
         el: "select",

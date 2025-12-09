@@ -3,7 +3,7 @@
     v-model="drawerVisible"
     :destroy-on-close="true"
     size="450px"
-    title="编辑"
+    :title="$t('common.edit')"
     @close="emits('close')"
   >
     <el-form
@@ -13,17 +13,17 @@
       :rules="rules"
       :model="operateInfo"
     >
-      <el-form-item label="新标题" prop="title">
+      <el-form-item :label="$t('licenseAdmin.newTitle')" prop="title">
         <el-input
           v-model="operateInfo!.title"
-          placeholder="请填写新标题"
+          :placeholder="$t('licenseAdmin.newTitlePlaceholder')"
           clearable
         ></el-input>
       </el-form-item>
-      <el-form-item label="公司" prop="company_id">
+      <el-form-item :label="$t('licenseAdmin.company')" prop="company_id">
         <el-select
           v-model="operateInfo!.company_id"
-          placeholder="请选择公司"
+          :placeholder="$t('licenseAdmin.companyPlaceholder')"
           @change="changeCompany"
         >
           <el-option
@@ -34,10 +34,10 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="部门" prop="department_id">
+      <el-form-item :label="$t('licenseAdmin.deptment')" prop="department_id">
         <el-select
           v-model="operateInfo!.department_id"
-          placeholder="请选择部门"
+          :placeholder="$t('licenseAdmin.deptmentPlaceholder')"
           @change="changeDept"
         >
           <el-option
@@ -48,8 +48,11 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="岗位" prop="position_id">
-        <el-select v-model="operateInfo!.position_id" placeholder="请选择岗位">
+      <el-form-item :label="$t('licenseAdmin.position')" prop="position_id">
+        <el-select
+          v-model="operateInfo!.position_id"
+          :placeholder="$t('licenseAdmin.positionPlaceholder')"
+        >
           <el-option
             v-for="oitem in postList"
             :key="oitem.value"
@@ -60,9 +63,12 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="emits('close')">取消</el-button>
-      <el-button type="primary" :loading="submitLoading" @click="handleSubmit"
-        >确定</el-button
+      <el-button @click="emits('close')">{{ $t("common.cancel") }}</el-button>
+      <el-button
+        type="primary"
+        :loading="submitLoading"
+        @click="handleSubmit"
+        >{{ $t("common.confirm") }}</el-button
       >
     </template>
   </el-drawer>
@@ -77,13 +83,21 @@ import {
   getDeptList,
 } from "@/services/company.service";
 import { updateSopTitle } from "@/services/sop.api";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 
 const emits = defineEmits(["close", "refresh"]);
 const rules = reactive({
-  title: [{ required: true, message: "请填写新标题" }],
-  company_id: [{ required: true, message: "请选择公司" }],
-  department_id: [{ required: true, message: "请选择部门" }],
-  position_id: [{ required: true, message: "请选择岗位" }],
+  title: [{ required: true, message: t("licenseAdmin.newTitlePlaceholder") }],
+  company_id: [
+    { required: true, message: t("licenseAdmin.companyPlaceholder") },
+  ],
+  department_id: [
+    { required: true, message: t("licenseAdmin.deptmentPlaceholder") },
+  ],
+  position_id: [
+    { required: true, message: t("licenseAdmin.positionPlaceholder") },
+  ],
 });
 const submitLoading = ref(false);
 
@@ -177,7 +191,7 @@ const handleSubmit = () => {
       }
       emits("close");
       emits("refresh");
-      ElMessage.success({ message: `编辑成功！` });
+      ElMessage.success({ message: t("common.editSuccess") });
     } catch (error) {
       console.log(error);
     }

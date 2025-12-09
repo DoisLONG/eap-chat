@@ -22,7 +22,9 @@
             >
               <component :is="item.meta.icon"></component>
             </el-icon>
-            <span class="breadcrumb-title">{{ item.meta.title }}</span>
+            <span class="breadcrumb-title">{{
+              item.meta.i18nKey ? $t(item.meta.i18nKey) : item.meta.title
+            }}</span>
           </div>
         </el-breadcrumb-item>
       </transition-group>

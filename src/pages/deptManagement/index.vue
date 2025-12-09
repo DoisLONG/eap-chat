@@ -15,7 +15,7 @@
           type="primary"
           :icon="CirclePlus"
           @click="openDrawer('create')"
-          >新增部门</el-button
+          >{{ $t("deptManagement.add") }}</el-button
         >
         <el-button
           type="danger"
@@ -24,7 +24,7 @@
           :disabled="!scope.isSelected"
           @click="batchDelete(scope.selectedListIds)"
         >
-          批量删除
+          {{ $t("common.batchDelete") }}
         </el-button>
       </template>
       <template #role="scope">
@@ -43,21 +43,21 @@
           link
           :icon="View"
           @click="openDrawer('check', scope.row)"
-          >查看</el-button
+          >{{ $t("common.check") }}</el-button
         >
         <el-button
           type="primary"
           link
           :icon="EditPen"
           @click="openDrawer('update', scope.row)"
-          >编辑</el-button
+          >{{ $t("common.edit") }}</el-button
         >
         <el-button
           type="danger"
           link
           :icon="Delete"
           @click="deleteAccount(scope.row)"
-          >删除</el-button
+          >{{ $t("common.delete") }}</el-button
         >
       </template>
     </ProTable>
@@ -81,6 +81,8 @@ import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
 import { CirclePlus, Delete, EditPen, View } from "@element-plus/icons-vue";
 import { getDeptPageList, deleteDept } from "@/services/company.service";
 import { useHandleData } from "@/hooks/useHandleData";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 
 const proTable = ref<ProTableInstance>();
 
@@ -100,42 +102,79 @@ const getTableList = (params: any) => {
 // 表格配置项
 const columns = reactive<ColumnProps[]>([
   { type: "selection", fixed: "left", width: 70 },
-  { prop: "company_name", label: "公司名称", minWidth: 150 },
+  {
+    prop: "company_name",
+    label: "公司名称",
+    i18nKey: "companyManagement.company",
+    minWidth: 150,
+  },
   {
     prop: "department_name",
     label: "部门名称",
+    i18nKey: "deptManagement.dept_name",
     minWidth: 120,
     search: {
       el: "input",
-      props: { clearable: true, placeholder: "部门名称" },
+      props: {
+        clearable: true,
+        // placeholder: "deptManagement.dept_namePlaceholder",
+      },
     },
   },
-  { prop: "manager", label: "部门负责人", minWidth: 150 },
-  { prop: "manager_phone", label: "负责人电话", minWidth: 150 },
-  { prop: "remark", label: "备注", width: 120 },
-  { prop: "operation", label: "操作", fixed: "right", width: 280 },
+  {
+    prop: "manager",
+    label: "部门负责人",
+    i18nKey: "deptManagement.leader",
+    minWidth: 150,
+  },
+  {
+    prop: "manager_phone",
+    label: "负责人电话",
+    i18nKey: "deptManagement.manager_phone",
+    minWidth: 150,
+  },
+  {
+    prop: "remark",
+    label: "备注",
+    i18nKey: "deptManagement.remark",
+    width: 120,
+  },
+  {
+    prop: "operation",
+    label: "操作",
+    i18nKey: "common.operate",
+    fixed: "right",
+    width: 280,
+  },
 ]);
 
-// 删除用户信息
+// 删除部门信息
 const deleteAccount = async (params) => {
   await useHandleData(
     deleteDept,
     { department_id: params.department_id },
-    `是否确认删除【${params.department_name}】`
+    t("deptManagement.deleteTip", { name: params.department_name }),
+    t
   );
 
   proTable.value?.getTableList();
 };
 
-// 批量删除用户信息
+// 批量删除部门信息
 const batchDelete = async (ids) => {
   if (!ids.length) return;
-  ElMessageBox.confirm(`已选中 ${ids.length} 条，确定删除？`, "提示", {
-    type: "warning",
-  })
+  ElMessageBox.confirm(
+    t("common.batchDeleteTip", { num: ids.length }),
+    t("header.tip"),
+    {
+      type: "warning",
+      confirmButtonText: t("common.confirm"),
+      cancelButtonText: t("common.cancel"),
+    }
+  )
     .then(async () => {
       await Promise.all(ids.map((id) => deleteDept({ department_id: id })));
-      ElMessage.success("批量删除成功");
+      ElMessage.success(t("common.batchDeleteSuccess"));
       proTable.value?.clearSelection();
       proTable.value?.getTableList();
     })

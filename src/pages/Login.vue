@@ -3,7 +3,7 @@
     <div class="login-box">
       <div class="login-header">
         <img class="logo" src="/logo2.png" alt="logo" />
-        <span class="title"> 全局管理员登录</span>
+        <span class="title"> {{ $t("header.logoTitle") }}</span>
       </div>
       <el-form
         :model="form"
@@ -16,14 +16,14 @@
         <el-form-item prop="username">
           <el-input
             v-model="form.username"
-            placeholder="请输入用户名"
+            :placeholder="$t('header.userPlaceholder')"
             prefix-icon="el-icon-user"
           />
         </el-form-item>
         <el-form-item prop="password">
           <el-input
             v-model="form.password"
-            placeholder="请输入密码"
+            :placeholder="$t('header.passwordPlaceholder')"
             show-password
             prefix-icon="el-icon-lock"
           />
@@ -34,11 +34,11 @@
             style="width: 100%"
             @click="onLogin"
             :loading="loading"
-            >登 录</el-button
+            >{{ $t("header.login") }}</el-button
           >
         </el-form-item>
       </el-form>
-      <div class="footer">© {{ year }} 全局管理系统</div>
+      <div class="footer">© {{ year }} {{ $t("header.logo") }}</div>
     </div>
   </div>
 </template>
@@ -49,6 +49,8 @@ import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { login } from "@/services/user.service";
 import { useUserStore } from "@/stores/modules/user";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 
 const router = useRouter();
 const route = useRoute();
@@ -64,8 +66,16 @@ const form = reactive({
 });
 
 const rules = {
-  username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
-  password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+  username: [
+    { required: true, message: t("header.userPlaceholder"), trigger: "blur" },
+  ],
+  password: [
+    {
+      required: true,
+      message: t("header.passwordPlaceholder"),
+      trigger: "blur",
+    },
+  ],
 };
 
 const onLogin = async () => {
@@ -86,9 +96,9 @@ const onLogin = async () => {
           const redirect = (route.query.redirect as string) || "/license/admin";
           router.replace(redirect);
 
-          ElMessage.success("登录成功！");
+          ElMessage.success(t("header.loginSuccess"));
         } else {
-          ElMessage.error(res.data.message || "登录失败");
+          ElMessage.error(res.data.message || t("header.loginError"));
         }
       })
       .finally(() => {

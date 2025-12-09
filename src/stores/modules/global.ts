@@ -5,6 +5,7 @@ import piniaPersistConfig from "@/stores/helper/persist";
 export const useGlobalStore = defineStore("sopai-global", {
   state: () => ({
     layout: "vertical",
+    language: null,
     assemblySize: "default",
     maximize: false,
     primary: DEFAULT_PRIMARY,

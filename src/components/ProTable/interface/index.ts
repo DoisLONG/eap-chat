@@ -72,6 +72,7 @@ export interface ColumnProps<T = any>
   extends Partial<
     Omit<TableColumnCtx<T>, "type" | "children" | "renderCell" | "renderHeader">
   > {
+  i18nKey?: string; // 国际化 key 值
   type?: TypeProps; // 列类型
   tag?: boolean | Ref<boolean>; // 是否是标签展示
   isShow?: boolean | Ref<boolean>; // 是否显示在表格当中

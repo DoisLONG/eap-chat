@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="drawerVisible"
-    title="混合出题"
+    :title="$t('SopPicker.mixMode')"
     width="350px"
     :close-on-click-modal="false"
     @close="emits('close')"
@@ -13,10 +13,10 @@
       :rules="rules"
       :model="operateInfo"
     >
-      <el-form-item label="公司" prop="company_id">
+      <el-form-item :label="$t('companyManagement.company')" prop="company_id">
         <el-select
           v-model="operateInfo.company_id"
-          placeholder="请选择公司"
+          :placeholder="$t('companyManagement.companyPlaceholder')"
           clearable
           @change="handleCompanyChange"
         >
@@ -28,10 +28,13 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="部门" prop="department_id">
+      <el-form-item
+        :label="$t('companyManagement.deptment')"
+        prop="department_id"
+      >
         <el-select
           v-model="operateInfo.department_id"
-          placeholder="请选择部门"
+          :placeholder="$t('companyManagement.deptmentPlaceholder')"
           clearable
           @change="handleDepartmentChange"
         >
@@ -43,10 +46,13 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="岗位" prop="position_id">
+      <el-form-item
+        :label="$t('companyManagement.position')"
+        prop="position_id"
+      >
         <el-select
           v-model="operateInfo.position_id"
-          placeholder="请选择岗位"
+          :placeholder="$t('companyManagement.positionPlaceholder')"
           clearable
         >
           <el-option
@@ -59,9 +65,12 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="emits('close')">取消</el-button>
-      <el-button type="primary" :loading="submitLoading" @click="handleSubmit"
-        >确定</el-button
+      <el-button @click="emits('close')">{{ $t("common.cancel") }}</el-button>
+      <el-button
+        type="primary"
+        :loading="submitLoading"
+        @click="handleSubmit"
+        >{{ $t("common.confirm") }}</el-button
       >
     </template>
   </el-dialog>
@@ -73,16 +82,24 @@ import { FormInstance } from "element-plus";
 import { getCascaderList } from "@/services/sop.api";
 import { useUserStore } from "@/stores/modules/user";
 import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
 
 const userStore = useUserStore();
 const { userInfo } = storeToRefs(userStore);
+const { t } = useI18n();
 
 const emits = defineEmits(["close", "confirm"]);
 
 const rules = reactive({
-  company_id: [{ required: true, message: "请选择公司" }],
-  department_id: [{ required: true, message: "请选择部门" }],
-  position_id: [{ required: true, message: "请选择岗位" }],
+  company_id: [
+    { required: true, message: t("companyManagement.companyPlaceholder") },
+  ],
+  department_id: [
+    { required: true, message: t("companyManagement.deptmentPlaceholder") },
+  ],
+  position_id: [
+    { required: true, message: t("companyManagement.positionPlaceholder") },
+  ],
 });
 
 const submitLoading = ref(false);

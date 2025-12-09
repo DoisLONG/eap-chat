@@ -9,6 +9,8 @@ import "element-plus/dist/index.css";
 import "@/styles/element.scss";
 import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import pinia from "@/stores";
+// vue i18n
+import I18n from "@/languages/index";
 
 const app = createApp(App);
 app.use(router);
@@ -19,4 +21,4 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component);
 }
 
-app.use(pinia).mount("#app");
+app.use(pinia).use(I18n).mount("#app");

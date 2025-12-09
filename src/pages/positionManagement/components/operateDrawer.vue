@@ -3,7 +3,7 @@
     v-model="drawerVisible"
     :destroy-on-close="true"
     size="450px"
-    :title="`${title}岗位`"
+    :title="title"
     @close="emits('close')"
   >
     <el-form
@@ -15,11 +15,15 @@
       :model="operateInfo"
       :hide-required-asterisk="drawerProps.isView"
     >
-      <el-form-item v-if="type === 'create'" label="公司" prop="company_id">
+      <el-form-item
+        v-if="type === 'create'"
+        :label="$t('companyManagement.company')"
+        prop="company_id"
+      >
         <el-select
           v-model="operateInfo!.company_id"
           @change="changeCompany"
-          placeholder="请选择公司"
+          :placeholder="$t('companyManagement.companyPlaceholder')"
         >
           <el-option
             v-for="oitem in companyList"
@@ -29,10 +33,13 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="部门" prop="department_id">
+      <el-form-item
+        :label="$t('deptManagement.dept_name')"
+        prop="department_id"
+      >
         <el-select
           v-model="operateInfo!.department_id"
-          placeholder="请选择部门"
+          :placeholder="$t('deptManagement.deptmentPlaceholder')"
           :disabled="type !== 'create'"
         >
           <el-option
@@ -43,62 +50,76 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="岗位名称" prop="position_name">
+      <el-form-item
+        :label="$t('positionManagement.position')"
+        prop="position_name"
+      >
         <el-input
           v-model="operateInfo!.position_name"
           :disabled="type !== 'create'"
-          placeholder="请填写岗位名称"
+          :placeholder="$t('positionManagement.positionPlaceholder')"
           clearable
         ></el-input>
       </el-form-item>
-      <el-form-item label="岗位职责" prop="duty">
+      <el-form-item :label="$t('positionManagement.duty')" prop="duty">
         <el-input
           v-model="operateInfo!.duty"
-          placeholder="请填写岗位职责"
+          :placeholder="$t('positionManagement.dutyPlaceholder')"
           type="textarea"
           clearable
         ></el-input>
       </el-form-item>
-      <el-form-item label="任职要求" prop="requirement">
+      <el-form-item
+        :label="$t('positionManagement.requirement')"
+        prop="requirement"
+      >
         <el-input
           v-model="operateInfo!.requirement"
-          placeholder="请填写任职要求"
+          :placeholder="$t('positionManagement.requirementPlaceholder')"
           type="textarea"
           clearable
         ></el-input>
       </el-form-item>
-      <el-form-item label="备注" prop="remark">
+      <el-form-item :label="$t('positionManagement.remark')" prop="remark">
         <el-input
           v-model="operateInfo!.remark"
-          placeholder="请填写备注"
+          :placeholder="$t('positionManagement.remarkPlaceholder')"
           type="textarea"
           clearable
         ></el-input>
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="emits('close')">取消</el-button>
+      <el-button @click="emits('close')">{{ $t("common.cancel") }}</el-button>
       <el-button
         v-show="!drawerProps.isView"
         type="primary"
         @click="handleSubmit"
-        >确定</el-button
+        >{{ $t("common.confirm") }}</el-button
       >
     </template>
   </el-drawer>
 </template>
 
 <script setup lang="ts" name="UserDrawer">
-import { ref, reactive, toRefs } from "vue";
+import { ref, reactive, toRefs, computed } from "vue";
 import { ElMessage, FormInstance } from "element-plus";
 import { updatePost, addPost } from "@/services/company.service";
 import { getCompanyList, getDeptList } from "@/services/company.service";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 
 const emits = defineEmits(["close", "refresh"]);
 const rules = reactive({
-  company_id: [{ required: true, message: "请选择公司名称" }],
-  department_id: [{ required: true, message: "请选择部门名称" }],
-  position_name: [{ required: true, message: "请填写岗位名称" }],
+  company_id: [
+    { required: true, message: t("companyManagement.companyPlaceholder") },
+  ],
+  department_id: [
+    { required: true, message: t("deptManagement.deptmentPlaceholder") },
+  ],
+  position_name: [
+    { required: true, message: t("positionManagement.positionPlaceholder") },
+  ],
 });
 
 interface DrawerProps {
@@ -110,9 +131,13 @@ const props = defineProps<{
 }>();
 
 const { rowInfo, type } = toRefs(props);
-const title = ref(
-  type.value === "create" ? "新增" : type.value === "update" ? "编辑" : "查看"
-);
+
+const title = computed(() => {
+  if (type.value === "create") return t("positionManagement.add");
+  if (type.value === "update") return t("common.edit");
+  return t("common.check");
+});
+
 const operateInfo = ref<any>({ ...rowInfo.value });
 const drawerVisible = ref(true);
 const drawerProps = ref<DrawerProps>({
@@ -121,10 +146,12 @@ const drawerProps = ref<DrawerProps>({
 
 const companyList = ref<{ label: string; value: string }[]>([]);
 const deptList = ref<{ label: string; value: string }[]>([]);
+
 const changeCompany = () => {
   queryDept();
   operateInfo.value.department_id = "";
 };
+
 const queryCompany = () => {
   const params: any = {};
   getCompanyList(params).then((res) => {
@@ -136,6 +163,7 @@ const queryCompany = () => {
   });
 };
 queryCompany();
+
 const queryDept = () => {
   const params: any = {};
   if (operateInfo.value?.company_id) {
@@ -165,12 +193,18 @@ const handleSubmit = () => {
           : undefined;
       const res = await api!(operateInfo.value);
       if (res.data.status !== 200) {
-        ElMessage.error({ message: res.data.msg || "操作失败！" });
+        ElMessage.error({ message: res.data.msg || t("common.operateError") });
         return;
       }
       emits("close");
       emits("refresh");
-      ElMessage.success({ message: `${title.value}公司成功！` });
+      ElMessage.success({
+        message: t(
+          type.value === "create"
+            ? "positionManagement.operateSuccess"
+            : "positionManagement.editSuccess"
+        ),
+      });
     } catch (error) {
       console.log(error);
     }

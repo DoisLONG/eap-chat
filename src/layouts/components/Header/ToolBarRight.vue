@@ -1,21 +1,20 @@
 <template>
   <div class="tool-bar-ri">
     <div class="header-icon">
-      <!-- <AssemblySize id="assemblySize" />
+      <!-- <AssemblySize id="assemblySize" /> -->
       <Language id="language" />
-      <SearchMenu id="searchMenu" />
+      <!-- <SearchMenu id="searchMenu" />
       <ThemeSetting id="themeSetting" />
       <Message id="message" />
       <Fullscreen id="fullscreen" /> -->
     </div>
-    <!-- <span class="username">{{ username }}</span> -->
     <Avatar />
   </div>
 </template>
 
 <script setup>
 // import AssemblySize from "./components/AssemblySize.vue";
-// import Language from "./components/Language.vue";
+import Language from "./components/Language.vue";
 // import SearchMenu from "./components/SearchMenu.vue";
 // import ThemeSetting from "./components/ThemeSetting.vue";
 // import Message from "./components/Message.vue";
@@ -32,6 +31,7 @@ import Avatar from "./components/Avatar.vue";
   .header-icon {
     display: flex;
     align-items: center;
+    margin-right: 15px;
     & > * {
       margin-left: 21px;
       color: var(--el-header-text-color);

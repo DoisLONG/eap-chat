@@ -3,7 +3,7 @@
     v-model="drawerVisible"
     :destroy-on-close="true"
     size="450px"
-    :title="`${title}公司`"
+    :title="title"
     @close="emits('close')"
   >
     <el-form
@@ -15,67 +15,80 @@
       :model="operateInfo"
       :hide-required-asterisk="drawerProps.isView"
     >
-      <el-form-item label="公司名称" prop="company_name">
+      <el-form-item
+        :label="$t('companyManagement.company')"
+        prop="company_name"
+      >
         <el-input
           v-model="operateInfo!.company_name"
           :disabled="type !== 'create'"
-          placeholder="请填写公司名称"
+          :placeholder="$t('companyManagement.companyPlaceholder')"
           clearable
         ></el-input>
       </el-form-item>
-      <el-form-item label="成立时间" prop="establish_time">
+      <el-form-item
+        :label="$t('companyManagement.establish_time')"
+        prop="establish_time"
+      >
         <el-date-picker
           style="width: 100%"
           v-model="operateInfo!.establish_time"
-          placeholder="请选择成立时间"
+          :placeholder="$t('companyManagement.establish_timePlaceholder')"
           type="date"
           value-format="YYYY-MM-DD"
           clearable
         ></el-date-picker>
       </el-form-item>
-      <el-form-item label="公司地址" prop="address">
+      <el-form-item :label="$t('companyManagement.address')" prop="address">
         <el-input
           v-model="operateInfo!.address"
-          placeholder="请填写公司地址"
+          :placeholder="$t('companyManagement.addressPlaceholder')"
           clearable
         ></el-input>
       </el-form-item>
-      <el-form-item label="联系电话" prop="contact_phone">
+      <el-form-item
+        :label="$t('companyManagement.contact_phone')"
+        prop="contact_phone"
+      >
         <el-input
           v-model="operateInfo!.contact_phone"
-          placeholder="请填写联系电话"
+          :placeholder="$t('companyManagement.contact_phonePlaceholder')"
           clearable
         ></el-input>
       </el-form-item>
-      <el-form-item label="备注" prop="remark">
+      <el-form-item :label="$t('companyManagement.remark')" prop="remark">
         <el-input
           v-model="operateInfo!.remark"
-          placeholder="请填写备注"
+          :placeholder="$t('companyManagement.remarkPlaceholder')"
           type="textarea"
           clearable
         ></el-input>
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="emits('close')">取消</el-button>
+      <el-button @click="emits('close')">{{ $t("common.cancel") }}</el-button>
       <el-button
         v-show="!drawerProps.isView"
         type="primary"
         @click="handleSubmit"
-        >确定</el-button
+        >{{ $t("common.confirm") }}</el-button
       >
     </template>
   </el-drawer>
 </template>
 
 <script setup lang="ts" name="UserDrawer">
-import { ref, reactive, toRefs } from "vue";
+import { ref, reactive, toRefs, computed } from "vue";
 import { ElMessage, FormInstance } from "element-plus";
 import { updateCompany, addCompany } from "@/services/company.service";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 
 const emits = defineEmits(["close", "refresh"]);
 const rules = reactive({
-  company_name: [{ required: true, message: "请填写公司名称" }],
+  company_name: [
+    { required: true, message: t("companyManagement.companyPlaceholder") },
+  ],
 });
 
 interface DrawerProps {
@@ -87,9 +100,13 @@ const props = defineProps<{
 }>();
 
 const { rowInfo, type } = toRefs(props);
-const title = ref(
-  type.value === "create" ? "新增" : type.value === "update" ? "编辑" : "查看"
-);
+
+const title = computed(() => {
+  if (type.value === "create") return t("companyManagement.add");
+  if (type.value === "update") return t("common.edit");
+  return t("common.check");
+});
+
 const operateInfo = ref<any>({ ...rowInfo.value });
 const drawerVisible = ref(true);
 const drawerProps = ref<DrawerProps>({
@@ -110,12 +127,18 @@ const handleSubmit = () => {
           : undefined;
       const res = await api!(operateInfo.value);
       if (res.data.status !== 200) {
-        ElMessage.error({ message: res.data.msg || "操作失败！" });
+        ElMessage.error({ message: res.data.msg || t("common.operateError") });
         return;
       }
       emits("close");
       emits("refresh");
-      ElMessage.success({ message: `${title.value}公司成功！` });
+      ElMessage.success({
+        message: t(
+          type.value === "create"
+            ? "companyManagement.operateSuccess"
+            : "companyManagement.editSuccess"
+        ),
+      });
     } catch (error) {
       console.log(error);
     }

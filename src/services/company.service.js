@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
+import { $t } from "@/languages/index.js";
 
 const router = useRouter();
 const companyApi = axios.create({
@@ -30,8 +31,8 @@ companyApi.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
+      ElMessage.error({ message: $t("header.loginValidate") });
       // 如果有路由实例，可以跳转到登录页
-      ElMessage.error({ message: "登录已过期，请重新登录" });
       setTimeout(() => {
         window.location.href = "/login";
       }, 500);

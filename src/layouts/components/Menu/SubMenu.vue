@@ -5,7 +5,9 @@
         <el-icon v-if="subItem.meta.icon">
           <component :is="subItem.meta.icon"></component>
         </el-icon>
-        <span class="sle">{{ subItem.meta.title }}</span>
+        <span class="sle">{{
+          subItem.meta.i18nKey ? $t(subItem.meta.i18nKey) : subItem.meta.title
+        }}</span>
       </template>
       <SubMenu :menu-list="subItem.children" />
     </el-sub-menu>
@@ -18,7 +20,9 @@
         <component :is="subItem.meta.icon"></component>
       </el-icon>
       <template #title>
-        <span class="sle">{{ subItem.meta.title }}</span>
+        <span class="sle">{{
+          subItem.meta.i18nKey ? $t(subItem.meta.i18nKey) : subItem.meta.title
+        }}</span>
       </template>
     </el-menu-item>
   </template>

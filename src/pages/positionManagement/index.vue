@@ -15,7 +15,7 @@
           type="primary"
           :icon="CirclePlus"
           @click="openDrawer('create')"
-          >新增岗位</el-button
+          >{{ $t("positionManagement.add") }}</el-button
         >
         <el-button
           type="danger"
@@ -24,7 +24,7 @@
           :disabled="!scope.isSelected"
           @click="batchDelete(scope.selectedListIds)"
         >
-          批量删除
+          {{ $t("common.batchDelete") }}
         </el-button>
       </template>
       <template #role="scope">
@@ -43,21 +43,21 @@
           link
           :icon="View"
           @click="openDrawer('check', scope.row)"
-          >查看</el-button
+          >{{ $t("common.check") }}</el-button
         >
         <el-button
           type="primary"
           link
           :icon="EditPen"
           @click="openDrawer('update', scope.row)"
-          >编辑</el-button
+          >{{ $t("common.edit") }}</el-button
         >
         <el-button
           type="danger"
           link
           :icon="Delete"
           @click="deleteAccount(scope.row)"
-          >删除</el-button
+          >{{ $t("common.delete") }}</el-button
         >
       </template>
     </ProTable>
@@ -81,6 +81,8 @@ import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
 import { CirclePlus, Delete, EditPen, View } from "@element-plus/icons-vue";
 import { getPostPageList, deletePost } from "@/services/company.service";
 import { useHandleData } from "@/hooks/useHandleData";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
 
 const proTable = ref<ProTableInstance>();
 
@@ -100,43 +102,85 @@ const getTableList = (params: any) => {
 // 表格配置项
 const columns = reactive<ColumnProps[]>([
   { type: "selection", fixed: "left", width: 70 },
-  { prop: "company_name", label: "公司名称", minWidth: 150 },
-  { prop: "department_name", label: "部门名称", minWidth: 150 },
+  {
+    prop: "company_name",
+    label: "公司名称",
+    i18nKey: "companyManagement.company",
+    minWidth: 150,
+  },
+  {
+    prop: "department_name",
+    label: "部门名称",
+    i18nKey: "deptManagement.dept_name",
+    minWidth: 150,
+  },
   {
     prop: "position_name",
     label: "岗位名称",
+    i18nKey: "companyManagement.position",
     minWidth: 120,
     search: {
       el: "input",
-      props: { clearable: true, placeholder: "岗位名称" },
+      props: {
+        clearable: true,
+        // placeholder: "companyManagement.positionPlaceholder",
+      },
     },
   },
-  { prop: "duty", label: "岗位职责", minWidth: 150 },
-  { prop: "requirement", label: "任职要求", minWidth: 150 },
-  { prop: "remark", label: "备注", width: 150 },
-  { prop: "operation", label: "操作", fixed: "right", width: 280 },
+  {
+    prop: "duty",
+    label: "岗位职责",
+    i18nKey: "positionManagement.duty",
+    minWidth: 150,
+  },
+  {
+    prop: "requirement",
+    label: "任职要求",
+    i18nKey: "positionManagement.requirement",
+    minWidth: 150,
+  },
+  {
+    prop: "remark",
+    label: "备注",
+    i18nKey: "positionManagement.remark",
+    width: 150,
+  },
+  {
+    prop: "operation",
+    label: "操作",
+    i18nKey: "common.operate",
+    fixed: "right",
+    width: 280,
+  },
 ]);
 
-// 删除用户信息
+// 删除岗位信息
 const deleteAccount = async (params) => {
   await useHandleData(
     deletePost,
     { position_id: params.position_id },
-    `是否确认删除【${params.position_name}】`
+    t("positionManagement.deleteTip", { name: params.position_name }),
+    t
   );
 
   proTable.value?.getTableList();
 };
 
-// 批量删除用户信息
+// 批量删除岗位信息
 const batchDelete = async (ids) => {
   if (!ids.length) return;
-  ElMessageBox.confirm(`已选中 ${ids.length} 条，确定删除？`, "提示", {
-    type: "warning",
-  })
+  ElMessageBox.confirm(
+    t("common.batchDeleteTip", { num: ids.length }),
+    t("header.tip"),
+    {
+      type: "warning",
+      confirmButtonText: t("common.confirm"),
+      cancelButtonText: t("common.cancel"),
+    }
+  )
     .then(async () => {
       await Promise.all(ids.map((id) => deletePost({ position_id: id })));
-      ElMessage.success("批量删除成功");
+      ElMessage.success(t("common.batchDeleteSuccess"));
       proTable.value?.clearSelection();
       proTable.value?.getTableList();
     })
