@@ -11,11 +11,11 @@
     <template #header>
       <div class="dlg-head">
         <div class="title-wrap">
-          <span class="doc-prefix">题目管理</span>
+          <span class="doc-prefix">{{ $t("licenseAdmin.timuManage") }}</span>
           <el-input
             v-model="local.title"
             class="title-input"
-            placeholder="请输入名称"
+            :placeholder="$t('licenseAdmin.namePlaceholder')"
             size="large"
             maxlength="60"
             show-word-limit
@@ -28,7 +28,7 @@
             :disabled="local.saving"
             @click.stop="onSave(true)"
           >
-            保存并同步知识库
+            {{ $t("licenseAdmin.saveAndUpdate") }}
           </el-button>
         </div>
       </div>
@@ -45,24 +45,26 @@
           <template #header>
             <div class="qa-header">
               <span class="qa-title"
-                >第 {{ idx + 1 }} 题（{{ r.type || "题型未知" }}）</span
+                >{{ $t("licenseAdmin.sort", { i: idx + 1 }) }}（{{
+                  $t(r.type) || $t("licenseAdmin.unknownti")
+                }}）</span
               >
               <el-tag size="small" type="info">{{
-                r.position || "模块未知"
+                r.position || $t("licenseAdmin.unknownMode")
               }}</el-tag>
               <el-button
                 size="small"
                 type="danger"
                 style="margin-left: auto"
                 @click="remove(idx)"
-                >删除</el-button
+                >{{ $t("common.delete") }}</el-button
               >
             </div>
           </template>
 
           <div class="qa-body">
             <div class="qa-field">
-              <label>题目：</label>
+              <label>{{ $t("licenseAdmin.timu") }}：</label>
               <el-input
                 v-model="r.question"
                 type="textarea"
@@ -72,7 +74,7 @@
               />
             </div>
             <div class="qa-field">
-              <label>参考答案：</label>
+              <label>{{ $t("licenseAdmin.answer") }}：</label>
               <el-input
                 v-model="r.answer"
                 type="textarea"
@@ -82,7 +84,7 @@
               />
             </div>
             <div class="qa-field">
-              <label>解析说明：</label>
+              <label>{{ $t("licenseAdmin.analysis") }}：</label>
               <el-input
                 v-model="r.content"
                 type="textarea"
@@ -95,14 +97,18 @@
         </el-card>
 
         <div class="add-line">
-          <el-button @click="addOne" plain>+ 新增一题</el-button>
+          <el-button @click="addOne" plain
+            >+ {{ $t("licenseAdmin.addNew") }}</el-button
+          >
         </div>
       </div>
     </div>
 
     <template #footer>
       <div class="foot">
-        <el-button @click="$emit('update:modelValue', false)">取消</el-button>
+        <el-button @click="$emit('update:modelValue', false)">{{
+          $t("common.cancel")
+        }}</el-button>
         <!-- <el-button type="primary" :disabled="local.saving" @click="onSave()">保存</el-button> -->
       </div>
     </template>
@@ -114,6 +120,9 @@ import { reactive, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { saveQaList } from "@/services/sop.api";
 import { watchEffect } from "vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const props = defineProps({
   modelValue: Boolean,
@@ -139,10 +148,12 @@ watchEffect(() => {
         _key: cryptoRandom(),
         id: x.id ?? Date.now() + Math.floor(Math.random() * 1000),
         row: x.row ?? 1,
-        position: x.position || "未知阶段",
+        position: x.position || t("licenseAdmin.unknownDuan"),
         stage: x.stage || "",
         section: x.section || "",
-        type: x.type || "问答题",
+        type: x.type
+          ? t(x.type) || t("licenseAdmin.wenda")
+          : t("licenseAdmin.wenda"),
         question: x.question || "",
         answer: String(x.answer ?? "").trim(),
         content: x.content || "",
@@ -183,11 +194,11 @@ function addOne() {
     _key: cryptoRandom(),
     id: Date.now(),
     row: 1,
-    position: "新阶段-新模块",
+    position: t("licenseAdmin.xinjieduanTit"),
     position_id: local.items[0].position_id,
-    stage: "新阶段",
-    section: "新模块",
-    type: "问答题",
+    stage: t("licenseAdmin.newDuanTit"),
+    section: t("licenseAdmin.newModuleTit"),
+    type: t("licenseAdmin.wenda"),
     question: "",
     answer: "",
     content: "",
@@ -211,9 +222,7 @@ async function onSave(sync = false) {
   );
 
   if (missingIndex !== -1) {
-    ElMessage.error(
-      `第 ${missingIndex + 1} 题有未填写的内容，请补充完整后再保存`
-    );
+    ElMessage.error(t("licenseAdmin.titTip", { i: missingIndex + 1 }));
     local.saving = false;
     return;
   }
@@ -229,7 +238,9 @@ async function onSave(sync = false) {
         question: item.question?.trim() || "",
         answer: String(item.answer ?? "").trim(), // 后端要求是 string
         content: item.content ?? "",
-        type: item.type ?? "问答题",
+        type: item.type
+          ? t(item.type) || t("licenseAdmin.wenda")
+          : t("licenseAdmin.wenda"),
       };
       delete params.id;
       return params;
@@ -241,9 +252,9 @@ async function onSave(sync = false) {
   try {
     await saveQaList(payload.sop_info_id, payload.records);
     if (sync) {
-      ElMessage.success("已保存并同步知识库");
+      ElMessage.success(t("licenseAdmin.saveSuccess"));
     } else {
-      ElMessage.success("保存成功");
+      ElMessage.success(t("common.saveSuccess"));
     }
     // emit('save', { title: cleanTitle, items: payload.records, sync })
     // if (!sync) emit('update:modelValue', false)
@@ -252,7 +263,9 @@ async function onSave(sync = false) {
     emit("refresh");
   } catch (e) {
     console.error("[保存失败]", e);
-    ElMessage.error(`保存失败：${e?.response?.data?.detail || e.message}`);
+    ElMessage.error(
+      `${t("common.saveError")}：${e?.response?.data?.detail || e.message}`
+    );
   } finally {
     local.saving = false;
   }

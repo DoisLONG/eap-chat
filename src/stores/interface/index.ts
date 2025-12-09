@@ -2,7 +2,7 @@ export type LayoutType = "vertical" | "classic" | "transverse" | "columns";
 
 export type AssemblySizeType = "large" | "default" | "small";
 
-export type LanguageType = "zh" | "th" | null;
+export type LanguageType = "zh" | "th" | "en" | null;
 
 /* GlobalState */
 export interface GlobalState {

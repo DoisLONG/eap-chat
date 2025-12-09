@@ -3,6 +3,7 @@ import { getBrowserLang } from "@/utils";
 
 import zh from "./modules/zh";
 import th from "./modules/th";
+import en from "./modules/en";
 
 const i18n = createI18n({
   allowComposition: true,
@@ -10,6 +11,7 @@ const i18n = createI18n({
   locale: getBrowserLang(),
   messages: {
     zh,
+    en,
     th,
   },
 });

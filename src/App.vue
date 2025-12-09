@@ -11,6 +11,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { LanguageType } from "./stores/interface";
 import { useGlobalStore } from "@/stores/modules/global";
 import th from "element-plus/es/locale/lang/th";
+import en from "element-plus/es/locale/lang/en";
 import zhCn from "element-plus/es/locale/lang/zh-cn";
 
 const globalStore = useGlobalStore();
@@ -27,8 +28,9 @@ onMounted(() => {
 
 const locale = computed(() => {
   if (globalStore.language == "zh") return zhCn;
+  if (globalStore.language == "en") return en;
   if (globalStore.language == "th") return th;
-  return getBrowserLang() == "zh" ? zhCn : th;
+  return getBrowserLang() == "zh" ? zhCn : getBrowserLang() == "en" ? en : th;
 });
 
 const assemblySize = computed(() => globalStore.assemblySize);

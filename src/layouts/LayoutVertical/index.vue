@@ -5,7 +5,11 @@
       <div class="aside-box" :style="{ width: isCollapse ? '65px' : '210px' }">
         <div class="logo flx-center">
           <img class="logo-img" src="/logo2.png" alt="logo" />
-          <span v-show="!isCollapse" class="logo-text">{{ title }}</span>
+          <span
+            v-show="!isCollapse"
+            :class="lang === 'en' ? 'logo-text-en' : 'logo-text'"
+            >{{ $t("home.title") }}</span
+          >
         </div>
         <el-scrollbar>
           <el-menu
@@ -40,13 +44,12 @@ import ToolBarLeft from "@/layouts/components/Header/ToolBarLeft.vue";
 import ToolBarRight from "@/layouts/components/Header/ToolBarRight.vue";
 import SubMenu from "@/layouts/components/Menu/SubMenu.vue";
 
-const title = "管理系统";
-
 const route = useRoute();
 const authStore = useAuthStore();
 const globalStore = useGlobalStore();
 const accordion = computed(() => globalStore.accordion);
 const isCollapse = computed(() => globalStore.isCollapse);
+const lang = computed(() => globalStore.language);
 const menuList = computed(() => authStore.showMenuListGet);
 const activeMenu = computed(() => {
   return route.meta.activeMenu ? route.meta.activeMenu : route.path;
@@ -84,6 +87,13 @@ const activeMenu = computed(() => {
         .logo-text {
           margin-left: 6px;
           font-size: 17px;
+          font-weight: bold;
+          color: var(--el-aside-logo-text-color);
+          white-space: nowrap;
+        }
+        .logo-text-en {
+          margin-left: 6px;
+          font-size: 13px;
           font-weight: bold;
           color: var(--el-aside-logo-text-color);
           white-space: nowrap;

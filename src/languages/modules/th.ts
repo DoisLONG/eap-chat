@@ -1,6 +1,9 @@
 export default {
+  填空题: "ข้อสอบแบบเติมช่องว่าง",
+  问答题: "ข้อสอบแบบถาม-ตอบ",
   home: {
     welcome: "ยินดีต้อนรับใช้งาน",
+    title: "ระบบจัดการ",
   },
   tabs: {
     refresh: "รีเฟรช",
@@ -108,6 +111,23 @@ export default {
     newTitle: "หัวข้อใหม่",
     newTitlePlaceholder: "กรุณากรอกหัวข้อใหม่",
     keywordPlaceholder: "กรุณากรอกชื่อกฎระเบียบ",
+    timuManage: "การจัดการข้อสอบ",
+    namePlaceholder: "กรุณากรอกชื่อ",
+    saveAndUpdate: "บันทึกและซิงโครไนซ์กับฐานความรู้",
+    sort: "ข้อที่ {i}",
+    unknownti: "ประเภทข้อสอบไม่ทราบ",
+    unknownMode: "โมดูลไม่ทราบ",
+    timu: "ข้อสอบ",
+    answer: "คำตอบอ้างอิง",
+    analysis: "คำอธิบายวิธีแก้",
+    addNew: "เพิ่มข้อสอบใหม่",
+    unknownDuan: "ระยะเวลาที่ไม่ทราบ",
+    wenda: "ข้อสอบแบบถาม-ตอบ",
+    xinjieduanTit: "ระยะใหม่ - โมดูลใหม่",
+    newDuanTit: "ระยะใหม่",
+    newModuleTit: "โมดูลใหม่",
+    titTip:
+      "ข้อที่ {i} มีเนื้อหาที่ยังไม่ได้กรอก กรุณากรอกให้ครบถ้วนก่อนบันทึก",
   },
   userManagement: {
     add: "เพิ่มผู้ใช้ใหม่",

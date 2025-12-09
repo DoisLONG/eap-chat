@@ -350,8 +350,11 @@ export function getBrowserLang() {
     ? navigator.language
     : navigator.browserLanguage;
   let defaultBrowserLang = "";
-  if (["cn", "zh", "zh-cn"].includes(browserLang.toLowerCase())) {
+  const lang = browserLang.toLowerCase();
+  if (["cn", "zh", "zh-cn", "zh-tw", "zh-hk"].includes(lang)) {
     defaultBrowserLang = "zh";
+  } else if (["en", "en-us", "en-gb", "en-au"].includes(lang)) {
+    defaultBrowserLang = "en";
   } else {
     defaultBrowserLang = "th";
   }

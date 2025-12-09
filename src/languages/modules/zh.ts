@@ -1,6 +1,9 @@
 export default {
+  填空题: "填空题",
+  问答题: "问答题",
   home: {
     welcome: "欢迎使用",
+    title: "管理系统",
   },
   tabs: {
     refresh: "刷新",
@@ -108,6 +111,23 @@ export default {
     newTitle: "新标题",
     newTitlePlaceholder: "请填写新标题",
     keywordPlaceholder: "请输入规程名称",
+    timuManage: "题目管理",
+    namePlaceholder: "请输入名称",
+    saveAndUpdate: "保存并同步知识库",
+    sort: "第 {i} 题",
+    unknownti: "题型未知",
+    unknownMode: "模块未知",
+    timu: "题目",
+    answer: "参考答案",
+    analysis: "解析说明",
+    addNew: "新增一题",
+    unknownDuan: "未知阶段",
+    wenda: "问答题",
+    xinjieduanTit: "新阶段-新模块",
+    newDuanTit: "新阶段",
+    newModuleTit: "新模块",
+    titTip: "第 {i} 题有未填写的内容，请补充完整后再保存",
+    fill: "填空题",
   },
   userManagement: {
     add: "新增用户",
