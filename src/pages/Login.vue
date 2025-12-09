@@ -4,6 +4,31 @@
       <div class="login-header">
         <img class="logo" src="/logo2.png" alt="logo" />
         <span class="title"> {{ $t("header.logoTitle") }}</span>
+        <el-dropdown
+          style="margin-left: 15px"
+          trigger="hover"
+          @command="changeLanguage"
+        >
+          <div>
+            <img
+              :src="globalIcon"
+              alt="language"
+              style="width: 23px; height: 23px"
+            />
+          </div>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item
+                v-for="item in languageList"
+                :key="item.value"
+                :command="item.value"
+                :disabled="language === item.value"
+              >
+                {{ item.label }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
       <el-form
         :model="form"
@@ -44,11 +69,14 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { reactive, ref, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { login } from "@/services/user.service";
 import { useUserStore } from "@/stores/modules/user";
+import { useGlobalStore } from "@/stores/modules/global";
+import { LanguageType } from "@/stores/interface";
+import globalIcon from "@/assets/images/global.png";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
@@ -59,6 +87,21 @@ const userStore = useUserStore();
 const loginForm = ref<any>();
 const loading = ref(false);
 const year = new Date().getFullYear();
+
+const i18n = useI18n();
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
+
+const languageList = [
+  { label: "简体中文", value: "zh" },
+  { label: "English", value: "en" },
+  { label: "ภาษาไทย", value: "th" },
+];
+
+const changeLanguage = (lang: string) => {
+  i18n.locale.value = lang;
+  globalStore.setGlobalState("language", lang as LanguageType);
+};
 
 const form = reactive({
   username: "",
@@ -134,7 +177,7 @@ const onLogin = async () => {
   align-items: center;
 }
 .login-box {
-  width: 380px;
+  width: 450px;
   padding: 36px 32px 18px 32px;
   background: #fff;
   border-radius: 18px;
