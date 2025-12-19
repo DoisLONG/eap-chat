@@ -21,6 +21,11 @@ initTheme();
 
 const i18n = useI18n();
 onMounted(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get("token");
+  if (token) {
+    localStorage.setItem("token", token);
+  }
   const language = globalStore.language ?? getBrowserLang();
   i18n.locale.value = language;
   globalStore.setGlobalState("language", language as LanguageType);

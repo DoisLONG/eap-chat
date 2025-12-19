@@ -39,6 +39,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/userapi/, ""),
       },
+      "/mobileapi": {
+        target: "http://14.103.223.101:7010",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/mobileapi/, ""),
+      },
     },
   },
 });
