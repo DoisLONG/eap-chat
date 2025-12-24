@@ -186,6 +186,8 @@ export default {
   positionManagement: {
     add: "新增岗位",
     duty: "岗位职责",
+    position: "岗位名称",
+    positionPlaceholder: "请输入岗位名称",
     dutyPlaceholder: "请输入岗位职责",
     requirement: "任职要求",
     requirementPlaceholder: "请输入任职要求",

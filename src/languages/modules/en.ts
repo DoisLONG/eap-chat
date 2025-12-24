@@ -187,6 +187,8 @@ export default {
   positionManagement: {
     add: "Add Position",
     duty: "Job Responsibilities",
+    position: "Position Name",
+    positionPlaceholder: "Please enter position name",
     dutyPlaceholder: "Please enter job responsibilities",
     requirement: "Requirements",
     requirementPlaceholder: "Please enter requirements",

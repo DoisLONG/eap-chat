@@ -186,6 +186,8 @@ export default {
   positionManagement: {
     add: "เพิ่มตำแหน่งงานใหม่",
     duty: "หน้าที่ของตำแหน่ง",
+    position: "ชื่อตำแหน่ง",
+    positionPlaceholder: "กรุณากรอกชื่อตำแหน่ง",
     dutyPlaceholder: "กรุณากรอกหน้าที่ของตำแหน่ง",
     requirement: "ข้อกำหนดสำหรับตำแหน่ง",
     requirementPlaceholder: "กรุณากรอกข้อกำหนดสำหรับตำแหน่ง",

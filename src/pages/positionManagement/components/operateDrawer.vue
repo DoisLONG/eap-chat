@@ -39,7 +39,7 @@
       >
         <el-select
           v-model="operateInfo!.department_id"
-          :placeholder="$t('deptManagement.deptmentPlaceholder')"
+          :placeholder="$t('companyManagement.deptmentPlaceholder')"
           :disabled="type !== 'create'"
         >
           <el-option
@@ -80,10 +80,10 @@
           clearable
         ></el-input>
       </el-form-item>
-      <el-form-item :label="$t('positionManagement.remark')" prop="remark">
+      <el-form-item :label="$t('deptManagement.remark')" prop="remark">
         <el-input
           v-model="operateInfo!.remark"
-          :placeholder="$t('positionManagement.remarkPlaceholder')"
+          :placeholder="$t('deptManagement.remarkPlaceholder')"
           type="textarea"
           clearable
         ></el-input>
