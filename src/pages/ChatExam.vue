@@ -465,6 +465,7 @@ onMounted(() => {
 
 // 页面卸载时结束考试会话
 onUnmounted(() => {
+  if (!examId.value) return;
   endExamSession({
     user_id: String(userInfo.value.id),
     exams_id: examId.value,
