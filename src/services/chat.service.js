@@ -74,3 +74,8 @@ export async function streamExamAnswer(body, onChunk) {
     });
   }
 }
+
+// 结束考试
+export function endExamSession({ user_id, exams_id }) {
+  return chatApi.post("/v1/exams/finish", { user_id, exams_id });
+}

@@ -141,9 +141,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from "vue";
+import { ref, reactive, onMounted, nextTick, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
+import { endExamSession } from "@/services/chat.service";
 import MarkdownRenderer from "@/components/MarkdownRenderer.vue";
 import { useUserStore } from "@/stores/modules/user";
 import { storeToRefs } from "pinia";
@@ -446,6 +447,13 @@ async function send() {
 
 function endExam() {
   persist();
+  // endExamSession({
+  //   user_id: String(userInfo.value.id),
+  //   exams_id: examId.value,
+  // }).then((res) => {
+  //   ElMessage.success(t("ChatExam.testOver"));
+  //   router.replace("/chat/sop");
+  // });
   ElMessage.success(t("ChatExam.testOver"));
   router.replace("/chat/sop");
 }
@@ -453,6 +461,14 @@ function endExam() {
 onMounted(() => {
   loadSessions();
   newSession();
+});
+
+// 页面卸载时结束考试会话
+onUnmounted(() => {
+  endExamSession({
+    user_id: String(userInfo.value.id),
+    exams_id: examId.value,
+  });
 });
 </script>
 
