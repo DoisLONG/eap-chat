@@ -83,7 +83,7 @@
           />
           <el-table-column
             prop="version"
-            :label="$t('SpPicker.version')"
+            :label="$t('SopPicker.version')"
             width="120"
           />
           <el-table-column

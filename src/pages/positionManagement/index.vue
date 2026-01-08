@@ -142,7 +142,7 @@ const columns = reactive<ColumnProps[]>([
   {
     prop: "remark",
     label: "备注",
-    i18nKey: "positionManagement.remark",
+    i18nKey: "companyManagement.remark",
     width: 150,
   },
   {
