@@ -6,16 +6,16 @@
       :request-api="getTableList"
       :init-param="initParam"
       :data-callback="dataCallback"
-      rowKey="position_id"
+      rowKey="material_id"
     >
       <!-- 表格 header 按钮 -->
       <template #tableHeader="scope">
         <el-button
           v-auth="'add'"
           type="primary"
-          :icon="CirclePlus"
+          :icon="Upload"
           @click="openDrawer('create')"
-          >{{ $t("positionManagement.add") }}</el-button
+          >{{ $t("materialLibrary.add") }}</el-button
         >
         <el-button
           type="danger"
@@ -27,23 +27,14 @@
           {{ $t("common.batchDelete") }}
         </el-button>
       </template>
-      <template #role="scope">
-        <span>{{ scope.row.role.name }}</span>
-      </template>
-      <template #department="scope">
-        <span>{{ scope.row.department?.department_name || "--" }}</span>
-      </template>
-      <template #position="scope">
-        <span>{{ scope.row.position?.position_name || "--" }}</span>
-      </template>
       <!-- 表格操作 -->
       <template #operation="scope">
         <el-button
           type="primary"
           link
           :icon="View"
-          @click="openDrawer('check', scope.row)"
-          >{{ $t("common.check") }}</el-button
+          @click="checkPreView(scope.row)"
+          >{{ $t("common.preview") }}</el-button
         >
         <el-button
           type="primary"
@@ -63,7 +54,7 @@
     </ProTable>
     <OperateDrawer
       v-if="operateDrawerVisible"
-      :rowInfo="userInfo"
+      :rowInfo="rowInfo"
       :type="drawerType"
       @refresh="refreshTable"
       @close="operateDrawerVisible = false"
@@ -75,12 +66,14 @@
 <script setup lang="tsx" name="useProTable">
 import { ref, reactive } from "vue";
 import ProTable from "@/components/ProTable/index.vue";
-import OperateDrawer from "../knowledgeManagement/materialLibrary/components/operateDrawer.vue";
+import OperateDrawer from "./components/operateDrawer.vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
-import { CirclePlus, Delete, EditPen, View } from "@element-plus/icons-vue";
-import { getPostPageList, deletePost } from "@/services/company.service";
+import { Upload, Delete, EditPen, View } from "@element-plus/icons-vue";
+import { getMaterialList, deleteMaterial } from "@/services/mobile.service";
+
 import { useHandleData } from "@/hooks/useHandleData";
+import { formatDateTime } from "@/utils/dateFormat";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
@@ -88,62 +81,79 @@ const proTable = ref<ProTableInstance>();
 
 const initParam = reactive({});
 const dataCallback = (data: any) => {
+  const res = data.data;
   return {
-    list: data.results.records || [],
-    total: data?.results?.total || 0,
+    list: res.items || [],
+    total: res?.total || 0,
   };
 };
 
 const getTableList = (params: any) => {
   let newParams = JSON.parse(JSON.stringify(params));
-  return getPostPageList(newParams);
+  return getMaterialList(newParams);
 };
 
 // 表格配置项
 const columns = reactive<ColumnProps[]>([
   { type: "selection", fixed: "left", width: 70 },
   {
-    prop: "company_name",
-    label: "公司名称",
-    i18nKey: "companyManagement.company",
-    minWidth: 150,
-  },
-  {
-    prop: "department_name",
-    label: "部门名称",
-    i18nKey: "deptManagement.dept_name",
-    minWidth: 150,
-  },
-  {
-    prop: "position_name",
-    label: "岗位名称",
-    i18nKey: "companyManagement.position",
-    minWidth: 120,
+    prop: "title",
+    label: "素材名称",
+    i18nKey: "materialLibrary.name",
+    minWidth: 200,
     search: {
       el: "input",
       props: {
         clearable: true,
-        // placeholder: "companyManagement.positionPlaceholder",
+        placeholder: t("materialLibrary.searchKeyword"),
       },
     },
   },
   {
-    prop: "duty",
-    label: "岗位职责",
-    i18nKey: "positionManagement.duty",
+    prop: "file_type",
+    label: "素材类型",
+    i18nKey: "materialLibrary.type",
+    minWidth: 120,
+  },
+  {
+    prop: "category",
+    label: "素材分类",
+    i18nKey: "materialLibrary.category",
+    minWidth: 120,
+  },
+  {
+    prop: "size",
+    label: "文件大小",
+    i18nKey: "materialLibrary.size",
+    minWidth: 100,
+    render: (scope) => {
+      const size = scope.row.size;
+      if (!size) return "-";
+      if (size < 1024) return size + " B";
+      if (size < 1024 * 1024) return (size / 1024).toFixed(1) + " KB";
+      return (size / (1024 * 1024)).toFixed(1) + " MB";
+    },
+  },
+  {
+    prop: "description",
+    label: "素材描述",
+    i18nKey: "materialLibrary.description",
     minWidth: 150,
   },
   {
-    prop: "requirement",
-    label: "任职要求",
-    i18nKey: "positionManagement.requirement",
+    prop: "course_name",
+    label: "关联课程",
+    i18nKey: "materialLibrary.course",
     minWidth: 150,
+    render: (scope) => scope.row.course_name || "-",
   },
   {
-    prop: "remark",
-    label: "备注",
-    i18nKey: "companyManagement.remark",
-    width: 150,
+    prop: "created_at",
+    label: "上传时间",
+    minWidth: 200,
+    render: (scope) => {
+      return scope.row.created_at ? formatDateTime(scope.row.created_at) : "-";
+    },
   },
   {
     prop: "operation",
@@ -154,19 +164,19 @@ const columns = reactive<ColumnProps[]>([
   },
 ]);
 
-// 删除岗位信息
+// 删除素材信息
 const deleteAccount = async (params) => {
   await useHandleData(
-    deletePost,
-    { position_id: params.position_id },
-    t("positionManagement.deleteTip", { name: params.position_name }),
+    deleteMaterial,
+    { id: params.material_id },
+    t("materialLibrary.deleteTip", { name: params.title }),
     t
   );
 
   proTable.value?.getTableList();
 };
 
-// 批量删除岗位信息
+// 批量删除部门信息
 const batchDelete = async (ids) => {
   if (!ids.length) return;
   ElMessageBox.confirm(
@@ -179,7 +189,7 @@ const batchDelete = async (ids) => {
     }
   )
     .then(async () => {
-      await Promise.all(ids.map((id) => deletePost({ position_id: id })));
+      await Promise.all(ids.map((id) => deleteMaterial({ id })));
       ElMessage.success(t("common.batchDeleteSuccess"));
       proTable.value?.clearSelection();
       proTable.value?.getTableList();
@@ -187,15 +197,20 @@ const batchDelete = async (ids) => {
     .catch(() => {});
 };
 
+// 预览
+const checkPreView = (row) => {
+  console.log("row", row);
+};
+
 // 打开 drawer(新增、查看、编辑)
 const operateDrawerVisible = ref(false);
-const userInfo = ref<any>({});
+const rowInfo = ref<any>({});
 const drawerType = ref<string>("check");
 const openDrawer = (type: string, row?: any) => {
   if (row) {
-    userInfo.value = row;
+    rowInfo.value = row;
   } else {
-    userInfo.value = {};
+    rowInfo.value = {};
   }
   drawerType.value = type;
   operateDrawerVisible.value = true;

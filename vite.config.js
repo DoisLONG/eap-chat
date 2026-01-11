@@ -44,6 +44,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/mobileapi/, ""),
       },
+      "/videoapi": {
+        target: "https://bin-practitioner-stated-sunrise.trycloudflare.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/videoapi/, ""),
+      },
     },
   },
 });

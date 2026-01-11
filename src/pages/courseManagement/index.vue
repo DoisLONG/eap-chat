@@ -6,7 +6,7 @@
       :request-api="getTableList"
       :init-param="initParam"
       :data-callback="dataCallback"
-      rowKey="position_id"
+      rowKey="course_id"
     >
       <!-- 表格 header 按钮 -->
       <template #tableHeader="scope">
@@ -15,7 +15,7 @@
           type="primary"
           :icon="CirclePlus"
           @click="openDrawer('create')"
-          >{{ $t("positionManagement.add") }}</el-button
+          >{{ $t("course.add") }}</el-button
         >
         <el-button
           type="danger"
@@ -27,8 +27,17 @@
           {{ $t("common.batchDelete") }}
         </el-button>
       </template>
-      <template #role="scope">
-        <span>{{ scope.row.role.name }}</span>
+      <template #status="scope">
+        <el-tag v-if="scope.row.status === 'published'" type="success"
+          >已发布</el-tag
+        >
+        <el-tag v-else-if="scope.row.status === 'draft'" type="info"
+          >草稿</el-tag
+        >
+        <el-tag v-else-if="scope.row.status === 'archived'" type="warning"
+          >已归档</el-tag
+        >
+        <span v-else>{{ scope.row.status }}</span>
       </template>
       <template #department="scope">
         <span>{{ scope.row.department?.department_name || "--" }}</span>
@@ -75,12 +84,13 @@
 <script setup lang="tsx" name="useProTable">
 import { ref, reactive } from "vue";
 import ProTable from "@/components/ProTable/index.vue";
-import OperateDrawer from "../knowledgeManagement/materialLibrary/components/operateDrawer.vue";
+import OperateDrawer from "./components/operateDrawer.vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
 import { CirclePlus, Delete, EditPen, View } from "@element-plus/icons-vue";
-import { getPostPageList, deletePost } from "@/services/company.service";
+import { getCourseList, deleteCourse } from "@/services/mobile.service";
 import { useHandleData } from "@/hooks/useHandleData";
+import { formatDateTime } from "@/utils/dateFormat";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
@@ -88,63 +98,99 @@ const proTable = ref<ProTableInstance>();
 
 const initParam = reactive({});
 const dataCallback = (data: any) => {
+  const res = data.data;
   return {
-    list: data.results.records || [],
-    total: data?.results?.total || 0,
+    list: res.items || [],
+    total: res?.total || 0,
   };
 };
 
 const getTableList = (params: any) => {
   let newParams = JSON.parse(JSON.stringify(params));
-  return getPostPageList(newParams);
+  return getCourseList(newParams);
 };
 
 // 表格配置项
 const columns = reactive<ColumnProps[]>([
   { type: "selection", fixed: "left", width: 70 },
   {
-    prop: "company_name",
-    label: "公司名称",
+    prop: "title",
+    label: "课程名称",
+    i18nKey: "course.name",
+    minWidth: 200,
+    search: {
+      el: "input",
+      props: {
+        clearable: true,
+        placeholder: t("course.searchKeyword"),
+      },
+    },
+  },
+  {
+    prop: "category",
+    label: "所属类别",
+    i18nKey: "materialLibrary.category",
+    minWidth: 120,
+    search: {
+      el: "select",
+      props: {
+        clearable: true,
+        placeholder: t("course.searchCategory"),
+      },
+    },
+  },
+  {
+    prop: "department_name",
+    label: "公司",
     i18nKey: "companyManagement.company",
     minWidth: 150,
   },
   {
     prop: "department_name",
-    label: "部门名称",
-    i18nKey: "deptManagement.dept_name",
+    label: "部门",
+    i18nKey: "companyManagement.deptment",
     minWidth: 150,
   },
   {
     prop: "position_name",
-    label: "岗位名称",
+    label: "岗位",
     i18nKey: "companyManagement.position",
     minWidth: 120,
+  },
+  {
+    prop: "version",
+    label: "版本",
+    i18nKey: "licenseAdmin.version",
+    width: 100,
+  },
+  {
+    prop: "version",
+    label: "TAB标签",
+    i18nKey: "course.TABTag",
+    minWidth: 100,
+  },
+  // draft 草稿/published 已发布/archived 已归档）
+  {
+    prop: "status",
+    label: "状态",
+    i18nKey: "course.status",
+    width: 150,
     search: {
-      el: "input",
+      el: "select",
       props: {
         clearable: true,
-        // placeholder: "companyManagement.positionPlaceholder",
+        placeholder: t("course.searchStatus"),
       },
     },
   },
-  {
-    prop: "duty",
-    label: "岗位职责",
-    i18nKey: "positionManagement.duty",
-    minWidth: 150,
-  },
-  {
-    prop: "requirement",
-    label: "任职要求",
-    i18nKey: "positionManagement.requirement",
-    minWidth: 150,
-  },
-  {
-    prop: "remark",
-    label: "备注",
-    i18nKey: "companyManagement.remark",
-    width: 150,
-  },
+  // {
+  //   prop: "created_at",
+  //   label: "上传时间",
+  //   minWidth: 200,
+  //   render: (scope) => {
+  //     return scope.row.created_at ? formatDateTime(scope.row.created_at) : "-";
+  //   },
+  // },
   {
     prop: "operation",
     label: "操作",
@@ -157,9 +203,9 @@ const columns = reactive<ColumnProps[]>([
 // 删除岗位信息
 const deleteAccount = async (params) => {
   await useHandleData(
-    deletePost,
-    { position_id: params.position_id },
-    t("positionManagement.deleteTip", { name: params.position_name }),
+    deleteCourse,
+    { id: params.course_id },
+    t("course.deleteTip", { name: params.title }),
     t
   );
 
@@ -179,7 +225,7 @@ const batchDelete = async (ids) => {
     }
   )
     .then(async () => {
-      await Promise.all(ids.map((id) => deletePost({ position_id: id })));
+      await Promise.all(ids.map((id) => deleteCourse({ id })));
       ElMessage.success(t("common.batchDeleteSuccess"));
       proTable.value?.clearSelection();
       proTable.value?.getTableList();

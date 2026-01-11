@@ -29,7 +29,10 @@ export const useHandleData = (
       .then(async () => {
         const res = await api(params);
         if (!res) return reject(false);
-        if (res.data.status !== 200) {
+        if (
+          (res.data.status && res.data.status !== 200) ||
+          (res.data.code && res.data.code !== 0)
+        ) {
           ElMessage({
             type: "error",
             message: res.data.message,
