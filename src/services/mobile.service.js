@@ -57,6 +57,15 @@ export function deleteCourse({ id }) {
 export function createCourse(params) {
   return mobileApi.post(`/api/v1/course/add`, params);
 }
+// 修改课程
+export function updateCourse(params) {
+  return mobileApi.post(`/api/v1/course/update`, params);
+}
+
+// 获取课程详情
+export function getCourseInfo(course_id) {
+  return mobileApi.get(`/api/v1/course/info/${course_id}`);
+}
 
 /**
  * 上传学习资料文件

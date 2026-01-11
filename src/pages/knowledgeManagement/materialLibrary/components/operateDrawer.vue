@@ -114,7 +114,7 @@
       </el-form-item>
 
       <!-- 关联课程 -->
-      <el-form-item :label="$t('materialLibrary.course')" prop="course_id">
+      <!-- <el-form-item :label="$t('materialLibrary.course')" prop="course_id">
         <el-select
           v-model="operateInfo.course_id"
           :placeholder="
@@ -130,7 +130,7 @@
             :value="item.value"
           />
         </el-select>
-      </el-form-item>
+      </el-form-item> -->
 
       <!-- 公司选择 -->
       <el-form-item :label="$t('companyManagement.company')" prop="company_id">

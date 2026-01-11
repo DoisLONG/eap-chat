@@ -150,12 +150,55 @@
           </div>
           <!-- 文件上传 -->
           <div class="left-bottom">
-            <el-form-item
-              :label="$t('licenseAdmin.selectFile')"
-              v-if="type == 'create'"
-              prop="files"
-            >
-              <div class="upload-container">
+            <el-form-item :label="$t('licenseAdmin.selectFile')" prop="files">
+              <div
+                v-if="
+                  type !== 'create' &&
+                  operateInfo.videos &&
+                  operateInfo.videos.length > 0 &&
+                  !showUploadArea
+                "
+                class="existing-video-info"
+              >
+                <div class="video-info-card">
+                  <div class="video-info-header">
+                    <span class="video-title">{{
+                      operateInfo.videos[0].video_title ||
+                      operateInfo.videos[0].title
+                    }}</span>
+                    <div v-if="type === 'update'" class="video-actions">
+                      <el-button
+                        v-if="!showUploadArea"
+                        type="primary"
+                        size="small"
+                        @click="handleReuploadClick"
+                        :icon="Upload"
+                      >
+                        {{ $t("course.reupload") }}
+                      </el-button>
+                    </div>
+                  </div>
+                  <div class="video-info-details"></div>
+                  <!-- 视频预览 -->
+                  <div v-if="videoPreviewUrl" class="video-preview">
+                    <video
+                      :src="videoPreviewUrl"
+                      controls
+                      preload="metadata"
+                      class="preview-video"
+                      @loadedmetadata="onVideoLoaded"
+                    >
+                      {{ $t("course.videoNotSupported") }}
+                    </video>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 上传 -->
+              <div
+                v-if="type === 'create' || showUploadArea"
+                class="upload-container"
+              >
                 <el-upload
                   ref="uploadRef"
                   class="upload-demo"
@@ -175,7 +218,11 @@
                     </el-icon>
                     <div class="upload-text">
                       <p class="upload-title">
-                        {{ $t("course.uploadTxt") }}
+                        {{
+                          type === "create"
+                            ? $t("course.uploadTxt")
+                            : $t("course.reuploadTxt")
+                        }}
                       </p>
                       <p class="upload-hint">
                         {{ $t("course.uploadType") }}
@@ -389,7 +436,11 @@
       </div>
     </el-form>
     <template #footer>
-      <el-button @click="emits('close')">{{ $t("common.cancel") }}</el-button>
+      <el-button @click="emits('close')">{{
+        ["create", "update"].includes(type)
+          ? $t("common.cancel")
+          : $t("common.close")
+      }}</el-button>
       <el-button
         v-show="!drawerProps.isView"
         type="primary"
@@ -407,6 +458,7 @@
 import { ref, nextTick, toRefs, computed, onMounted } from "vue";
 import {
   ElMessage,
+  ElMessageBox,
   FormInstance,
   UploadInstance,
   UploadProps,
@@ -420,13 +472,20 @@ import {
   Warning,
   Close,
   Loading,
+  Upload,
 } from "@element-plus/icons-vue";
 import {
   getCompanyList,
   getDeptList,
   getPostList,
 } from "@/services/company.service";
-import { uploadOss, createCourse, getOssSign } from "@/services/mobile.service";
+import {
+  uploadOss,
+  createCourse,
+  getOssSign,
+  getCourseInfo,
+  updateCourse,
+} from "@/services/mobile.service";
 import {
   createAsrJobs,
   getJobStatus,
@@ -542,6 +601,8 @@ const jobId = ref(""); // 存储分析任务ID
 const analysisResult = ref<any>({}); // 存储分析结果
 const tableLoading = ref(false); // 表格loading状态
 const coverGenerating = ref(false); // 封面生成状态
+const showUploadArea = ref(false); // 编辑模式下是否显示上传
+const videoPreviewUrl = ref(""); // 视频预览URL
 
 // 任务状态查询
 let jobStatusTimer: number | null = null;
@@ -636,8 +697,8 @@ const onUploadChange: UploadProps["onChange"] = async (
 ) => {
   operateInfo.value.files = uploadFiles;
 
-  // 如果没有填写素材名称，自动使用文件名
-  if (!operateInfo.value.title && uploadFile.name) {
+  // 如果没有填写素材名称，自动使用文件名（在创建时候）
+  if (!operateInfo.value.title && uploadFile.name && type.value === "create") {
     const fileName = uploadFile.name.substring(
       0,
       uploadFile.name.lastIndexOf(".")
@@ -646,7 +707,11 @@ const onUploadChange: UploadProps["onChange"] = async (
   }
 
   // 文件选择后立即上传
-  if (uploadFile.raw && type.value === "create") {
+  if (
+    uploadFile.raw &&
+    (type.value === "create" ||
+      (type.value === "update" && showUploadArea.value))
+  ) {
     await handleFileUpload(uploadFile.raw);
   }
 };
@@ -819,6 +884,48 @@ const validateTimeInput = (value: string, row: any, field: string) => {
   // }
 };
 
+// 视频加载完成事件
+const onVideoLoaded = (event: Event) => {
+  const video = event.target as HTMLVideoElement;
+  console.log("视频时长:", video.duration);
+};
+
+const getVideoPreviewUrl = async (ossUri: string) => {
+  try {
+    const res = await getOssSign({ oss_uri: ossUri });
+    if (res.data.code === 0) {
+      videoPreviewUrl.value = res.data.data;
+    }
+  } catch (error) {
+    console.error("获取视频预览URL失败:", error);
+  }
+};
+
+// 处理重新上传点击事件
+const handleReuploadClick = () => {
+  // 如果已有章节数据
+  if (keywordsList.value.length > 0) {
+    ElMessageBox.confirm(
+      t("course.reuploadConfirmMessage"),
+      t("course.reuploadConfirmTitle"),
+      {
+        type: "warning",
+        confirmButtonText: t("common.confirm"),
+        cancelButtonText: t("common.cancel"),
+      }
+    )
+      .then(() => {
+        keywordsList.value = [];
+        showUploadArea.value = true;
+      })
+      .catch(() => {
+        // 取消
+      });
+  } else {
+    showUploadArea.value = true;
+  }
+};
+
 // 处理文件上传
 const handleFileUpload = async (file: File) => {
   isUploading.value = true;
@@ -883,7 +990,11 @@ const handleFileUpload = async (file: File) => {
       throw new Error(t("course.createAnalysisTaskFailed"));
     }
 
-    ElMessage.success(t("course.uploadSuccessAnalyzing"));
+    ElMessage.success(
+      type.value === "create"
+        ? t("course.uploadSuccessAnalyzing")
+        : t("course.reuploadSuccessAnalyzing")
+    );
   } catch (error: any) {
     console.error("文件上传失败:", error);
     ElMessage.error(error.message || t("course.uploadFailed"));
@@ -919,7 +1030,11 @@ const pollJobStatus = async (jobId: string) => {
         }
         isUploading.value = false;
         tableLoading.value = false;
-        ElMessage.success(t("course.analysisCompleted"));
+        ElMessage.success(
+          type.value === "create"
+            ? t("course.analysisCompleted")
+            : t("course.reanalysisCompleted")
+        );
         return;
       case "failed":
         analysisProgress.value = 100;
@@ -961,7 +1076,38 @@ const getAnalysisResult = async (jobId: string) => {
 
       // 处理关键词列表
       if (res.data.data.keywords && Array.isArray(res.data.data.keywords)) {
-        keywordsList.value = res.data.data.keywords.map((item: any) => ({
+        const newKeywords = res.data.data.keywords.map((item: any) => ({
+          keyword: item.keyword || "",
+          desc: item.desc || "",
+          start: secondsToMMSS(item.time?.start || 0),
+          end: secondsToMMSS(item.time?.end || 0),
+          editing: false,
+        }));
+
+        keywordsList.value = newKeywords;
+      }
+    }
+  } catch (error) {
+    console.error("获取分析结果失败:", error);
+  }
+};
+
+// 获取课程详情
+const getDetail = () => {
+  if (!rowInfo.value.course_id) return;
+  getCourseInfo(rowInfo.value.course_id).then((res) => {
+    // console.log("课程详情", res);
+    if (res.data.code == 0) {
+      operateInfo.value = {
+        ...operateInfo.value,
+        ...res.data.data,
+      };
+      dynamicTags.value = res.data.data?.tags || [];
+
+      // 章节
+      const keywords = res.data.data?.keywordslist?.[0]?.keywords;
+      if (keywords && Array.isArray(keywords)) {
+        keywordsList.value = keywords.map((item: any) => ({
           keyword: item.keyword || "",
           desc: item.desc || "",
           start: secondsToMMSS(item.time?.start || 0),
@@ -969,10 +1115,15 @@ const getAnalysisResult = async (jobId: string) => {
           editing: false,
         }));
       }
+
+      if (res.data.data?.videos && res.data.data.videos.length > 0) {
+        const video = res.data.data.videos[0];
+        if (video.video_url) {
+          getVideoPreviewUrl(video.video_url);
+        }
+      }
     }
-  } catch (error) {
-    console.error("获取分析结果失败:", error);
-  }
+  });
 };
 
 // 提交
@@ -990,49 +1141,49 @@ const handleSubmit = () => {
     submitLoading.value = true;
 
     try {
-      const courseData = {
-        title: operateInfo.value.title,
-        description: operateInfo.value.description,
-        category: operateInfo.value.category,
-        company_id: operateInfo.value.company_id,
-        department_id: operateInfo.value.department_id,
-        position_id: operateInfo.value.position_id,
-        tags: dynamicTags.value,
-        videos: [
-          {
-            title: operateInfo.value.title,
-            video_url: uploadedFileUrl.value,
-            // duration: 600,
-            // order_index: 1
-          },
-        ],
-        cover_url: "",
-        // cover_url: coverUrl.value,
-        keywordslist: [
-          {
-            speaker: analysisResult.value.speaker,
-            doc_id: analysisResult.value.doc_id,
-            duration_s: analysisResult.value.duration_s,
-            title: operateInfo.value.title,
-            keywords: keywordsList.value
-              .filter((item) => item.keyword.trim())
-              .map((item) => {
-                return {
-                  keyword: item.keyword,
-                  desc: item.desc || "",
-                  time: {
-                    start: mmssToSeconds(item.start),
-                    end: mmssToSeconds(item.end),
-                  },
-                };
-              }),
-          },
-        ],
-        // job_id: jobId.value,
-      };
-
-      console.log("courseData", courseData);
       if (type.value === "create") {
+        const courseData = {
+          title: operateInfo.value.title,
+          description: operateInfo.value.description,
+          category: operateInfo.value.category,
+          company_id: operateInfo.value.company_id,
+          department_id: operateInfo.value.department_id,
+          position_id: operateInfo.value.position_id,
+          tags: dynamicTags.value,
+          videos: [
+            {
+              title: operateInfo.value.title,
+              video_url: uploadedFileUrl.value,
+              // duration: 600,
+              // order_index: 1
+            },
+          ],
+          cover_url: "",
+          // cover_url: coverUrl.value,
+          keywordslist: [
+            {
+              speaker: analysisResult.value.speaker,
+              doc_id: analysisResult.value.doc_id,
+              duration_s: analysisResult.value.duration_s,
+              title: operateInfo.value.title,
+              keywords: keywordsList.value
+                .filter((item) => item.keyword.trim())
+                .map((item) => {
+                  return {
+                    keyword: item.keyword,
+                    desc: item.desc || "",
+                    time: {
+                      start: mmssToSeconds(item.start),
+                      end: mmssToSeconds(item.end),
+                    },
+                  };
+                }),
+            },
+          ],
+          // job_id: jobId.value,
+        };
+
+        console.log("courseData", courseData);
         const res = await createCourse(courseData);
         if (res.data.code === 0) {
           ElMessage.success(t("course.addSuccess"));
@@ -1043,9 +1194,63 @@ const handleSubmit = () => {
         }
       } else if (type.value === "update") {
         // 编辑逻辑
-        ElMessage.success(t("common.editSuccess"));
-        emits("close");
-        emits("refresh");
+        const editData = {
+          ...operateInfo.value,
+          title: operateInfo.value.title,
+          description: operateInfo.value.description,
+          category: operateInfo.value.category,
+          company_id: operateInfo.value.company_id,
+          department_id: operateInfo.value.department_id,
+          position_id: operateInfo.value.position_id,
+          tags: dynamicTags.value,
+          // cover_url: coverUrl.value,
+          keywordslist: [
+            {
+              speaker: analysisResult.value.speaker,
+              doc_id: analysisResult.value.doc_id,
+              duration_s: analysisResult.value.duration_s,
+              title: operateInfo.value.title,
+              keywords: keywordsList.value
+                .filter((item) => item.keyword.trim())
+                .map((item) => {
+                  return {
+                    keyword: item.keyword,
+                    desc: item.desc || "",
+                    time: {
+                      start: mmssToSeconds(item.start),
+                      end: mmssToSeconds(item.end),
+                    },
+                  };
+                }),
+            },
+          ],
+        };
+        if (uploadedFileUrl.value) {
+          editData.videos = [
+            {
+              title: operateInfo.value.title,
+              video_url: uploadedFileUrl.value,
+              // duration: 600,
+              // order_index: 1
+            },
+          ];
+        } else {
+          editData.videos = operateInfo.value.videos.map((i) => {
+            return {
+              ...i,
+              title: i.video_title,
+            };
+          });
+        }
+        const res = await updateCourse(editData);
+
+        if (res.data.code === 0) {
+          ElMessage.success(t("common.editSuccess"));
+          emits("close");
+          emits("refresh");
+        } else {
+          ElMessage.error(res.data.message || t("common.operateError"));
+        }
       }
     } catch (error: any) {
       console.error("提交失败:", error);
@@ -1061,6 +1266,7 @@ onMounted(() => {
   queryCompany();
   queryDept();
   queryPost();
+  getDetail();
 
   // 组件卸载时清理定时器
   return () => {
@@ -1445,5 +1651,74 @@ onMounted(() => {
 :deep(.el-table .el-button) {
   margin: 0 2px;
   padding: 4px 8px;
+}
+
+// 视频
+.existing-video-info {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.video-info-card {
+  background-color: #fff;
+  border: 1px solid #e4e7ed;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.video-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.video-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.video-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.video-info-details {
+  margin-bottom: 16px;
+
+  p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: #606266;
+    line-height: 1.5;
+
+    strong {
+      color: #303133;
+      font-weight: 500;
+      margin-right: 8px;
+    }
+  }
+}
+
+.video-preview {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.preview-video {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.upload-actions {
+  margin-top: 16px;
+  text-align: right;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
 }
 </style>

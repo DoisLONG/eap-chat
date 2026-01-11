@@ -61,6 +61,7 @@ export default {
     zhi: "至",
     preview: "预览",
     add: "添加",
+    close: "关闭",
   },
   menu: {
     sopManagement: "SOP管理",
@@ -292,5 +293,12 @@ export default {
     analysisFailed: "视频分析失败，请重新上传",
     queryStatusFailed: "查询任务状态失败，请重试",
     pleaseUploadVideo: "请先上传视频文件",
+    reupload: "重新上传",
+    reuploadTxt: "点击重新上传课程视频",
+    videoNotSupported: "您的浏览器不支持视频播放",
+    reuploadSuccessAnalyzing: "文件重新上传成功，正在进行视频分析...",
+    reanalysisCompleted: "视频重新分析完成",
+    reuploadConfirmTitle: "确认重新上传",
+    reuploadConfirmMessage: "重新上传视频将会替换当前的章节信息，是否继续？",
   },
 };

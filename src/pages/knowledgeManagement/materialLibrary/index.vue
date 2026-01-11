@@ -140,13 +140,13 @@ const columns = reactive<ColumnProps[]>([
     i18nKey: "materialLibrary.description",
     minWidth: 150,
   },
-  {
-    prop: "course_name",
-    label: "关联课程",
-    i18nKey: "materialLibrary.course",
-    minWidth: 150,
-    render: (scope) => scope.row.course_name || "-",
-  },
+  // {
+  //   prop: "course_name",
+  //   label: "关联课程",
+  //   i18nKey: "materialLibrary.course",
+  //   minWidth: 150,
+  //   render: (scope) => scope.row.course_name || "-",
+  // },
   {
     prop: "created_at",
     label: "上传时间",
