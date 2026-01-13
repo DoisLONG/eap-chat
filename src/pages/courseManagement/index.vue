@@ -39,8 +39,17 @@
         >
         <span v-else>{{ scope.row.status }}</span>
       </template>
-      <template #department="scope">
-        <span>{{ scope.row.department?.department_name || "--" }}</span>
+      <template #tags="scope">
+        <span v-if="scope.row.tags">
+          <el-tag
+            style="margin-right: 5px"
+            v-for="item in scope.row.tags"
+            type="info"
+            >{{ item }}</el-tag
+          >
+        </span>
+
+        <span v-else>{{ "--" }}</span>
       </template>
       <template #position="scope">
         <span>{{ scope.row.position?.position_name || "--" }}</span>
@@ -139,18 +148,18 @@ const columns = reactive<ColumnProps[]>([
       },
     },
   },
-  {
-    prop: "department_name",
-    label: "公司",
-    i18nKey: "companyManagement.company",
-    minWidth: 150,
-  },
-  {
-    prop: "department_name",
-    label: "部门",
-    i18nKey: "companyManagement.deptment",
-    minWidth: 150,
-  },
+  // {
+  //   prop: "department_name",
+  //   label: "公司",
+  //   i18nKey: "companyManagement.company",
+  //   minWidth: 150,
+  // },
+  // {
+  //   prop: "department_name",
+  //   label: "部门",
+  //   i18nKey: "companyManagement.deptment",
+  //   minWidth: 150,
+  // },
   {
     prop: "position_name",
     label: "岗位",
@@ -158,16 +167,16 @@ const columns = reactive<ColumnProps[]>([
     minWidth: 120,
   },
   {
-    prop: "version",
+    prop: "version_code",
     label: "版本",
     i18nKey: "licenseAdmin.version",
     width: 100,
   },
   {
-    prop: "version",
+    prop: "tags",
     label: "TAB标签",
     i18nKey: "course.TABTag",
-    minWidth: 100,
+    minWidth: 200,
   },
   // draft 草稿/published 已发布/archived 已归档）
   {

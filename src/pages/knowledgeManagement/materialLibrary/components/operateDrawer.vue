@@ -114,7 +114,7 @@
       </el-form-item>
 
       <!-- 关联课程 -->
-      <!-- <el-form-item :label="$t('materialLibrary.course')" prop="course_id">
+      <el-form-item :label="$t('materialLibrary.course')" prop="course_id">
         <el-select
           v-model="operateInfo.course_id"
           :placeholder="
@@ -130,7 +130,7 @@
             :value="item.value"
           />
         </el-select>
-      </el-form-item> -->
+      </el-form-item>
 
       <!-- 公司选择 -->
       <el-form-item :label="$t('companyManagement.company')" prop="company_id">
@@ -270,7 +270,7 @@ const operateInfo = ref<any>({
   title: "",
   description: "",
   category: "",
-  // course_id: "",
+  course_id: "",
   ...rowInfo.value,
 });
 
@@ -434,18 +434,18 @@ const handleSubmit = () => {
         if (operateInfo.value.category) {
           formData.append("category", operateInfo.value.category);
         }
-        // if (operateInfo.value.course_id) {
-        //   formData.append("course_id", operateInfo.value.course_id);
-        // }
-        // if (operateInfo.value.company_id) {
-        //   formData.append("company_id", operateInfo.value.company_id);
-        // }
-        // if (operateInfo.value.department_id) {
-        //   formData.append("department_id", operateInfo.value.department_id);
-        // }
-        // if (operateInfo.value.position_id) {
-        //   formData.append("position_id", operateInfo.value.position_id);
-        // }
+        if (operateInfo.value.course_id) {
+          formData.append("course_id", operateInfo.value.course_id);
+        }
+        if (operateInfo.value.company_id) {
+          formData.append("company_id", operateInfo.value.company_id);
+        }
+        if (operateInfo.value.department_id) {
+          formData.append("department_id", operateInfo.value.department_id);
+        }
+        if (operateInfo.value.position_id) {
+          formData.append("position_id", operateInfo.value.position_id);
+        }
 
         const res = await uploadMaterial(formData);
         console.log("res", res);
@@ -463,10 +463,10 @@ const handleSubmit = () => {
           title: operateInfo.value.title,
           description: operateInfo.value.description,
           category: operateInfo.value.category,
-          // course_id: operateInfo.value.course_id,
-          // company_id: operateInfo.value.company_id,
-          // department_id: operateInfo.value.department_id,
-          // position_id: operateInfo.value.position_id,
+          course_id: operateInfo.value.course_id,
+          company_id: operateInfo.value.company_id,
+          department_id: operateInfo.value.department_id,
+          position_id: operateInfo.value.position_id,
         });
         if (res.data.code != 0) {
           ElMessage.error({

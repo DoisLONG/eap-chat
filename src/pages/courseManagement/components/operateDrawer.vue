@@ -577,6 +577,7 @@ const operateInfo = ref<any>({
   title: "",
   description: "",
   category: "",
+  cover_oss_uri: "", // 添加封面OSS URI字段
   ...rowInfo.value,
 });
 
@@ -722,6 +723,7 @@ const onUploadRemove: UploadProps["onRemove"] = (uploadFile, uploadFiles) => {
   // 清空上传相关数据
   uploadedFileUrl.value = "";
   coverUrl.value = "";
+  operateInfo.value.cover_oss_uri = ""; // 清空封面OSS URI
   jobId.value = "";
   keywordsList.value = [];
   ossUploadProgress.value = 0;
@@ -834,7 +836,7 @@ const clearAnalysisError = () => {
   analysisErrorMessage.value = "";
 };
 
-// 从视频URL生成封面图
+// 从视频URL生成封面图并上传到OSS
 const generateVideoCover = (videoUrl: string): Promise<string> => {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
@@ -849,11 +851,50 @@ const generateVideoCover = (videoUrl: string): Promise<string> => {
       canvas.height = video.videoHeight;
     };
 
-    video.onseeked = () => {
+    video.onseeked = async () => {
       if (ctx) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const coverDataUrl = canvas.toDataURL("image/jpeg", 0.8);
-        resolve(coverDataUrl);
+
+        // 将canvas转换为Blob
+        canvas.toBlob(
+          async (blob) => {
+            if (blob) {
+              try {
+                // 创建File对象
+                const coverFile = new File([blob], `cover_${Date.now()}.jpg`, {
+                  type: "image/jpeg",
+                });
+
+                const formData = new FormData();
+                formData.append("file", coverFile);
+
+                const ossRes = await uploadOss(formData);
+
+                if (ossRes.data.code === 0) {
+                  // 获取上传后的OSS URL用于预览
+                  const signRes = await getOssSign({
+                    oss_uri: ossRes.data.data,
+                  });
+                  if (signRes.data.code === 0) {
+                    resolve(signRes.data.data);
+                    // 同时存储OSS URI用于提交
+                    operateInfo.value.cover_oss_uri = ossRes.data.data;
+                  } else {
+                    reject(new Error("获取封面预览URL失败"));
+                  }
+                } else {
+                  reject(new Error("封面上传失败"));
+                }
+              } catch (error: any) {
+                reject(new Error("封面上传过程中出错: " + error.message));
+              }
+            } else {
+              reject(new Error("无法生成封面图片"));
+            }
+          },
+          "image/jpeg",
+          0.8
+        );
       } else {
         reject(new Error("无法获取canvas上下文"));
       }
@@ -960,14 +1001,15 @@ const handleFileUpload = async (file: File) => {
         if (oss.data.code == 0) {
           const canViewurl = oss.data.data;
 
-          // 自动生成视频封面
+          // 自动生成视频封面并上传到OSS
           coverGenerating.value = true;
           try {
-            const coverDataUrl = await generateVideoCover(canViewurl);
-            coverUrl.value = coverDataUrl;
-            console.log("coverDataUrl", coverDataUrl);
-          } catch (error) {
+            const coverPreviewUrl = await generateVideoCover(canViewurl);
+            coverUrl.value = coverPreviewUrl;
+            console.log("封面OSS URI:", operateInfo.value.cover_oss_uri);
+          } catch (error: any) {
             console.error("生成视频封面失败:", error);
+            ElMessage.warning("视频封面生成失败: " + error.message);
           } finally {
             coverGenerating.value = false;
           }
@@ -1158,8 +1200,7 @@ const handleSubmit = () => {
               // order_index: 1
             },
           ],
-          cover_url: "",
-          // cover_url: coverUrl.value,
+          cover_url: operateInfo.value.cover_oss_uri || "", // 使用上传的封面OSS URI
           keywordslist: [
             {
               speaker: analysisResult.value.speaker,
@@ -1203,7 +1244,10 @@ const handleSubmit = () => {
           department_id: operateInfo.value.department_id,
           position_id: operateInfo.value.position_id,
           tags: dynamicTags.value,
-          // cover_url: coverUrl.value,
+          cover_url:
+            operateInfo.value.cover_oss_uri ||
+            operateInfo.value.cover_url ||
+            "",
           keywordslist: [
             {
               speaker: analysisResult.value.speaker,
