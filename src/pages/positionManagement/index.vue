@@ -75,7 +75,7 @@
 <script setup lang="tsx" name="useProTable">
 import { ref, reactive } from "vue";
 import ProTable from "@/components/ProTable/index.vue";
-import OperateDrawer from "../knowledgeManagement/materialLibrary/components/operateDrawer.vue";
+import OperateDrawer from "./components/operateDrawer.vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
 import { CirclePlus, Delete, EditPen, View } from "@element-plus/icons-vue";
