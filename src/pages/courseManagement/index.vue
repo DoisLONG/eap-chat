@@ -147,6 +147,13 @@ const columns = reactive<ColumnProps[]>([
         placeholder: t("course.searchCategory"),
       },
     },
+    enum: [
+      { label: t("course.safetyTraining"), value: "安全培训" },
+      { label: t("course.skillImprovement"), value: "技能提升" },
+      { label: t("course.onboardingTraining"), value: "入职培训" },
+      { label: t("course.productTraining"), value: "产品培训" },
+    ],
+    fieldNames: { label: "label", value: "value" },
   },
   // {
   //   prop: "department_name",
@@ -191,6 +198,12 @@ const columns = reactive<ColumnProps[]>([
         placeholder: t("course.searchStatus"),
       },
     },
+    enum: [
+      { label: t("course.draft"), value: "draft" },
+      { label: t("course.published"), value: "published" },
+      { label: t("course.archived"), value: "archived" },
+    ],
+    fieldNames: { label: "label", value: "value" },
   },
   // {
   //   prop: "created_at",

@@ -135,16 +135,18 @@
     <footer class="pager" v-if="total > 0">
       <el-pagination
         background
-        layout="prev, pager, next, total"
+        :layout="
+          isMobile
+            ? 'prev, pager, next, jumper, total'
+            : 'total, sizes, prev, pager, next, jumper'
+        "
         :total="total"
         :current-page="query.page"
         :page-size="query.pageSize"
-        @current-change="
-          (p) => {
-            query.page = p;
-            reload();
-          }
-        "
+        :page-sizes="[10, 20, 50, 100]"
+        :pager-count="isMobile ? 2 : 7"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
       />
     </footer>
 
@@ -221,7 +223,7 @@ async function fetchList() {
   try {
     const { data } = await getSops({
       user_id: String(userInfo.value.id),
-      page: query.page,
+      pageNum: query.page,
       pageSize: query.pageSize,
       keyword: query.kw.trim(),
     });
@@ -244,16 +246,16 @@ async function fetchList() {
 
     items.value = mapped;
     total.value = data?.results?.total || 0;
-
+    console.log("data", data, total.value);
     // 前端关键词/环境过滤
-    const kw = query.kw.trim();
-    const filtered = mapped.filter(
-      (x) => (!kw || x.name.includes(kw)) && (!query.env || x.env === query.env)
-    );
+    // const kw = query.kw.trim();
+    // const filtered = mapped.filter(
+    //   (x) => (!kw || x.name.includes(kw)) && (!query.env || x.env === query.env)
+    // );
 
-    total.value = filtered.length;
-    const start = (query.page - 1) * query.pageSize;
-    items.value = filtered.slice(start, start + query.pageSize);
+    // total.value = filtered.length;
+    // const start = (query.page - 1) * query.pageSize;
+    // items.value = filtered.slice(start, start + query.pageSize);
   } catch (e) {
     console.error("[fetchList error]", e);
   } finally {
@@ -263,6 +265,28 @@ async function fetchList() {
 
 function reload() {
   query.page = 1;
+  fetchList();
+}
+
+// 分页事件处理
+function handleSizeChange(size) {
+  query.pageSize = size;
+  query.page = 1; // 改变每页条数时重置到第一页
+  fetchList();
+}
+
+function handleCurrentChange(page) {
+  query.page = page;
+  fetchList();
+}
+
+function handlePrevClick(page) {
+  query.page = page;
+  fetchList();
+}
+
+function handleNextClick(page) {
+  query.page = page;
   fetchList();
 }
 
@@ -445,7 +469,14 @@ const handleConfirmMix = (position_id) => {
 /* 分页/说明 */
 .pager {
   margin: 20px 0;
+  padding: 0 20px;
   display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.pager :deep(.el-pagination) {
+  flex-wrap: wrap;
   justify-content: center;
 }
 

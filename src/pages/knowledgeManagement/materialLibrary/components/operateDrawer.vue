@@ -115,21 +115,24 @@
 
       <!-- 关联课程 -->
       <el-form-item :label="$t('materialLibrary.course')" prop="course_id">
-        <el-select
-          v-model="operateInfo.course_id"
-          :placeholder="
-            $t('common.pleaseSelect') + $t('materialLibrary.course')
-          "
-          clearable
-          filterable
-        >
-          <el-option
-            v-for="item in courseList"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
+        <div class="course-select-container">
+          <el-input
+            v-model="selectedCourseName"
+            :placeholder="
+              $t('common.pleaseSelect') + $t('materialLibrary.course')
+            "
+            readonly
+            clearable
+            @clear="handleClearCourse"
           />
-        </el-select>
+          <el-button
+            type="primary"
+            @click="showCourseDialog = true"
+            style="margin-left: 8px"
+          >
+            {{ $t("common.select") }}
+          </el-button>
+        </div>
       </el-form-item>
 
       <!-- 公司选择 -->
@@ -193,6 +196,12 @@
       >
     </template>
   </el-drawer>
+  <!-- 课程选择对话框 -->
+  <CourseSelectDialog
+    v-model="showCourseDialog"
+    :current-course-id="operateInfo.course_id"
+    @confirm="handleCourseSelect"
+  />
 </template>
 
 <script setup lang="ts" name="UserDrawer">
@@ -210,6 +219,7 @@ import {
   getPostList,
 } from "@/services/company.service";
 import { uploadMaterial, updateMaterial } from "@/services/mobile.service";
+import CourseSelectDialog from "./CourseSelectDialog.vue";
 
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
@@ -288,7 +298,22 @@ const submitLoading = ref(false);
 const companyList = ref<{ label: string; value: string }[]>([]);
 const deptList = ref<{ label: string; value: string }[]>([]);
 const postList = ref<{ label: string; value: string }[]>([]);
-const courseList = ref<{ label: string; value: string }[]>([]);
+
+// 课程选择相关
+const showCourseDialog = ref(false);
+const selectedCourseName = ref("");
+
+// 处理课程选择
+const handleCourseSelect = (course: any) => {
+  operateInfo.value.course_id = course.course_id;
+  selectedCourseName.value = course.title;
+};
+
+// 清除课程选择
+const handleClearCourse = () => {
+  operateInfo.value.course_id = "";
+  selectedCourseName.value = "";
+};
 
 // 素材分类选项
 const categoryOptions = ref([
@@ -359,8 +384,9 @@ const queryPost = async () => {
     const data = res.data.results || [];
     postList.value = data.map((item: any) => ({
       label: item.position_name,
-      value: item.position_id,
+      value: Number(item.position_id) || item.position_id,
     }));
+    console.warn("postList.value", postList.value);
   } catch (error) {
     console.error("获取岗位列表失败:", error);
   }
@@ -495,10 +521,25 @@ onMounted(() => {
   queryCompany();
   queryDept();
   queryPost();
+
+  // 如果是编辑模式且有课程信息，设置课程名称
+  if (type.value !== "create" && operateInfo.value.course_name) {
+    selectedCourseName.value = operateInfo.value.course_name;
+  }
 });
 </script>
 
 <style scoped>
+.course-select-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.course-select-container .el-input {
+  flex: 1;
+}
+
 .upload-container {
   width: 100%;
 }

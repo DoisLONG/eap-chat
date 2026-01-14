@@ -133,7 +133,7 @@ const queryPost = () => {
     const data = res.data.results || [];
     postList.value = data.map((item: any) => ({
       label: item.position_name,
-      value: item.position_id,
+      value: Number(item.position_id) || item.position_id,
     }));
   });
 };

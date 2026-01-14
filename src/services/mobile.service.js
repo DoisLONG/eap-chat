@@ -42,11 +42,15 @@ export function getCourseList(parmas) {
   const upParams = {
     ...parmas,
     page: parmas.pageNum,
-    size: parmas.pageSize,
+    page_size: parmas.pageSize,
   };
   delete upParams.pageSize;
   delete upParams.pageNum;
-  return mobileApi.get("/api/v1/course/list", upParams);
+  if (upParams.title) {
+    upParams.keyword = upParams.title;
+    delete upParams.title;
+  }
+  return mobileApi.get("/api/v1/course/list", { params: upParams });
 }
 
 // 删除课程列表
