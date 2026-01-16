@@ -54,7 +54,7 @@ export const useAuthStore = defineStore("sopai-auth", {
         ],
       },
       {
-        path: "courseManagement",
+        path: "/courseManagement",
         name: "courseManagement",
         meta: {
           icon: "List",
@@ -68,7 +68,7 @@ export const useAuthStore = defineStore("sopai-auth", {
         },
       },
       // {
-      //   path: "testCenter",
+      //   path: "/testCenter",
       //   name: "TestCenter",
       //   meta: {
       //     icon: "Histogram",

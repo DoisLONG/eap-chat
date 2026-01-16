@@ -60,17 +60,30 @@
       @close="operateDrawerVisible = false"
       ref="drawerRef"
     />
+    <OfficeCheck
+      v-if="operateOfficeVisible"
+      :fileTitle="fileTitle"
+      :fileType="fileType"
+      :fileSrc="fileSrc"
+      @close="operateOfficeVisible = false"
+      ref="drawerOfficeRef"
+    />
   </div>
 </template>
 
 <script setup lang="tsx" name="useProTable">
 import { ref, reactive } from "vue";
 import ProTable from "@/components/ProTable/index.vue";
+import OfficeCheck from "./components/officeCheck.vue";
 import OperateDrawer from "./components/operateDrawer.vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
 import { Upload, Delete, EditPen, View } from "@element-plus/icons-vue";
-import { getMaterialList, deleteMaterial } from "@/services/mobile.service";
+import {
+  getMaterialList,
+  deleteMaterial,
+  getOssSign,
+} from "@/services/mobile.service";
 
 import { useHandleData } from "@/hooks/useHandleData";
 import { formatDateTime } from "@/utils/dateFormat";
@@ -134,6 +147,7 @@ const columns = reactive<ColumnProps[]>([
       return (size / (1024 * 1024)).toFixed(1) + " MB";
     },
   },
+
   {
     prop: "description",
     label: "素材描述",
@@ -141,15 +155,33 @@ const columns = reactive<ColumnProps[]>([
     minWidth: 150,
   },
   // {
-  //   prop: "course_name",
-  //   label: "关联课程",
-  //   i18nKey: "materialLibrary.course",
+  //   prop: "company_name",
+  //   label: "公司名称",
+  //   i18nKey: "companyManagement.company",
   //   minWidth: 150,
-  //   render: (scope) => scope.row.course_name || "-",
   // },
+  // {
+  //   prop: "department_name",
+  //   label: "部门名称",
+  //   i18nKey: "deptManagement.dept_name",
+  //   minWidth: 150,
+  // },
+  {
+    prop: "position_name",
+    label: "岗位名称",
+    i18nKey: "companyManagement.position",
+    minWidth: 120,
+  },
+  {
+    prop: "course_title",
+    label: "关联课程",
+    i18nKey: "materialLibrary.course",
+    minWidth: 200,
+  },
   {
     prop: "created_at",
     label: "上传时间",
+    i18nKey: "materialLibrary.uploadTime",
     minWidth: 200,
     render: (scope) => {
       return scope.row.created_at ? formatDateTime(scope.row.created_at) : "-";
@@ -198,8 +230,22 @@ const batchDelete = async (ids) => {
 };
 
 // 预览
-const checkPreView = (row) => {
+const fileType = ref("");
+const fileSrc = ref("");
+const fileTitle = ref("");
+const operateOfficeVisible = ref(false);
+
+const checkPreView = async (row) => {
   console.log("row", row);
+  if (row.file_url) {
+    const res = await getOssSign({ oss_uri: row.file_url });
+    if (res.data.code === 0) {
+      fileSrc.value = res.data.data;
+      fileType.value = row.file_type;
+      fileTitle.value = row.title;
+      operateOfficeVisible.value = true;
+    }
+  }
 };
 
 // 打开 drawer(新增、查看、编辑)

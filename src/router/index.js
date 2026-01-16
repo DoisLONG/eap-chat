@@ -21,7 +21,11 @@ const routes = [
     name: "ChatExam",
     component: () => import("@/pages/ChatExam.vue"),
   },
-
+  {
+    path: "/h5Preview",
+    name: "h5Preview",
+    component: () => import("@/pages/h5Preview/index.vue"),
+  },
   // 带侧边栏的主框架
   {
     path: "/",
@@ -33,7 +37,7 @@ const routes = [
         redirect: "/list",
       },
       {
-        path: "list",
+        path: "/list",
         name: "List",
         component: () => import("@/pages/LicenseAdmin.vue"),
         meta: {
@@ -81,7 +85,7 @@ const routes = [
         ],
       },
       {
-        path: "courseManagement",
+        path: "/courseManagement",
         name: "CourseManagement",
         component: () => import("@/pages/courseManagement/index.vue"),
         meta: {

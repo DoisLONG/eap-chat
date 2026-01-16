@@ -523,8 +523,8 @@ onMounted(() => {
   queryPost();
 
   // 如果是编辑模式且有课程信息，设置课程名称
-  if (type.value !== "create" && operateInfo.value.course_name) {
-    selectedCourseName.value = operateInfo.value.course_name;
+  if (type.value !== "create" && operateInfo.value.course_title) {
+    selectedCourseName.value = operateInfo.value.course_title;
   }
 });
 </script>

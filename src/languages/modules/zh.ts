@@ -255,6 +255,7 @@ export default {
     addSuccess: "素材新增成功",
     uploadTxt: "点击或拖拽文件到此处上传",
     uploadType: "支持格式",
+    uploadTime: "上传时间",
   },
   course: {
     add: "新增课程",
@@ -310,5 +311,14 @@ export default {
     reuploadConfirmTitle: "确认重新上传",
     reuploadConfirmMessage: "重新上传视频将会替换当前的章节信息，是否继续？",
     previewError: "文档加载失败",
+  },
+  officeViewer: {
+    unsupportedFileType: "不支持的文件类型",
+    supportedFormats: "支持的格式: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX",
+    documentLoading: "文档加载中...",
+    documentLoadFailed: "文档加载失败",
+    retry: "重试",
+    zoomLevel: "缩放",
+    zoomTip: "Ctrl+滚轮缩放，拖拽移动，双击重置",
   },
 };

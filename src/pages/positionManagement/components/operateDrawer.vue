@@ -115,7 +115,7 @@ const rules = reactive({
     { required: true, message: t("companyManagement.companyPlaceholder") },
   ],
   department_id: [
-    { required: true, message: t("deptManagement.deptmentPlaceholder") },
+    { required: true, message: t("companyManagement.deptmentPlaceholder") },
   ],
   position_name: [
     { required: true, message: t("positionManagement.positionPlaceholder") },

@@ -604,6 +604,7 @@ const tableLoading = ref(false); // 表格loading状态
 const coverGenerating = ref(false); // 封面生成状态
 const showUploadArea = ref(false); // 编辑模式下是否显示上传
 const videoPreviewUrl = ref(""); // 视频预览URL
+const videoDuration = ref(0); // 视频时长（秒）
 
 // 任务状态查询
 let jobStatusTimer: number | null = null;
@@ -707,6 +708,17 @@ const onUploadChange: UploadProps["onChange"] = async (
     operateInfo.value.title = fileName;
   }
 
+  // 获取视频时长
+  if (uploadFile.raw) {
+    try {
+      const duration = await getVideoDuration(uploadFile.raw);
+      videoDuration.value = duration;
+      console.log("视频时长:", duration, "秒", `(${secondsToMMSS(duration)})`);
+    } catch (error: any) {
+      console.error("获取视频时长失败:", error);
+    }
+  }
+
   // 文件选择后立即上传
   if (
     uploadFile.raw &&
@@ -732,6 +744,7 @@ const onUploadRemove: UploadProps["onRemove"] = (uploadFile, uploadFiles) => {
   analysisErrorMessage.value = ""; // 清空错误信息
   isUploading.value = false;
   tableLoading.value = false; // 重置表格loading状态
+  videoDuration.value = 0; // 清空视频时长
 
   if (jobStatusTimer) {
     clearTimeout(jobStatusTimer);
@@ -928,7 +941,34 @@ const validateTimeInput = (value: string, row: any, field: string) => {
 // 视频加载完成事件
 const onVideoLoaded = (event: Event) => {
   const video = event.target as HTMLVideoElement;
-  console.log("视频时长:", video.duration);
+  if (video.duration && !isNaN(video.duration)) {
+    videoDuration.value = video.duration;
+  }
+};
+
+// 获取视频时长的辅助函数
+const getVideoDuration = (file: File): Promise<number> => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+
+    video.onloadedmetadata = () => {
+      window.URL.revokeObjectURL(video.src);
+      const duration = video.duration;
+      if (duration && !isNaN(duration) && isFinite(duration)) {
+        resolve(duration);
+      } else {
+        // reject(new Error("无法获取有效的视频时长"));
+      }
+    };
+
+    video.onerror = () => {
+      window.URL.revokeObjectURL(video.src);
+      // reject(new Error("无法读取视频文件"));
+    };
+
+    video.src = URL.createObjectURL(file);
+  });
 };
 
 const getVideoPreviewUrl = async (ossUri: string) => {
@@ -957,6 +997,7 @@ const handleReuploadClick = () => {
     )
       .then(() => {
         keywordsList.value = [];
+        videoDuration.value = 0; // 清空视频时长
         showUploadArea.value = true;
       })
       .catch(() => {
@@ -1116,6 +1157,14 @@ const getAnalysisResult = async (jobId: string) => {
     if (res.data && res.data.code === 200 && res.data.data) {
       analysisResult.value = res.data.data;
 
+      // 从分析结果中获取视频时长（如果前面没有获取到）
+      if (
+        res.data.data.duration_s &&
+        (!videoDuration.value || videoDuration.value === 0)
+      ) {
+        videoDuration.value = res.data.data.duration_s;
+      }
+
       // 处理关键词列表
       if (res.data.data.keywords && Array.isArray(res.data.data.keywords)) {
         const newKeywords = res.data.data.keywords.map((item: any) => ({
@@ -1196,8 +1245,10 @@ const handleSubmit = () => {
             {
               title: operateInfo.value.title,
               video_url: uploadedFileUrl.value,
-              // duration: 600,
-              // order_index: 1
+              duration: Math.round(
+                videoDuration.value || analysisResult.value.duration_s || 0
+              ),
+              order_index: 1,
             },
           ],
           cover_url: operateInfo.value.cover_oss_uri || "", // 使用上传的封面OSS URI
@@ -1205,7 +1256,8 @@ const handleSubmit = () => {
             {
               speaker: analysisResult.value.speaker,
               doc_id: analysisResult.value.doc_id,
-              duration_s: analysisResult.value.duration_s,
+              duration_s:
+                videoDuration.value || analysisResult.value.duration_s || 0,
               title: operateInfo.value.title,
               keywords: keywordsList.value
                 .filter((item) => item.keyword.trim())
@@ -1221,7 +1273,6 @@ const handleSubmit = () => {
                 }),
             },
           ],
-          // job_id: jobId.value,
         };
 
         console.log("courseData", courseData);
@@ -1252,7 +1303,8 @@ const handleSubmit = () => {
             {
               speaker: analysisResult.value.speaker,
               doc_id: analysisResult.value.doc_id,
-              duration_s: analysisResult.value.duration_s,
+              duration_s:
+                videoDuration.value || analysisResult.value.duration_s || 0,
               title: operateInfo.value.title,
               keywords: keywordsList.value
                 .filter((item) => item.keyword.trim())
@@ -1274,8 +1326,10 @@ const handleSubmit = () => {
             {
               title: operateInfo.value.title,
               video_url: uploadedFileUrl.value,
-              // duration: 600,
-              // order_index: 1
+              duration: Math.round(
+                videoDuration.value || analysisResult.value.duration_s || 0
+              ),
+              order_index: 1,
             },
           ];
         } else {

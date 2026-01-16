@@ -36,11 +36,13 @@ export default defineConfig({
       },
       "/userapi": {
         target: "http://14.103.223.101:9011",
+        // target: "http://153.35.82.12:30902", // 四会
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/userapi/, ""),
       },
       "/mobileapi": {
         target: "http://14.103.223.101:7010",
+        // target: "http://153.35.82.12:30701",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/mobileapi/, ""),
       },
