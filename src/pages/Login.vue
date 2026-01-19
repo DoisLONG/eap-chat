@@ -98,17 +98,7 @@ const languageList = [
   { label: "ภาษาไทย", value: "th" },
 ];
 
-const changeLanguage = (lang: string) => {
-  i18n.locale.value = lang;
-  globalStore.setGlobalState("language", lang as LanguageType);
-};
-
-const form = reactive({
-  username: "",
-  password: "",
-});
-
-const rules = {
+const rules = computed(() => ({
   username: [
     { required: true, message: t("header.userPlaceholder"), trigger: "blur" },
   ],
@@ -119,7 +109,17 @@ const rules = {
       trigger: "blur",
     },
   ],
+}));
+
+const changeLanguage = (lang: string) => {
+  i18n.locale.value = lang;
+  globalStore.setGlobalState("language", lang as LanguageType);
 };
+
+const form = reactive({
+  username: "",
+  password: "",
+});
 
 const onLogin = async () => {
   await loginForm.value.validate(async (valid: boolean) => {
