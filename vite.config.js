@@ -15,19 +15,20 @@ export default defineConfig({
     proxy: {
       "/sop-api": {
         // target: "http://14.103.223.101:6007",
-        target: "http://153.35.82.12:6007", // 四会
+        target: "http://14.103.144.187:30104", // 四会
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/sop-api/, ""),
         secure: false,
       },
       "/chatapi": {
-        target: "http://14.103.223.101:9010",
+        // target: "http://14.103.223.101:9010",
+        target: "http://14.103.144.187:30106", // 四会
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/chatapi/, ""),
       },
       "/companyapi": {
         // target: "http://14.103.223.101:8010",
-        target: "http://153.35.82.12:8010", // 四会
+        target: "http://14.103.144.187:30107", // 四会
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/companyapi/, ""),
       },
@@ -38,13 +39,13 @@ export default defineConfig({
       },
       "/userapi": {
         // target: "http://14.103.223.101:9011",
-        target: "http://153.35.82.12:30902", // 四会
+        target: "http://14.103.144.187:30102", // 四会
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/userapi/, ""),
       },
       "/mobileapi": {
         // target: "http://14.103.223.101:7010",
-        target: "http://153.35.82.12:30701",
+        target: "http://14.103.144.187:30105",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/mobileapi/, ""),
       },
