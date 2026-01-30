@@ -1,4 +1,5 @@
 <template>
+  <el-link  type="primary" href="http://14.103.144.187:30101/chat/sop" target="_blank" class="color: #000;">模拟训练</el-link>
   <el-dropdown trigger="hover" @command="changeLanguage">
     <div>
       <img :src="globalIcon" alt="language" style="width: 23px; height: 23px" />
