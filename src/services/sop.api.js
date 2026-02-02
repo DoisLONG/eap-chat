@@ -22,7 +22,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // 响应拦截器 - 处理token过期等情况
@@ -40,14 +40,15 @@ api.interceptors.response.use(
       }, 500);
     }
     return Promise.reject(error);
-  }
+  },
 );
 // 生成 QA（支持多文件上传）
-export async function generateQa(files, file_type, position_id) {
+export async function generateQa(files, file_type, position_id, strategy) {
   const form = new FormData();
   files.forEach((file) => form.append("files", file));
   form.append("file_type", file_type);
   form.append("position_id", position_id);
+  form.append("strategy", strategy);
 
   return axios.post("/sop-api/v1/dataprep/generate_qa", form);
 }
@@ -75,7 +76,7 @@ export function pollTaskStatus(taskId, opt = {}) {
       try {
         times++;
         const { data } = await getTaskStatus(taskId);
-        const status = typeof data === "string" ? data : data?.status ?? data;
+        const status = typeof data === "string" ? data : (data?.status ?? data);
         if (judge(status) || times >= maxTimes) {
           clearInterval(timer);
           resolve(status);

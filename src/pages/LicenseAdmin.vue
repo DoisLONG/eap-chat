@@ -100,7 +100,11 @@
     >
       <div class="import-body">
         <el-form label-width="110px" :rules="rules" :model="importDlg">
-          <el-form-item :label="$t('licenseAdmin.uploadType')" prop="file_type">
+          <el-form-item
+            style="width: 50%"
+            :label="$t('licenseAdmin.uploadType')"
+            prop="file_type"
+          >
             <el-select
               v-model="importDlg!.file_type"
               :placeholder="$t('licenseAdmin.uploadTypePlaceholder')"
@@ -115,6 +119,25 @@
             </el-select>
           </el-form-item>
           <el-form-item
+            style="width: 50%"
+            :label="$t('licenseAdmin.analysisMode')"
+            prop="strategy"
+          >
+            <el-select
+              v-model="importDlg!.strategy"
+              :placeholder="$t('licenseAdmin.analysisModePlaceholder')"
+              @change="changeFileType"
+            >
+              <el-option
+                v-for="oitem in strategyList"
+                :key="oitem.value"
+                :label="oitem.label"
+                :value="oitem.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item
+            style="width: 100%"
             :label="$t('licenseAdmin.selectFile')"
             class="upload-file"
           >
@@ -138,7 +161,11 @@
               </div>
             </el-upload>
           </el-form-item>
-          <el-form-item :label="$t('licenseAdmin.company')" prop="company_id">
+          <el-form-item
+            style="width: 50%"
+            :label="$t('licenseAdmin.company')"
+            prop="company_id"
+          >
             <el-select
               v-model="importDlg!.company_id"
               :placeholder="$t('licenseAdmin.companyPlaceholder')"
@@ -153,6 +180,7 @@
             </el-select>
           </el-form-item>
           <el-form-item
+            style="width: 50%"
             :label="$t('licenseAdmin.deptment')"
             prop="department_id"
           >
@@ -169,7 +197,11 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item :label="$t('licenseAdmin.position')" prop="position_id">
+          <el-form-item
+            style="width: 50%"
+            :label="$t('licenseAdmin.position')"
+            prop="position_id"
+          >
             <el-select
               v-model="importDlg!.position_id"
               :placeholder="$t('licenseAdmin.positionPlaceholder')"
@@ -250,9 +282,16 @@ const userId = ref("test_user");
 const proTable = ref<ProTableInstance>();
 const initParam = reactive({});
 
+const strategyList = [
+  { label: t("licenseAdmin.allMode"), value: "all" },
+  { label: t("licenseAdmin.stepMode"), value: "step" },
+  { label: t("licenseAdmin.errorMode"), value: "error" },
+  { label: t("licenseAdmin.dataMode"), value: "data" },
+];
 const handleSearch = (params: any) => {
   proTable.value?.handleAlignsearch(params);
 };
+
 const dataCallback = (data: any) => {
   const arr = Array.isArray(data?.results?.records) ? data.results.records : [];
   const list = arr.map((item) => {
@@ -372,7 +411,7 @@ async function openReview(row) {
     // ✅ 如果不是 SUCCESS，提示后不再继续加载题目
     if (normalized !== "SUCCESS") {
       ElMessage.warning(
-        t("licenseAdmin.taskStatusTip", { normalized: normalized })
+        t("licenseAdmin.taskStatusTip", { normalized: normalized }),
       );
       return;
     }
@@ -422,7 +461,7 @@ async function handleSaveReview(payload) {
     };
     await saveQaList(body);
     ElMessage.success(
-      payload?.sync ? t("licenseAdmin.saveSuccess") : t("common.saveSuccess")
+      payload?.sync ? t("licenseAdmin.saveSuccess") : t("common.saveSuccess"),
     );
     review.visible = false;
     await load();
@@ -451,7 +490,7 @@ async function onDelete(row) {
         type: "warning",
         confirmButtonText: t("common.confirm"),
         cancelButtonText: t("common.cancel"),
-      }
+      },
     );
 
     const res = await deleteSop(row.id);
@@ -479,7 +518,7 @@ const batchDelete = async (id: string[], list: any[]) => {
       type: "warning",
       confirmButtonText: t("common.confirm"),
       cancelButtonText: t("common.cancel"),
-    }
+    },
   )
     .then(async () => {
       await Promise.all(id.map((x) => deleteSop(x)));
@@ -509,10 +548,14 @@ const importDlg = reactive({
   company_id: "",
   department_id: "",
   running: false,
+  strategy: "all",
 });
 
 const rules = reactive({
   file_type: [{ required: true, message: t("licenseAdmin.uploadPlaceholder") }],
+  strategy: [
+    { required: true, message: t("licenseAdmin.strategyPlaceholder") },
+  ],
   company_id: [
     { required: true, message: t("licenseAdmin.companyPlaceholder") },
   ],
@@ -654,7 +697,8 @@ async function startImport() {
     const res = await generateQa(
       realFiles,
       importDlg.file_type,
-      importDlg.position_id
+      importDlg.position_id,
+      importDlg.strategy,
     );
 
     console.log("generateQa", res);
@@ -670,7 +714,9 @@ async function startImport() {
   } catch (e) {
     console.error("[导入失败]", e);
     ElMessage.error(
-      t("licenseAdmin.importFail", { msg: e.message || t("common.vailderror") })
+      t("licenseAdmin.importFail", {
+        msg: e.message || t("common.vailderror"),
+      }),
     );
   } finally {
     importDlg.running = false;
@@ -720,6 +766,10 @@ onUnmounted(() => {
 
 .import-body {
   padding: 4px 4px 0;
+}
+.import-body :deep(.el-form) {
+  display: flex;
+  flex-wrap: wrap;
 }
 
 /* 编辑弹窗 */
