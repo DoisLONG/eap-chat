@@ -50,7 +50,7 @@ export async function generateQa(files, file_type, position_id, strategy) {
   form.append("position_id", position_id);
   form.append("strategy", strategy);
 
-  return axios.post("/sop-api/v1/dataprep/generate_qa", form);
+  return api.post("/v1/dataprep/generate_qa", form);
 }
 
 // 轮询任务状态
