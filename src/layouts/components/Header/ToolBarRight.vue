@@ -2,6 +2,15 @@
   <div class="tool-bar-ri">
     <div class="header-icon">
       <!-- <AssemblySize id="assemblySize" /> -->
+      <el-button
+        v-auth="'add'"
+        type="primary"
+        :icon="CirclePlus"
+        class="header-btn"
+        @click="checkoutToUser"
+      >
+        {{ $t("header.checkoutB") }}
+      </el-button>
       <Language id="language" />
       <!-- <SearchMenu id="searchMenu" />
       <ThemeSetting id="themeSetting" />
@@ -20,6 +29,13 @@ import Language from "./components/Language.vue";
 // import Message from "./components/Message.vue";
 // import Fullscreen from "./components/Fullscreen.vue";
 import Avatar from "./components/Avatar.vue";
+const checkoutToUser = () => {
+  window.open(
+    "http://14.103.144.187:30101/chat/sop",
+    "_blank",
+    "noopener,noreferrer"
+  );
+};
 </script>
 
 <style scoped lang="scss">
@@ -36,6 +52,9 @@ import Avatar from "./components/Avatar.vue";
       margin-left: 21px;
       color: var(--el-header-text-color);
     }
+  }
+  .header-btn {
+    color: #fff;
   }
   .username {
     margin: 0 10px;

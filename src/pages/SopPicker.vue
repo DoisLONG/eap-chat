@@ -8,6 +8,15 @@
       </div>
 
       <div class="actions">
+        <el-button
+          v-auth="'add'"
+          type="primary"
+          :icon="CirclePlus"
+          class="header-btn"
+          @click="checkoutToUser"
+        >
+          {{ $t("header.checkoutA") }}
+        </el-button>
         <el-dropdown trigger="click" @command="changeLanguage">
           <div class="language-switch">
             <img :src="globalIcon" alt="language" class="language-icon" />
@@ -53,7 +62,7 @@
       <el-button class="f-item env" type="primary" @click="reload">
         {{ $t("common.search") }}
       </el-button>
-      <el-button
+      <!-- <el-button
         class="f-item btn"
         :class="!isMobile ? 'btn-pc' : ''"
         style="margin-left: 0"
@@ -61,7 +70,7 @@
         @click="toMixTest"
       >
         {{ $t("SopPicker.mixMode") }}
-      </el-button>
+      </el-button> -->
     </div>
 
     <!-- 内容：桌面表格 / 平板&手机卡片 -->
@@ -171,6 +180,15 @@ import { storeToRefs } from "pinia";
 import globalIcon from "@/assets/images/global.png";
 import { useGlobalStore } from "@/stores/modules/global";
 import { useI18n } from "vue-i18n";
+
+
+const checkoutToUser = () => {
+  window.open(
+    "http://14.103.144.187:30101/list",
+    "_blank",
+    "noopener,noreferrer"
+  );
+};
 
 const userStore = useUserStore();
 const { userInfo } = storeToRefs(userStore);
@@ -386,7 +404,7 @@ const handleConfirmMix = (position_id) => {
 /* 过滤区：自适应网格 */
 .filters {
   display: grid;
-  grid-template-columns: 1fr 140px 110px; /* kw | env | btn */
+  grid-template-columns: 1fr 140px 0; /* kw | env | btn */
   gap: 12px;
   margin-bottom: 24px;
 }

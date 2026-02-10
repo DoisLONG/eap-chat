@@ -15,6 +15,8 @@ export default {
     closeAll: "Close All",
   },
   header: {
+    checkoutA: 'Enter file upload',
+    checkoutB: 'Start simulated training',
     language: "Internationalization",
     personalData: "Personal Information",
     changePassword: "Change Password",

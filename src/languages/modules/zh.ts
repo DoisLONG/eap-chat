@@ -15,6 +15,8 @@ export default {
     closeAll: "关闭所有",
   },
   header: {
+    checkoutA: '开始文件上传',
+    checkoutB: '切换到考试页面',
     language: "国际化",
     personalData: "个人信息",
     changePassword: "修改密码",
@@ -78,7 +80,7 @@ export default {
   },
   licenseAdmin: {
     sopManagement: "SOP管理",
-    importSop: "导入SOP",
+    importSop: "导入文件",
     uploadType: "上传类型",
     uploadTypePlaceholder: "请选择上传类型",
     analysisMode: "解析模式",

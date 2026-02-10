@@ -15,6 +15,8 @@ export default {
     closeAll: "ปิดทั้งหมด",
   },
   header: {
+    checkoutA: 'เข้าสู่การอัปโหลดไฟล์',
+    checkoutB: 'เริ่มการฝึกจำลอง',
     language: "อินเทอร์เนชันแนลไรเซชัน",
     personalData: "ข้อมูลส่วนตัว",
     changePassword: "เปลี่ยนรหัสผ่าน",
