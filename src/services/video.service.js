@@ -16,7 +16,7 @@ videoApi.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // 响应拦截器 - 处理token过期等情况
@@ -34,7 +34,7 @@ videoApi.interceptors.response.use(
       }, 500);
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 /**
@@ -50,7 +50,7 @@ export function createAsrJobs(formData, onUploadProgress) {
       onUploadProgress ||
       ((progressEvent) => {
         const percentCompleted = Math.round(
-          (progressEvent.loaded * 100) / progressEvent.total
+          (progressEvent.loaded * 100) / progressEvent.total,
         );
         console.log(`上传进度: ${percentCompleted}%`);
       }),

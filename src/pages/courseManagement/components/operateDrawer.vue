@@ -491,6 +491,7 @@ import {
   getJobStatus,
   getJobResult,
 } from "@/services/video.service";
+import { createExcelJob, getExcelJobResult } from "@/services/videov2.service";
 import type { InputInstance } from "element-plus";
 
 import { useI18n } from "vue-i18n";
@@ -695,7 +696,7 @@ const importFileType = ref(".mp4,.mov");
 // 文件上传变更处理
 const onUploadChange: UploadProps["onChange"] = async (
   uploadFile,
-  uploadFiles
+  uploadFiles,
 ) => {
   operateInfo.value.files = uploadFiles;
 
@@ -703,7 +704,7 @@ const onUploadChange: UploadProps["onChange"] = async (
   if (!operateInfo.value.title && uploadFile.name && type.value === "create") {
     const fileName = uploadFile.name.substring(
       0,
-      uploadFile.name.lastIndexOf(".")
+      uploadFile.name.lastIndexOf("."),
     );
     operateInfo.value.title = fileName;
   }
@@ -906,7 +907,7 @@ const generateVideoCover = (videoUrl: string): Promise<string> => {
             }
           },
           "image/jpeg",
-          0.8
+          0.8,
         );
       } else {
         reject(new Error("无法获取canvas上下文"));
@@ -993,7 +994,7 @@ const handleReuploadClick = () => {
         type: "warning",
         confirmButtonText: t("common.confirm"),
         cancelButtonText: t("common.cancel"),
-      }
+      },
     )
       .then(() => {
         keywordsList.value = [];
@@ -1024,7 +1025,7 @@ const handleFileUpload = async (file: File) => {
 
     const ossRes = await uploadOss(ossFormData, (progressEvent) => {
       ossUploadProgress.value = Math.round(
-        (progressEvent.loaded * 100) / progressEvent.total
+        (progressEvent.loaded * 100) / progressEvent.total,
       );
     });
 
@@ -1076,7 +1077,7 @@ const handleFileUpload = async (file: File) => {
     ElMessage.success(
       type.value === "create"
         ? t("course.uploadSuccessAnalyzing")
-        : t("course.reuploadSuccessAnalyzing")
+        : t("course.reuploadSuccessAnalyzing"),
     );
   } catch (error: any) {
     console.error("文件上传失败:", error);
@@ -1088,6 +1089,7 @@ const handleFileUpload = async (file: File) => {
 };
 
 // 任务状态查询
+const taskId = ref("");
 const pollJobStatus = async (jobId: string) => {
   try {
     const res = await getJobStatus(jobId);
@@ -1111,12 +1113,17 @@ const pollJobStatus = async (jobId: string) => {
           clearTimeout(jobStatusTimer);
           jobStatusTimer = null;
         }
+        // 创建Excel生成任务
+        createExcelJob(jobId).then(async (res) => {
+          console.log("Excel生成任务创建成功:", res);
+          taskId.value = res.data;
+        });
         isUploading.value = false;
         tableLoading.value = false;
         ElMessage.success(
           type.value === "create"
             ? t("course.analysisCompleted")
-            : t("course.reanalysisCompleted")
+            : t("course.reanalysisCompleted"),
         );
         return;
       case "failed":
@@ -1246,7 +1253,7 @@ const handleSubmit = () => {
               title: operateInfo.value.title,
               video_url: uploadedFileUrl.value,
               duration: Math.round(
-                videoDuration.value || analysisResult.value.duration_s || 0
+                videoDuration.value || analysisResult.value.duration_s || 0,
               ),
               order_index: 1,
             },
@@ -1278,6 +1285,11 @@ const handleSubmit = () => {
         console.log("courseData", courseData);
         const res = await createCourse(courseData);
         if (res.data.code === 0) {
+          if (taskId.value) {
+            getExcelJobResult(taskId.value).then((res) => {
+              console.log("Excel生成结果:", res);
+            });
+          }
           ElMessage.success(t("course.addSuccess"));
           emits("close");
           emits("refresh");
@@ -1327,7 +1339,7 @@ const handleSubmit = () => {
               title: operateInfo.value.title,
               video_url: uploadedFileUrl.value,
               duration: Math.round(
-                videoDuration.value || analysisResult.value.duration_s || 0
+                videoDuration.value || analysisResult.value.duration_s || 0,
               ),
               order_index: 1,
             },
@@ -1365,7 +1377,7 @@ onMounted(() => {
   queryDept();
   queryPost();
   getDetail();
-
+  taskId.value = ""; // 清空任务ID
   // 组件卸载时清理定时器
   return () => {
     if (jobStatusTimer) {
