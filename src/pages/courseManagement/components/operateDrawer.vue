@@ -1114,9 +1114,11 @@ const pollJobStatus = async (jobId: string) => {
           jobStatusTimer = null;
         }
         // 创建Excel生成任务
-        createExcelJob(jobId).then(async (res) => {
-          console.log("Excel生成任务创建成功:", res);
-          taskId.value = res.data;
+        createExcelJob(jobId).then((excelRes) => {
+          console.log("Excel生成任务创建成功:", excelRes);
+          if (excelRes.data.code == 200) {
+            taskId.value = excelRes.data.data.task_id;
+          }
         });
         isUploading.value = false;
         tableLoading.value = false;
@@ -1284,12 +1286,11 @@ const handleSubmit = () => {
 
         console.log("courseData", courseData);
         const res = await createCourse(courseData);
+        if (taskId.value) {
+          const excelResult = await getExcelJobResult(taskId.value);
+          console.log("Excel生成结果:", excelResult);
+        }
         if (res.data.code === 0) {
-          if (taskId.value) {
-            getExcelJobResult(taskId.value).then((res) => {
-              console.log("Excel生成结果:", res);
-            });
-          }
           ElMessage.success(t("course.addSuccess"));
           emits("close");
           emits("refresh");
