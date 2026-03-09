@@ -27,12 +27,13 @@ const fileType = ref("");
 const fileSrc = ref("");
 
 onMounted(() => {
+  console.log("route.query:", route.query);
   const urlFileSrc = route.query.fileSrc as string;
   const urlFileType = route.query.fileType as string;
-
   if (urlFileSrc) {
-    fileSrc.value = decodeURIComponent(urlFileSrc);
-    console.log(fileSrc.value);
+    // fileSrc.value = encodeURIComponent(urlFileSrc);
+    const decodedStr = atob(urlFileSrc);
+    fileSrc.value = decodedStr;
   } else {
     ElMessage.error("缺少文件地址");
   }
