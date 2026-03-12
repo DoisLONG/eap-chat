@@ -99,7 +99,12 @@
       @close="resetImportDlg"
     >
       <div class="import-body">
-        <el-form label-width="110px" :rules="rules" :model="importDlg">
+        <el-form
+          ref="ruleFormRef"
+          label-width="110px"
+          :rules="rules"
+          :model="importDlg"
+        >
           <el-form-item
             style="width: 50%"
             :label="$t('licenseAdmin.uploadType')"
@@ -214,6 +219,34 @@
               />
             </el-select>
           </el-form-item>
+          <el-form-item
+            style="width: 50%"
+            :label="$t('common.publishTime')"
+            prop="start_time"
+          >
+            <el-date-picker
+              style="width: 100%"
+              v-model="importDlg!.start_time"
+              type="date"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              :placeholder="$t('common.publishTimePlaceholder')"
+            />
+          </el-form-item>
+          <el-form-item
+            style="width: 50%"
+            :label="$t('common.endTime')"
+            prop="end_time"
+          >
+            <el-date-picker
+              style="width: 100%"
+              v-model="importDlg!.end_time"
+              type="date"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              :placeholder="$t('common.endTimePlaceholder')"
+            />
+          </el-form-item>
         </el-form>
       </div>
       <template #footer>
@@ -278,6 +311,7 @@ const userStore = useUserStore();
 const { userInfo } = storeToRefs(userStore);
 
 const userId = ref("test_user");
+const ruleFormRef = ref<FormInstance>();
 
 const proTable = ref<ProTableInstance>();
 const initParam = reactive({});
@@ -549,6 +583,8 @@ const importDlg = reactive({
   department_id: "",
   running: false,
   strategy: "all",
+  start_time: "",
+  end_time: "",
 });
 
 const rules = reactive({
@@ -564,6 +600,41 @@ const rules = reactive({
   ],
   position_id: [
     { required: true, message: t("licenseAdmin.positionPlaceholder") },
+  ],
+  start_time: [
+    { required: true, message: t("common.publishTimePlaceholder") },
+    {
+      validator: (rule, value, callback) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const startDate = new Date(value);
+        if (startDate < today) {
+          callback(new Error(t("common.publishTimeError")));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
+  ],
+  end_time: [
+    { required: true, message: t("common.endTimePlaceholder") },
+    {
+      validator: (rule, value, callback) => {
+        if (importDlg.start_time) {
+          const startDate = new Date(importDlg.start_time);
+          const endDate = new Date(value);
+          if (endDate < startDate) {
+            callback(new Error(t("common.endTimeError")));
+          } else {
+            callback();
+          }
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
 });
 
@@ -638,6 +709,8 @@ function resetImportDlg() {
   importDlg.company_id = "";
   importDlg.department_id = "";
   importDlg.position_id = "";
+  importDlg.start_time = "";
+  importDlg.end_time = "";
 }
 
 const ALLOW_RE = ref<RegExp>(/\.(xlsx|xls)$/i);
@@ -692,35 +765,41 @@ async function startImport() {
   const realFiles = importDlg.files.map((f) => f.raw).filter(Boolean);
   if (!realFiles.length) return ElMessage.warning(t("licenseAdmin.fileError"));
 
-  importDlg.running = true;
-  try {
-    const res = await generateQa(
-      realFiles,
-      importDlg.file_type,
-      importDlg.position_id,
-      importDlg.strategy,
-    );
+  ruleFormRef.value!.validate(async (valid) => {
+    if (!valid) return;
+    importDlg.running = true;
+    try {
+      console.log("importDlg", importDlg);
+      const res = await generateQa(
+        realFiles,
+        importDlg.file_type,
+        importDlg.position_id,
+        importDlg.strategy,
+        importDlg.start_time,
+        importDlg.end_time,
+      );
 
-    console.log("generateQa", res);
+      console.log("generateQa", res);
 
-    // ✅ 后端返回非200/201时，主动抛错
-    if (res?.data.status !== 200 && res?.data.status !== 201) {
-      throw new Error(res?.data.message || t("licenseAdmin.importError"));
+      // ✅ 后端返回非200/201时，主动抛错
+      if (res?.data.status !== 200 && res?.data.status !== 201) {
+        throw new Error(res?.data.message || t("licenseAdmin.importError"));
+      }
+
+      ElMessage.success(t("licenseAdmin.importSuccess"));
+      importDlg.visible = false;
+      proTable.value?.getTableList();
+    } catch (e) {
+      console.error("[导入失败]", e);
+      ElMessage.error(
+        t("licenseAdmin.importFail", {
+          msg: e.message || t("common.vailderror"),
+        }),
+      );
+    } finally {
+      importDlg.running = false;
     }
-
-    ElMessage.success(t("licenseAdmin.importSuccess"));
-    importDlg.visible = false;
-    proTable.value?.getTableList();
-  } catch (e) {
-    console.error("[导入失败]", e);
-    ElMessage.error(
-      t("licenseAdmin.importFail", {
-        msg: e.message || t("common.vailderror"),
-      }),
-    );
-  } finally {
-    importDlg.running = false;
-  }
+  });
 }
 // 5s轮询接口
 const listTimer = ref();

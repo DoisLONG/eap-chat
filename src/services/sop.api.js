@@ -43,12 +43,23 @@ api.interceptors.response.use(
   },
 );
 // 生成 QA（支持多文件上传）
-export async function generateQa(files, file_type, position_id, strategy) {
+export async function generateQa(
+  files,
+  file_type,
+  position_id,
+  strategy,
+  start_time,
+  end_time,
+) {
   const form = new FormData();
   files.forEach((file) => form.append("files", file));
   form.append("file_type", file_type);
   form.append("position_id", position_id);
   form.append("strategy", strategy);
+  form.append("start_time", start_time);
+  if (end_time) {
+    form.append("end_time", end_time);
+  }
 
   return api.post("/v1/dataprep/generate_qa", form);
 }
