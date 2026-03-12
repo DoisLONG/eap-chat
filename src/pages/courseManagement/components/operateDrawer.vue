@@ -545,13 +545,13 @@ const rules = computed(() => ({
         ]
       : [],
   company_id: [
-    { required: false, message: t("companyManagement.companyPlaceholder") },
+    { required: true, message: t("companyManagement.companyPlaceholder") },
   ],
   department_id: [
-    { required: false, message: t("companyManagement.deptmentPlaceholder") },
+    { required: true, message: t("companyManagement.deptmentPlaceholder") },
   ],
   position_id: [
-    { required: false, message: t("companyManagement.positionPlaceholder") },
+    { required: true, message: t("companyManagement.positionPlaceholder") },
   ],
 }));
 
@@ -1114,12 +1114,14 @@ const pollJobStatus = async (jobId: string) => {
           jobStatusTimer = null;
         }
         // 创建Excel生成任务
-        createExcelJob(jobId).then((excelRes) => {
-          console.log("Excel生成任务创建成功:", excelRes);
-          if (excelRes.data.code == 200) {
-            taskId.value = excelRes.data.data.task_id;
-          }
-        });
+        createExcelJob(jobId, operateInfo.value.position_id).then(
+          (excelRes) => {
+            console.log("Excel生成任务创建成功:", excelRes);
+            if (excelRes.data.code == 200) {
+              taskId.value = excelRes.data.data.task_id;
+            }
+          },
+        );
         isUploading.value = false;
         tableLoading.value = false;
         ElMessage.success(

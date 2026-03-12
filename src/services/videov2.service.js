@@ -38,8 +38,10 @@ videoApiV2.interceptors.response.use(
 );
 
 // 创建通用Excel生成任务
-export function createExcelJob(jobId) {
-  return videoApiV2.get(`/api/v2/universal/jobs?job_id=${jobId}`);
+export function createExcelJob(jobId, position_id) {
+  return videoApiV2.get(
+    `/api/v2/universal/jobs?job_id=${jobId}&position_id=${position_id}`,
+  );
 }
 
 // 获取处理结果
