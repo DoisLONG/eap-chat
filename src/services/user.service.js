@@ -19,7 +19,7 @@ userApi.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // 响应拦截器 - 处理token过期等情况
@@ -37,7 +37,7 @@ userApi.interceptors.response.use(
       }, 500);
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export function login(parmas) {
@@ -53,7 +53,7 @@ export function getUserList(parmas) {
   };
   delete upParams.pageSize;
   delete upParams.pageNum;
-  return userApi.post("/v1/users/list", upParams);
+  return userApi.get("/v1/users/list", { params: upParams });
 }
 // 获取角色列表
 export function getRoleList(parmas) {
@@ -61,7 +61,7 @@ export function getRoleList(parmas) {
 }
 // 获取用户信息
 export function getUserInfo(parmas) {
-  return userApi.post("/v1/users/get", parmas);
+  return userApi.get("/v1/users/get", { params: parmas });
 }
 
 // 创建用户

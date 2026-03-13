@@ -97,8 +97,8 @@ const handleSubmit = () => {
     }
     try {
       const res = await changePwd!(userInfo.value);
-      if (res.data.http_status_code !== 200) {
-        ElMessage.error({ message: res.data.msg || "操作失败！" });
+      if (res.data.status !== 200) {
+        ElMessage.error({ message: res.data.message || "操作失败！" });
         return;
       }
       emits("close");

@@ -306,12 +306,12 @@ const handleSubmit = () => {
         type.value === "create"
           ? createUser
           : type.value === "update"
-          ? updateUser
-          : undefined;
+            ? updateUser
+            : undefined;
       const res = await api!(userInfo.value);
-      if (res.data.http_status_code !== 200) {
+      if (res.data.status !== 200) {
         ElMessage.error({
-          message: res.data.msg || t("common.operateError"),
+          message: res.data.message || t("common.operateError"),
         });
         return;
       }

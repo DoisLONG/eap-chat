@@ -172,7 +172,7 @@ const props = defineProps<{
 
 const { rowInfo, type } = toRefs(props);
 const title = ref(
-  type.value === "create" ? "新增" : type.value === "update" ? "编辑" : "查看"
+  type.value === "create" ? "新增" : type.value === "update" ? "编辑" : "查看",
 );
 const userInfo = ref<any>({ ...rowInfo.value });
 const drawerVisible = ref(true);
@@ -264,11 +264,11 @@ const handleSubmit = () => {
         type.value === "create"
           ? createUser
           : type.value === "update"
-          ? updateUser
-          : undefined;
+            ? updateUser
+            : undefined;
       const res = await api!(userInfo.value);
-      if (res.data.http_status_code !== 200) {
-        ElMessage.error({ message: res.data.msg || "操作失败！" });
+      if (res.data.status !== 200) {
+        ElMessage.error({ message: res.data.message || "操作失败！" });
         return;
       }
       emits("close");

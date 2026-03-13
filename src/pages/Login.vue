@@ -131,7 +131,7 @@ const onLogin = async () => {
     };
     login(params)
       .then((res) => {
-        if (res.data.http_status_code === 200) {
+        if (res.data.status === 200) {
           const token = res.data.data.token;
           localStorage.setItem("token", token);
           userStore.setUserInfo(res.data.data.data);

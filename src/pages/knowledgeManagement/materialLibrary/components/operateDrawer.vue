@@ -247,13 +247,13 @@ const rules = computed(() => ({
         ]
       : [],
   company_id: [
-    { required: false, message: t("companyManagement.companyPlaceholder") },
+    { required: true, message: t("companyManagement.companyPlaceholder") },
   ],
   department_id: [
-    { required: false, message: t("companyManagement.deptmentPlaceholder") },
+    { required: true, message: t("companyManagement.deptmentPlaceholder") },
   ],
   position_id: [
-    { required: false, message: t("companyManagement.positionPlaceholder") },
+    { required: true, message: t("companyManagement.positionPlaceholder") },
   ],
 }));
 
@@ -403,7 +403,7 @@ const onUploadChange: UploadProps["onChange"] = (uploadFile, uploadFiles) => {
   if (!operateInfo.value.title && uploadFile.name) {
     const fileName = uploadFile.name.substring(
       0,
-      uploadFile.name.lastIndexOf(".")
+      uploadFile.name.lastIndexOf("."),
     );
     operateInfo.value.title = fileName;
   }
