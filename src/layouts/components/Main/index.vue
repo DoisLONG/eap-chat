@@ -57,7 +57,7 @@ watch(
     if (maximize.value) app.classList.add("main-maximize");
     else app.classList.remove("main-maximize");
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 // 监听布局变化，在 body 上添加相对应的 layout class
@@ -67,7 +67,7 @@ watch(
     const body = document.body;
     body.setAttribute("class", layout.value);
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 // 监听窗口大小变化，折叠侧边栏
@@ -88,7 +88,8 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .el-main {
   box-sizing: border-box;
-  padding: 10px 12px;
+  // padding: 10px 12px;
+  padding: 24px;
   overflow-x: hidden;
   background-color: var(--el-bg-color-page);
 }

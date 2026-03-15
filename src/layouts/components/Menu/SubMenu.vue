@@ -57,22 +57,44 @@ const handleClickMenu = (subItem) => {
       background-color: var(--el-color-primary) !important;
     }
   }
+  .el-menu-item .el-menu-tooltip__trigger,
+  .el-sub-menu .el-sub-menu__title {
+    padding: 0 8px 8px 10px !important;
+    font-weight: 400 !important;
+  }
+  // .el-menu-item .el-menu-tooltip__trigger:nth-last-of-type(1),
+  // .el-sub-menu .el-sub-menu__title:nth-last-of-type(1) {
+  //   margin-bottom: 0 !important;
+  // }
 }
+.el-menu-item,
+.el-sub-menu {
+  margin: 0 8px 8px 8px !important;
+  font-weight: 400 !important;
+}
+.el-menu-item:nth-last-of-type(1),
+.el-sub-menu:nth-last-of-type(1) {
+  margin-bottom: 0 !important;
+}
+
 .el-menu-item {
   &:hover {
+    border-radius: 4px;
     color: var(--el-menu-hover-text-color);
   }
   &.is-active {
     color: var(--el-menu-active-color) !important;
     background-color: var(--el-menu-active-bg-color) !important;
-    &::before {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      content: "";
-      background-color: var(--el-color-primary);
-    }
+    border-radius: 4px;
+    border-right: 4px solid var(--el-color-primary);
+    // &::before {
+    //   position: absolute;
+    //   top: 0;
+    //   bottom: 0;
+    //   width: 4px;
+    //   content: "";
+    //   background-color: var(--el-color-primary);
+    // }
   }
 }
 .vertical,
@@ -94,5 +116,13 @@ const handleClickMenu = (subItem) => {
       }
     }
   }
+}
+.el-menu--vertical:not(.el-menu--collapse):not(.el-menu--popup-container)
+  .el-menu-item,
+.el-menu--vertical:not(.el-menu--collapse):not(.el-menu--popup-container)
+  .el-menu-item-group__title,
+.el-menu--vertical:not(.el-menu--collapse):not(.el-menu--popup-container)
+  .el-sub-menu__title {
+  margin-bottom: 8px !important;
 }
 </style>

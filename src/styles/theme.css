@@ -1,0 +1,14 @@
+/* Element Plus 主题色配置 */
+:root {
+  --el-menu-item-height: 40px;
+  --el-menu-sub-item-height: 40px;
+  --el-menu-base-level-padding: 15px;
+
+  --el-color-primary: #1677ff !important;
+  --el-color-primary-light-3: #409eff !important;
+  --el-color-primary-light-5: #66b1ff !important;
+  --el-color-primary-light-7: #91caff !important;
+  --el-color-primary-light-8: #b3d8ff !important;
+  --el-color-primary-light-9: #d6e8ff !important;
+  --el-color-primary-dark-2: #0960e8 !important;
+}

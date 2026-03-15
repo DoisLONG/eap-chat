@@ -78,7 +78,7 @@ export function generateUUID() {
  */
 export function isObjectValueEqual(
   a: { [key: string]: any },
-  b: { [key: string]: any }
+  b: { [key: string]: any },
 ) {
   if (!a || !b) return false;
   let aProps = Object.getOwnPropertyNames(a);
@@ -127,7 +127,7 @@ export function getUrlWithParams() {
  * @returns {Array}
  */
 export function getFlatMenuList(
-  menuList: Menu.MenuOptions[]
+  menuList: Menu.MenuOptions[],
 ): Menu.MenuOptions[] {
   let newMenuList: Menu.MenuOptions[] = JSON.parse(JSON.stringify(menuList));
   return newMenuList.flatMap((item) => [
@@ -159,7 +159,7 @@ export function getShowMenuList(menuList: Menu.MenuOptions[]) {
 export const getAllBreadcrumbList = (
   menuList: Menu.MenuOptions[],
   parent = [],
-  result: { [key: string]: any } = {}
+  result: { [key: string]: any } = {},
 ) => {
   for (const item of menuList) {
     result[item.path] = [...parent, item];
@@ -177,7 +177,7 @@ export const getAllBreadcrumbList = (
  */
 export function getMenuListPath(
   menuList: Menu.MenuOptions[],
-  menuPathArr: string[] = []
+  menuPathArr: string[] = [],
 ): string[] {
   for (const item of menuList) {
     if (typeof item === "object" && item.path) menuPathArr.push(item.path);
@@ -194,7 +194,7 @@ export function getMenuListPath(
  */
 export function findMenuByPath(
   menuList: Menu.MenuOptions[],
-  path: string
+  path: string,
 ): Menu.MenuOptions | null {
   for (const item of menuList) {
     if (item.path === path) return item;
@@ -214,7 +214,7 @@ export function findMenuByPath(
  * */
 export function getKeepAliveRouterName(
   menuList: Menu.MenuOptions[],
-  keepAliveNameArr: string[] = []
+  keepAliveNameArr: string[] = [],
 ) {
   menuList.forEach((item) => {
     item.meta.isKeepAlive && item.name && keepAliveNameArr.push(item.name);
@@ -258,7 +258,7 @@ export function formatValue(callValue: any) {
  * */
 export function handleRowAccordingToProp(
   row: { [key: string]: any },
-  prop: string
+  prop: string,
 ) {
   if (!prop.includes(".")) return row[prop] ?? "--";
   prop.split(".").forEach((item) => (row = row[item] ?? "--"));
@@ -288,7 +288,7 @@ export function filterEnum(
   callValue: any,
   enumData?: any,
   fieldNames?: FieldNamesProps,
-  type?: "tag"
+  type?: "tag",
 ) {
   const value = fieldNames?.value ?? "value";
   const label = fieldNames?.label ?? "label";
@@ -312,7 +312,7 @@ export function findItemNested(
   enumData: any,
   callValue: any,
   value: string,
-  children: string
+  children: string,
 ) {
   return enumData.reduce((accumulator: any, current: any) => {
     if (accumulator) return accumulator;
@@ -360,3 +360,9 @@ export function getBrowserLang() {
   }
   return defaultBrowserLang;
 }
+
+// 数字格式化函数 123456 => 123,456
+export const formatNumber = (num) => {
+  if (!num) return "0";
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};

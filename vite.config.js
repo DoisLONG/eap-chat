@@ -50,6 +50,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/mobileapi/, ""),
       },
+      "/dashboardapi": {
+        target: "http://14.103.176.8:6020",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/dashboardapi/, ""),
+      },
       "/videoapi": {
         // http://14.103.176.8:8000/docs        asr_service
         // http://14.103.176.8:8001/docs        excel_service

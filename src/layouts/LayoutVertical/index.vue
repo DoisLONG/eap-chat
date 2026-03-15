@@ -2,14 +2,25 @@
 <template>
   <el-container class="layout">
     <el-aside>
-      <div class="aside-box" :style="{ width: isCollapse ? '65px' : '210px' }">
-        <div class="logo flx-center">
+      <div class="aside-box" :style="{ width: isCollapse ? '65px' : '240px' }">
+        <!-- <div class="logo flx-center">
           <img class="logo-img" src="/logo2.png" alt="logo" />
           <span
             v-show="!isCollapse"
             :class="lang === 'en' ? 'logo-text-en' : 'logo-text'"
             >{{ $t("home.title") }}</span
           >
+        </div> -->
+        <div class="logo-full" v-if="!isCollapse">
+          <img style="width: 127px" src="/logo-full.png" alt="logo" />
+          <!-- <span
+            v-show="!isCollapse"
+            :class="lang === 'en' ? 'logo-text-en' : 'logo-text'"
+            >{{ $t("home.title") }}</span
+          > -->
+        </div>
+        <div class="logo-full-collapse" v-else>
+          <img style="width: 28px" src="/logo-blue.png" alt="logo" />
         </div>
         <el-scrollbar>
           <el-menu
@@ -70,7 +81,7 @@ const activeMenu = computed(() => {
       height: 100%;
       transition: width 0.3s ease;
       .el-scrollbar {
-        height: calc(100% - 55px);
+        height: calc(100% - 64px);
         .el-menu {
           width: 100%;
           overflow-x: hidden;
@@ -79,7 +90,7 @@ const activeMenu = computed(() => {
       }
       .logo {
         box-sizing: border-box;
-        height: 55px;
+        height: 64px;
         .logo-img {
           width: 28px;
           object-fit: contain;
@@ -106,10 +117,24 @@ const activeMenu = computed(() => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 55px;
+    height: 64px;
     padding: 0 15px;
     background-color: var(--el-header-bg-color);
     border-bottom: 1px solid var(--el-header-border-color);
   }
+}
+.logo-full {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 24px;
+  box-sizing: border-box;
+}
+.logo-full-collapse {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

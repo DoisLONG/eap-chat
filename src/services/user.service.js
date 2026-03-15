@@ -81,3 +81,7 @@ export function deleteUser(parmas) {
 export function changePwd(parmas) {
   return userApi.post("/v1/users/change_password", parmas);
 }
+// 获取总人数
+export function getTotalUserCount() {
+  return userApi.get("/v1/users/statistics");
+}

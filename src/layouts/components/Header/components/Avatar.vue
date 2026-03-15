@@ -2,7 +2,10 @@
   <el-dropdown>
     <div class="avatar">
       <img src="@/assets/images/user.png" alt="avatar" />
-      <el-text>{{ userInfo.name }}</el-text>
+      <div class="avatar-info">
+        <div class="name">{{ userInfo.name }}</div>
+        <div class="role">{{ userInfo.role?.name }}</div>
+      </div>
     </div>
     <template #dropdown>
       <el-dropdown-menu>
@@ -50,20 +53,45 @@ const logout = () => {
 
 <style scoped lang="scss">
 .avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 5px 5px 5px 10px;
+  border-radius: 6px;
   img {
     width: 30px;
     height: 30px;
     border-radius: 50%;
     margin-right: 7px;
   }
-  display: flex;
-  align-items: center;
-  outline: none;
-  cursor: pointer;
-  white-space: nowrap;
-  padding: 5px 5px 5px 10px;
-  border-radius: 6px;
-
+  .avatar-info {
+    height: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    .name {
+      height: 14px;
+      line-height: 14px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #01021d;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .role {
+      height: 12px;
+      line-height: 12px;
+      margin-top: 4px;
+      font-size: 12px;
+      color: #99a1af;
+    }
+  }
   &:hover {
     background-color: var(--el-fill-color-light);
   }

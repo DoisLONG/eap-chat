@@ -711,6 +711,7 @@ function resetImportDlg() {
   importDlg.position_id = "";
   importDlg.start_time = "";
   importDlg.end_time = "";
+  ruleFormRef.value?.resetFields();
 }
 
 const ALLOW_RE = ref<RegExp>(/\.(xlsx|xls)$/i);
