@@ -144,7 +144,10 @@ const initChart = () => {
     rank: sortedData.findIndex((sortedItem) => sortedItem.name === item.name),
   }));
 
-  dataWithRank.forEach((item, index) => {
+  // 按照排序等级从低到高排序（从最多到最少）
+  const sortedDataWithRank = dataWithRank.sort((a, b) => a.rank - b.rank);
+
+  sortedDataWithRank.forEach((item, index) => {
     const ratio = item.value / total;
     const endAngle = startAngle - ratio * 360; // 逆时针旋转
 

@@ -42,6 +42,11 @@ http {
             try_files $uri $uri/ /index.html;
         }
 
+        location /eap {
+            root /usr/share/nginx/html;
+            try_files $uri $uri/ /eap/index.html;
+        }
+
         # 反代：SOP 服务
         location /sop-api/ {
             proxy_pass http://$SOP_API_HOST/;
