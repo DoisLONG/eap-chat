@@ -338,6 +338,7 @@ const currentSopLabel = computed(() => {
   );
 });
 const getRankData = () => {
+  if (!currentSop.value) return;
   const params = {
     sop_id: currentSop.value,
   };

@@ -104,11 +104,12 @@ const getData = () => {
           colorClass: "gray",
         },
       ];
-      isHaveData.value =
+      isHaveData.value = !!(
         info.sop_count ||
         info.material_count ||
-        info?.exercise_count ||
-        info.robot_count;
+        info.exercise_count ||
+        info.robot_count
+      );
       nextTick(() => {
         initChart();
       });
@@ -131,23 +132,21 @@ const initChart = () => {
 
   // 计算数据总和
   const total = data.value.reduce((sum, item) => sum + item.value, 0);
-  console.log("total", total);
+  console.warn("total", total);
 
   let startAngle = 180; // 从顶部开始
 
   // 按值从大到小排序数据
   const sortedData = [...data.value].sort((a, b) => b.value - a.value);
-
   // 为每个数据项添加排序索引
   const dataWithRank = data.value.map((item) => ({
     ...item,
     rank: sortedData.findIndex((sortedItem) => sortedItem.name === item.name),
   }));
-
-  // 按照排序等级从低到高排序（从最多到最少）
   const sortedDataWithRank = dataWithRank.sort((a, b) => a.rank - b.rank);
+  const nonZeroData = sortedDataWithRank.filter((item) => item.value > 0);
 
-  sortedDataWithRank.forEach((item, index) => {
+  nonZeroData.forEach((item, index) => {
     const ratio = item.value / total;
     const endAngle = startAngle - ratio * 360; // 逆时针旋转
 
@@ -273,6 +272,12 @@ const createArcPath = (
   startAngle,
   endAngle,
 ) => {
+  // 处理单数据情况，确保创建完整的圆环
+  if (Math.abs(endAngle - startAngle) >= 360) {
+    // 对于完整圆环，使用稍微小于360度的角度，确保路径有效
+    endAngle = startAngle - 359.999;
+  }
+
   const startRad = (startAngle * Math.PI) / 180;
   const endRad = (endAngle * Math.PI) / 180;
 

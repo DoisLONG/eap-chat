@@ -77,15 +77,17 @@ const isChecking = ref(false); // 是否正在检查网络
 // console.log("w", (window.innerWidth - 240 - 48 - 320 - 16 - 48) / 31);
 const globalStore = useGlobalStore();
 const isCollapse = computed(() => globalStore.isCollapse);
-const daysInMonth = new Date(
-  new Date().getFullYear(),
-  new Date().getMonth() + 1,
-  0,
-).getDate(); // 当前月份的天数
+const daysInMonth = 30; // 热力图显示30天数据
 // const heatmapAreaSize = ref(22); // 默认热力图小块大小
 const heatmapAreaSize = computed(() => {
   return Math.floor(
-    (window.innerWidth - (isCollapse.value ? 65 : 240) - 48 - 320 - 16 - 48) /
+    (window.innerWidth -
+      (isCollapse.value ? 65 : 240) -
+      48 -
+      320 -
+      16 -
+      48 -
+      80) /
       daysInMonth,
   ); // -菜单栏-padding-右侧栏-ml-leftCardWidth的padding
 });

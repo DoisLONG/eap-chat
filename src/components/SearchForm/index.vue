@@ -1,6 +1,6 @@
 <template>
   <div v-if="columns.length" class="card table-search">
-    <el-form ref="formRef" :model="searchParam">
+    <el-form ref="formRef" :model="searchParam" @submit.prevent>
       <Grid
         ref="gridRef"
         :collapsed="collapsed"

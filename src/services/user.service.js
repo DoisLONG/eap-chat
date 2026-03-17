@@ -85,3 +85,11 @@ export function changePwd(parmas) {
 export function getTotalUserCount() {
   return userApi.get("/v1/users/statistics");
 }
+
+// 获取配置
+export function getConfigs() {
+  return userApi.get("/api/users/onboarding");
+}
+export function setConfigs(params) {
+  return userApi.post("/api/users/onboard/update", params);
+}
