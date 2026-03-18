@@ -164,8 +164,8 @@ const isFirst = ref(false);
 const activeDuan = ref(localStorage.getItem("activeDuan") || "user");
 const userUrl = ref("");
 const h5Size = ref({
-  width: 375,
-  height: 667,
+  width: 0,
+  height: 0,
 });
 
 const getUserConfig = async () => {
@@ -190,9 +190,6 @@ const changeDuan = (val) => {
   if (isFirst.value && val === "admin") return;
   activeDuan.value = val;
   localStorage.setItem("activeDuan", val);
-  if (val === "user") {
-    setTimeout(calculateH5Size, 100);
-  }
 };
 
 const calculateH5Size = () => {
@@ -239,8 +236,8 @@ onMounted(() => {
       : window.location.origin;
   userUrl.value = `${origin}/eap/#/?token=${token}`;
   // userUrl.value = `http://localhost:8888/eap/#/?token=${token}`;
-
   // console.log("userUrl.value", userUrl.value);
+  calculateH5Size();
   window.addEventListener("resize", calculateH5Size);
 });
 
