@@ -2,6 +2,11 @@
   <template v-for="subItem in menuList" :key="subItem.path">
     <el-sub-menu v-if="subItem.children?.length" :index="subItem.path">
       <template #title>
+        <!-- <img
+          v-if="subItem.meta.iconPath"
+          style="width: 16px; height: 16px; margin-right: 8px"
+          :src="subItem.meta.iconPath"
+        /> -->
         <el-icon v-if="subItem.meta.icon">
           <component :is="subItem.meta.icon"></component>
         </el-icon>
@@ -16,6 +21,11 @@
       :index="subItem.path"
       @click="handleClickMenu(subItem)"
     >
+      <!-- <img
+        v-if="subItem.meta.iconPath"
+        style="width: 16px; height: 16px; margin-right: 8px"
+        :src="subItem.meta.iconPath"
+      /> -->
       <el-icon v-if="subItem.meta.icon">
         <component :is="subItem.meta.icon"></component>
       </el-icon>

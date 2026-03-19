@@ -1,8 +1,10 @@
 <template>
   <div class="dashboard-container">
     <div class="dashboard-header">
-      <div>仪表盘</div>
-      <span class="update-time">{{ todayDate }} 00:00:00 更新数据</span>
+      <div>{{ $t("dashboard.title") }}</div>
+      <span class="update-time"
+        >{{ todayDate }} {{ $t("dashboard.updateTime") }}</span
+      >
     </div>
     <div v-if="isOnline">
       <overview :data="overviewData" />
@@ -41,9 +43,9 @@
       <div class="no-data-icon">
         <img src="@/assets/images/offline.png" class="no-data-icon" />
       </div>
-      <div class="no-data-text">失去连接</div>
+      <div class="no-data-text">{{ $t("dashboard.offline") }}</div>
       <div class="no-data-text-warning">
-        哎呀……未找到网络连接。请检查您的网络连接
+        {{ $t("dashboard.offlineTip") }}
       </div>
       <div>
         <el-button
@@ -52,7 +54,7 @@
           @click="retryNetwork"
           :loading="isChecking"
         >
-          {{ isChecking ? "检查中..." : "再试一次" }}
+          {{ isChecking ? $t("dashboard.checking") : $t("dashboard.retry") }}
         </el-button>
       </div>
     </div>
@@ -74,7 +76,7 @@ import { getOverview } from "@/services/dashboard.service";
 
 const isOnline = ref(true); // 是否有网络
 const isChecking = ref(false); // 是否正在检查网络
-// console.log("w", (window.innerWidth - 240 - 48 - 320 - 16 - 48) / 31);
+// console.log("w", (window.innerWidth - 208 - 48 - 320 - 16 - 48) / 31);
 const globalStore = useGlobalStore();
 const isCollapse = computed(() => globalStore.isCollapse);
 const daysInMonth = 30; // 热力图显示30天数据
@@ -82,7 +84,7 @@ const daysInMonth = 30; // 热力图显示30天数据
 const heatmapAreaSize = computed(() => {
   return Math.floor(
     (window.innerWidth -
-      (isCollapse.value ? 65 : 240) -
+      (isCollapse.value ? 65 : 208) -
       48 -
       320 -
       16 -

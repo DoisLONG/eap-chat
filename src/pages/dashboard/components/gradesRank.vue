@@ -2,11 +2,11 @@
   <div class="grades-rank-container">
     <!-- 标题 -->
     <div class="grades-rank-header">
-      <span> 成绩排名 </span>
+      <span> {{ $t("dashboard.gradesRank.title") }} </span>
       <el-tooltip
         class="box-item"
         effect="dark"
-        content="展示指定考核下已完成考试用户的成绩排名"
+        :content="$t('dashboard.gradesRank.tooltip')"
         popper-style="width: 150px; box-sizing: border-box; background: rgba(1, 2, 29, 0.8); font-size: 12px; border-radius: 8px; padding: 12px;"
         placement="right"
       >
@@ -24,7 +24,7 @@
         <div class="filter-area">
           <el-input
             v-model="keyword"
-            placeholder="输入关键词"
+            :placeholder="$t('dashboard.gradesRank.keywordPlaceholder')"
             class="search-input"
             @keyup.enter="getSopListData"
           >
@@ -37,7 +37,7 @@
               v-model="deptFilter"
               popper-style="border-radius: 8px"
               class="filter-select"
-              placeholder="部门筛选"
+              :placeholder="$t('dashboard.gradesRank.deptFilter')"
               @change="getSopListData"
             >
               <el-option
@@ -52,14 +52,26 @@
             </el-select>
             <el-select
               v-model="timeDimension"
-              placeholder="时间维度"
+              :placeholder="$t('dashboard.gradesRank.timeDimension')"
               class="filter-select"
               @change="getSopListData"
             >
-              <el-option label="全部时间" value="all" />
-              <el-option label="本周" value="week" />
-              <el-option label="本月" value="month" />
-              <el-option label="本季度" value="quarter" />
+              <el-option
+                :label="$t('dashboard.gradesRank.allTime')"
+                value="all"
+              />
+              <el-option
+                :label="$t('dashboard.gradesRank.week')"
+                value="week"
+              />
+              <el-option
+                :label="$t('dashboard.gradesRank.month')"
+                value="month"
+              />
+              <el-option
+                :label="$t('dashboard.gradesRank.quarter')"
+                value="quarter"
+              />
               <template #prefix>
                 <img src="@/assets/images/calendar.png" class="select-prefix" />
               </template>
@@ -69,7 +81,7 @@
               text
               @click="resetFilters"
               class="reset-button"
-              >重置</el-button
+              >{{ $t("dashboard.gradesRank.reset") }}</el-button
             >
           </div>
         </div>
@@ -78,7 +90,7 @@
         <div class="exam-select" style="display: flex">
           <el-select
             v-model="currentSop"
-            placeholder="请选择SOP"
+            :placeholder="$t('dashboard.gradesRank.selectSop')"
             size="small"
             @visible-change="handleVisibleChange"
             class="exam-select-dropdown"
@@ -91,7 +103,7 @@
             />
             <template #prefix>
               <span class="select-label">{{
-                currentSopLabel || "请选择SOP"
+                currentSopLabel || $t("dashboard.gradesRank.selectSop")
               }}</span>
               <img
                 src="@/assets/images/arrow-down.png"
@@ -110,12 +122,16 @@
           <div class="exam-title">{{ currentSopLabel }}</div>
           <div class="exam-info-item">
             <img src="@/assets/images/building.png" class="exam-info-icon" />
-            <span>所属部门：{{ exam_info?.sop_title || "-" }}</span>
+            <span
+              >{{ $t("dashboard.gradesRank.examInfo.department")
+              }}{{ exam_info?.sop_title || "-" }}</span
+            >
           </div>
           <div class="exam-info-item">
             <img src="@/assets/images/calendar.png" class="exam-info-icon" />
             <span
-              >时间：{{ exam_info?.start_time || "-" }} -
+              >{{ $t("dashboard.gradesRank.examInfo.time")
+              }}{{ exam_info?.start_time || "-" }} -
               {{ exam_info?.end_time || "-" }}</span
             >
           </div>
@@ -126,7 +142,25 @@
                   src="@/assets/images/usergroup.png"
                   class="stat-label-icon"
                 />
-                <span>应考人数</span>
+                <el-tooltip
+                  :content="
+                    $t('dashboard.gradesRank.examInfo.totalParticipants')
+                  "
+                  placement="top"
+                  effect="dark"
+                  :disabled="!isTotalParticipantsRef"
+                >
+                  <div
+                    ref="totalParticipantsRef"
+                    class="sle"
+                    :style="{
+                      width: language === 'zh' ? 'auto' : '80%',
+                    }"
+                    @mouseenter="checkOverflow($event)"
+                  >
+                    {{ $t("dashboard.gradesRank.examInfo.totalParticipants") }}
+                  </div>
+                </el-tooltip>
               </div>
               <div class="stat-value">
                 {{ exam_info?.total_participants }}
@@ -135,21 +169,40 @@
             <div class="stat-item">
               <div class="stat-label">
                 <div class="stat-label-dot"></div>
-                <span>已完成</span>
+                <span>{{ $t("dashboard.gradesRank.examInfo.completed") }}</span>
               </div>
               <div class="stat-value completed">
                 {{ exam_info?.completed_participants }}
               </div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">完成率</div>
+              <!-- <div class="stat-label" ref="completionRateRef">
+                {{ $t("dashboard.gradesRank.examInfo.completionRate") }}
+              </div> -->
+              <el-tooltip
+                :content="$t('dashboard.gradesRank.examInfo.completionRate')"
+                placement="top"
+                effect="dark"
+                :disabled="!isCompletionRate"
+              >
+                <div
+                  ref="completionRateRef"
+                  class="stat-label sle"
+                  :style="{
+                    width: language === 'zh' ? 'auto' : '90%',
+                  }"
+                  @mouseenter="checkOverflow($event)"
+                >
+                  {{ $t("dashboard.gradesRank.examInfo.completionRate") }}
+                </div>
+              </el-tooltip>
               <div class="stat-value">{{ exam_info?.completion_rate }}%</div>
             </div>
           </div>
         </div>
         <div v-else class="exam-info-card exam-info-no-data">
           <img src="@/assets/images/nodata.png" class="no-data-icon" />
-          <div class="no-data-text">暂无SOP</div>
+          <div class="no-data-text">{{ $t("dashboard.gradesRank.noSop") }}</div>
         </div>
       </el-col>
 
@@ -163,18 +216,37 @@
                   src="@/assets/images/trendingUp.png"
                   class="ranking-title-icon"
                 />
-                <span>成绩排名详情</span>
+                <el-tooltip
+                  :content="$t('dashboard.gradesRank.ranking.title')"
+                  placement="top"
+                  effect="dark"
+                  :disabled="!isRankingTitleRef"
+                >
+                  <div
+                    ref="rankingTitleRef"
+                    class="sle"
+                    :style="{
+                      width: language === 'zh' ? 'auto' : '120px',
+                    }"
+                    @mouseenter="checkOverflow($event)"
+                  >
+                    {{ $t("dashboard.gradesRank.ranking.title") }}
+                  </div>
+                </el-tooltip>
               </div>
               <div class="participant-count">
                 <img
                   src="@/assets/images/usergroup.png"
                   class="participant-count-icon"
                 />
-                <span>当前展示人数: {{ showCount }}</span>
+                <span
+                  >{{ $t("dashboard.gradesRank.ranking.participantCount")
+                  }}{{ showCount }}</span
+                >
               </div>
             </div>
             <div class="ranking-subtitle">
-              当前展示:
+              {{ $t("dashboard.gradesRank.ranking.title") }}:
               {{ currentSopLabel || "-" }}
             </div>
             <div class="ranking-list-wrapper" v-if="rankingData.length > 0">
@@ -194,7 +266,10 @@
                     <div class="user-name">{{ item.user_name }}</div>
                     <div class="user-dept">{{ item.department }}</div>
                   </div>
-                  <div class="user-score">{{ item.score }}分</div>
+                  <div class="user-score">
+                    {{ item.score
+                    }}{{ $t("dashboard.gradesRank.ranking.userScore") }}
+                  </div>
                   <div
                     class="rank-change"
                     :class="{
@@ -224,7 +299,9 @@
             </div>
             <div v-else class="ranking-list-wrapper ranking-no-data">
               <img src="@/assets/images/nodata.png" class="no-data-icon" />
-              <div class="no-data-text">暂无成绩排名</div>
+              <div class="no-data-text">
+                {{ $t("dashboard.gradesRank.ranking.noData") }}
+              </div>
             </div>
           </div>
         </div>
@@ -237,6 +314,10 @@
 import { ref, computed } from "vue";
 import { getDeptList } from "@/services/company.service";
 import { getRank, getSopList } from "@/services/dashboard.service";
+import { useGlobalStore } from "@/stores/modules/global";
+
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
 
 const deptList = ref<{ label: string; value: string }[]>([]);
 const keyword = ref("");
@@ -343,7 +424,7 @@ const getRankData = () => {
     sop_id: currentSop.value,
   };
   getRank(params).then((res) => {
-    console.log("成绩排名", res);
+    // console.log("成绩排名", res);
     if (res.data.status === 200) {
       exam_info.value = res.data.data.exam_info || {};
       rankingData.value = res.data.data.ranking || [];
@@ -375,6 +456,37 @@ const resetFilters = () => {
   deptFilter.value = "";
   timeDimension.value = "";
   getSopListData();
+};
+
+// 检测文本是否溢出
+const isTextOverflow = (el) => {
+  if (!el) return false;
+  return el.scrollWidth > el.clientWidth;
+};
+
+const totalParticipantsRef = ref();
+const completionRateRef = ref();
+const rankingTitleRef = ref();
+
+const isTotalParticipantsRef = ref(false);
+const isCompletionRate = ref(false);
+const isRankingTitleRef = ref(false);
+
+// 检查溢出并设置状态
+const checkOverflow = (event) => {
+  const el = event.target;
+  const refMap = {
+    totalParticipantsRef: isTotalParticipantsRef,
+    completionRateRef: isCompletionRate,
+    rankingTitleRef: isRankingTitleRef,
+  };
+
+  // 根据元素找到对应的ref和状态变量
+  Object.entries(refMap).forEach(([refName, statusRef]) => {
+    if (el === eval(refName).value) {
+      statusRef.value = isTextOverflow(el);
+    }
+  });
 };
 </script>
 
@@ -627,6 +739,9 @@ const resetFilters = () => {
   padding: 0 8px;
   font-size: 12px;
   color: #99a1af;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   .participant-count-icon {
     width: 12px;
     height: 12px;

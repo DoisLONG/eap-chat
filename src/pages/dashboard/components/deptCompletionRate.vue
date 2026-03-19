@@ -1,7 +1,9 @@
 <template>
   <div class="dept-completion-rate">
     <div class="header">
-      <div class="header-title">各部门完成度</div>
+      <div class="header-title">
+        {{ $t("dashboard.deptCompletionRate.title") }}
+      </div>
       <div class="select-box">
         <el-select
           v-model="selectedDept"
@@ -28,16 +30,36 @@
           {{ summary?.overall_completion_rate || "-" }}%
         </div>
         <div class="stat-content">
-          <div class="stat-label">整体完成率</div>
-          <div class="stat-change positive" v-if="isHaveData">
+          <el-tooltip
+            :content="$t('dashboard.deptCompletionRate.overallCompletionRate')"
+            placement="top"
+            effect="dark"
+            :disabled="!isOverallCompletionRateOverflow"
+          >
+            <div
+              class="stat-label sle"
+              :style="{
+                width: language === 'zh' ? 'auto' : 'calc(100% - 60px)',
+              }"
+              ref="overallCompletionRateRef"
+              @mouseenter="checkOverflow($event)"
+            >
+              {{ $t("dashboard.deptCompletionRate.overallCompletionRate") }}
+            </div>
+          </el-tooltip>
+          <div
+            class="stat-change positive"
+            style="width: 60px"
+            v-if="isHaveData"
+          >
             <img src="@/assets/images/up-icon.png" class="stat-change-icon" />{{
               summary?.completion_growth
             }}%
           </div>
           <div
-            class="stat-change"
             v-else
-            style="display: flex; align-items: center"
+            class="stat-change"
+            style="display: flex; align-items: center; width: 60px"
           >
             <img
               src="@/assets/images/unknown-icon.png"
@@ -52,7 +74,20 @@
           <span class="stat-unit">/{{ summary?.total_sop_count }}</span>
         </div>
         <div class="stat-content">
-          <div class="stat-label">进行中</div>
+          <el-tooltip
+            :content="$t('dashboard.deptCompletionRate.inProgress')"
+            placement="top"
+            effect="dark"
+            :disabled="!isInProgressOverflow"
+          >
+            <div
+              class="stat-label"
+              ref="inProgressRef"
+              @mouseenter="checkOverflow($event)"
+            >
+              {{ $t("dashboard.deptCompletionRate.inProgress") }}
+            </div>
+          </el-tooltip>
         </div>
       </div>
       <div class="stat-card">
@@ -60,10 +95,45 @@
           {{ formatNumber(summary?.pending_count) }}
         </div>
         <div class="stat-content">
-          <div class="stat-label">待考人次</div>
-          <div class="stat-warning" v-if="isHaveData">
-            {{ summary?.due_soon_count }}人即将到期
-          </div>
+          <el-tooltip
+            :content="$t('dashboard.deptCompletionRate.pendingCount')"
+            placement="top"
+            effect="dark"
+            :disabled="!isPendingCountOverflow"
+          >
+            <div
+              class="stat-label sle"
+              :style="{
+                width: language === 'zh' ? 'auto' : '50%',
+              }"
+              ref="pendingCountRef"
+              @mouseenter="checkOverflow($event)"
+            >
+              {{ $t("dashboard.deptCompletionRate.pendingCount") }}
+            </div>
+          </el-tooltip>
+          <el-tooltip
+            :content="
+              summary?.due_soon_count +
+              $t('dashboard.deptCompletionRate.dueSoon')
+            "
+            placement="top"
+            effect="dark"
+            :disabled="!isDueSoonOverflow"
+            v-if="isHaveData"
+          >
+            <div
+              class="stat-warning sle"
+              :style="{
+                width: language === 'zh' ? 'auto' : '50%',
+              }"
+              ref="dueSoonRef"
+              @mouseenter="checkOverflow($event)"
+            >
+              {{ summary?.due_soon_count
+              }}{{ $t("dashboard.deptCompletionRate.dueSoon") }}
+            </div>
+          </el-tooltip>
         </div>
       </div>
     </div>
@@ -78,29 +148,47 @@
         <el-table-column
           prop="name"
           show-overflow-tooltip
-          label="任务名称"
+          :label="$t('dashboard.deptCompletionRate.taskName')"
           min-width="220"
         >
           <template #default="{ row }">
             <span class="task-name">{{ row.task_name }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="health" label="健康度" min-width="80">
+        <el-table-column
+          prop="health"
+          show-overflow-tooltip
+          :label="$t('dashboard.deptCompletionRate.health')"
+          min-width="80"
+        >
           <template #default="{ row }">
             <span>{{ row.health_score }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="completionRate" label="完成率" min-width="80">
+        <el-table-column
+          show-overflow-tooltip
+          prop="completionRate"
+          :label="$t('dashboard.deptCompletionRate.completionRate')"
+          min-width="80"
+        >
           <template #default="{ row }">
             <span>{{ row.completion_rate }}%</span>
           </template>
         </el-table-column>
-        <el-table-column label="待考/已完成" min-width="110">
+        <el-table-column
+          show-overflow-tooltip
+          :label="$t('dashboard.deptCompletionRate.pendingCompleted')"
+          min-width="110"
+        >
           <template #default="{ row }">
             <span>{{ row.pending_count }}/{{ row.completed_count }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" min-width="80">
+        <el-table-column
+          show-overflow-tooltip
+          :label="$t('dashboard.deptCompletionRate.status')"
+          min-width="80"
+        >
           <template #default="{ row }">
             <span
               :class="
@@ -110,8 +198,8 @@
               "
               >{{
                 ["running", "RUNNING"].includes(row.status)
-                  ? "进行中"
-                  : "已截止"
+                  ? $t("dashboard.deptCompletionRate.running")
+                  : $t("dashboard.deptCompletionRate.expired")
               }}</span
             >
           </template>
@@ -134,8 +222,12 @@
     </div>
     <div v-else class="table-container no-data">
       <img src="@/assets/images/nodata.png" class="no-data-icon" />
-      <div class="no-data-text">暂无SOP任务</div>
-      <div class="no-data-text-warning">请添加考试任务</div>
+      <div class="no-data-text">
+        {{ $t("dashboard.deptCompletionRate.noTask") }}
+      </div>
+      <div class="no-data-text-warning">
+        {{ $t("dashboard.deptCompletionRate.addTask") }}
+      </div>
     </div>
   </div>
 </template>
@@ -145,10 +237,53 @@ import { ref, computed } from "vue";
 import { getDeptList } from "@/services/company.service";
 import { formatNumber } from "@/utils/index";
 import { getDepartmentExam } from "@/services/dashboard.service";
+import { useI18n } from "vue-i18n";
+import { useGlobalStore } from "@/stores/modules/global";
+
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
+
+const { t } = useI18n();
 
 // 部门选择
 const selectedDept = ref("total");
 const deptList = ref([]);
+
+// 文本溢出检测
+const overallCompletionRateRef = ref(null);
+const inProgressRef = ref(null);
+const pendingCountRef = ref(null);
+const dueSoonRef = ref(null);
+
+// 溢出状态
+const isOverallCompletionRateOverflow = ref(false);
+const isInProgressOverflow = ref(false);
+const isPendingCountOverflow = ref(false);
+const isDueSoonOverflow = ref(false);
+
+// 检测文本是否溢出
+const isTextOverflow = (el) => {
+  if (!el) return false;
+  return el.scrollWidth > el.clientWidth;
+};
+
+// 检查溢出并设置状态
+const checkOverflow = (event) => {
+  const el = event.target;
+  const refMap = {
+    overallCompletionRateRef: isOverallCompletionRateOverflow,
+    inProgressRef: isInProgressOverflow,
+    pendingCountRef: isPendingCountOverflow,
+    dueSoonRef: isDueSoonOverflow,
+  };
+
+  // 根据元素找到对应的ref和状态变量
+  Object.entries(refMap).forEach(([refName, statusRef]) => {
+    if (el === eval(refName).value) {
+      statusRef.value = isTextOverflow(el);
+    }
+  });
+};
 
 const isHaveData = computed(() => tasks.value?.length);
 
@@ -163,7 +298,7 @@ const queryDept = () => {
       value: item.department_id,
     }));
     deptList.value.unshift({
-      label: "全公司",
+      label: t("dashboard.deptCompletionRate.allCompany"),
       value: "total",
     });
   });
@@ -176,7 +311,7 @@ const getData = () => {
     params.department_id = selectedDept.value;
   }
   getDepartmentExam(params).then((res) => {
-    console.log("各部门考试完成率", res);
+    // console.log("各部门考试完成率", res);
     if (res.data.status === 200) {
       summary.value = res.data.data.summary || {};
       tasks.value = res.data.data.list || [];
@@ -221,18 +356,22 @@ const changeDept = () => {
 }
 
 .stats-cards {
+  display: flex;
+  width: 100%;
   margin-top: 16px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  // display: grid;
+  // grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   margin-bottom: 24px;
 }
 
 .stat-card {
+  width: calc(33.33% - 11px);
   background-color: #f9fafb;
   border-radius: 8px;
   padding: 16px;
   position: relative;
+  box-sizing: border-box;
 }
 
 .stat-card:hover {

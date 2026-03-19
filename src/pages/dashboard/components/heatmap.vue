@@ -1,7 +1,7 @@
 <template>
   <div class="heatmap">
     <div class="heatmap-title">
-      <span>在线热力图</span>
+      <span>{{ $t("dashboard.heatmap.title") }}</span>
     </div>
     <div ref="chartRef" class="heatmap-chart"></div>
   </div>
@@ -21,7 +21,12 @@ import {
 import * as echarts from "echarts";
 import { getHeatmap } from "@/services/dashboard.service";
 import { getTotalUserCount } from "@/services/user.service";
+import { useI18n } from "vue-i18n";
+import { useGlobalStore } from "@/stores/modules/global";
 
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
+const { t } = useI18n();
 const props = defineProps({
   areasize: {
     type: Number,
@@ -160,7 +165,7 @@ const initChart = () => {
         const day = currentDate.getDate();
         const value = params.value[2];
         const percentage = (value / totalUserCount.value) * 100; // 计算占比
-        return `<div style="font-size: 12px;color: #6A7282;width: 128px;">${year}年${month}月${day}日</div><hr style="margin: 8px 0; border: none; height: 1px; background-color: rgba(106, 114, 130, 0.2);"/><div style="color:#F9FAFB; font-size:12px;">${actualHour}:00 - ${nextHour}:00</div><div style="font-size: 12px;color: #6A7282;display: flex; align-items: center; justify-content: space-between;"><div>当前在线人数: </div><div style="color: #1677FF; font-weight: 600;">${value}</div></div><div style="margin-top: 8px;margin-bottom: 4px; height: 4px; background-color: rgba(255, 255, 255, 0.2); border-radius: 2px; overflow: hidden;"><div style="height: 100%; width: ${percentage}%; background-color: #1677FF; border-radius: 2px;"></div></div>`;
+        return `<div style="font-size: 12px;color: #6A7282;width: ${language.value === "zh" ? "128px" : "160px"};">${year}年${month}月${day}日</div><hr style="margin: 8px 0; border: none; height: 1px; background-color: rgba(106, 114, 130, 0.2);"/><div style="color:#F9FAFB; font-size:12px;">${actualHour}:00 - ${nextHour}:00</div><div style="font-size: 12px;color: #6A7282;display: flex; align-items: center; justify-content: space-between;"><div>${t("dashboard.heatmap.tooltip.onlineCount")}</div><div style="color: #1677FF; font-weight: 600;">${value}</div></div><div style="margin-top: 8px;margin-bottom: 4px; height: 4px; background-color: rgba(255, 255, 255, 0.2); border-radius: 2px; overflow: hidden;"><div style="height: 100%; width: ${percentage}%; background-color: #1677FF; border-radius: 2px;"></div></div>`;
       },
     },
     grid: {
@@ -244,7 +249,7 @@ const initChart = () => {
     },
     series: [
       {
-        name: "在线热度",
+        name: t("dashboard.heatmap.seriesName"),
         type: "heatmap",
         data: transformedHeatmapData.value,
         label: {

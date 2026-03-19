@@ -2,9 +2,14 @@
   <div class="welcome-container">
     <div class="welcome-content">
       <div class="welcome-text">
-        <div class="title">欢迎使用</div>
-        <div class="title subtitle">BlueDot智能陪练系统</div>
-        <el-button type="primary" class="guide-button">新手引导</el-button>
+        <div class="title">{{ $t("dashboard.welcome.title") }}</div>
+        <div class="title subtitle">{{ $t("dashboard.welcome.subtitle") }}</div>
+        <el-button
+          type="primary"
+          class="guide-button"
+          :style="{ width: language === 'en' ? '140px' : '100px' }"
+          >{{ $t("dashboard.welcome.guideButton") }}</el-button
+        >
       </div>
       <div class="welcome-image">
         <img src="@/assets/images/guide.png" alt="引导图片" />
@@ -14,7 +19,10 @@
 </template>
 
 <script setup>
-// 组件逻辑
+import { computed } from "vue";
+import { useGlobalStore } from "@/stores/modules/global";
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
 </script>
 
 <style scoped>

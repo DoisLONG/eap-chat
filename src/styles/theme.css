@@ -3,6 +3,8 @@
   --el-menu-item-height: 40px;
   --el-menu-sub-item-height: 40px;
   --el-menu-base-level-padding: 15px;
+  /* --el-menu-level-padding: 16px; */
+  --el-menu-level-padding: 20px;
 
   --el-color-primary: #1677ff !important;
   --el-color-primary-light-3: #409eff !important;

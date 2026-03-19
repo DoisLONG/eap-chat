@@ -1,7 +1,9 @@
 <template>
   <div class="announcement-container">
     <div class="announcement-header flx-justify-between">
-      <div class="announcement-title">公告</div>
+      <div class="announcement-title">
+        {{ $t("dashboard.announcement.title") }}
+      </div>
       <!-- <div class="view-all">查看全部</div> -->
       <div class="view-all"></div>
     </div>
@@ -14,7 +16,7 @@
             alt="calendar"
             class="section-title-icon"
           />
-          <span>最新考试安排</span>
+          <span>{{ $t("dashboard.announcement.latestExam") }}</span>
         </div>
 
         <div v-if="newData.length > 0">
@@ -23,16 +25,10 @@
               {{ item.title }}
             </div>
             <div class="item-time">
-              考试时间: {{ `${item.start_time}-${item.end_time}` }}
+              {{ $t("dashboard.announcement.examTime") }}
+              {{ `${item.start_time}-${item.end_time}` }}
             </div>
           </div>
-
-          <!-- <div class="announcement-item">
-            <div class="item-title item-title-announcement">
-              新员工入职基础业务能力测试
-            </div>
-            <div class="item-time">考试时间: 2024-03-20</div>
-          </div> -->
         </div>
         <div v-else class="new-no-data">
           <div class="no-data-icon">
@@ -42,7 +38,9 @@
               alt="no-data"
             />
           </div>
-          <div class="no-data-text">暂无最新考试安排</div>
+          <div class="no-data-text">
+            {{ $t("dashboard.announcement.noLatestExam") }}
+          </div>
         </div>
       </div>
 
@@ -53,7 +51,9 @@
             alt="warning"
             class="section-title-icon"
           />
-          <span class="warning-text">即将截止</span>
+          <span class="warning-text">{{
+            $t("dashboard.announcement.expiring")
+          }}</span>
         </div>
 
         <div v-if="expiringData.length > 0">
@@ -65,7 +65,20 @@
             <div class="item-title item-title-align flx-justify-between">
               <div class="title">{{ item.title }}</div>
               <div class="countdown-warp">
-                <div class="countdown">剩余 {{ item.days_left }} 天</div>
+                <div class="countdown" v-if="item.time_left">
+                  {{
+                    $t("dashboard.announcement.timeLeft", {
+                      time: item.time_left,
+                    })
+                  }}
+                </div>
+                <div class="countdown" v-else>
+                  {{
+                    $t("dashboard.announcement.daysLeft", {
+                      days: item.days_left,
+                    })
+                  }}
+                </div>
               </div>
             </div>
           </div>
@@ -78,17 +91,10 @@
               alt="no-data"
             />
           </div>
-          <div class="no-data-text">暂无即将截止安排</div>
-        </div>
-
-        <!-- <div class="announcement-item announcement-item-warning">
-          <div class="item-title item-title-align flx-justify-between">
-            <div class="title">客户服务礼仪专项测验</div>
-            <div class="countdown-warp">
-              <div class="countdown">剩余 5 小时</div>
-            </div>
+          <div class="no-data-text">
+            {{ $t("dashboard.announcement.noExpiring") }}
           </div>
-        </div> -->
+        </div>
       </div>
     </div>
     <div v-else>
@@ -100,9 +106,15 @@
             alt="no-data"
           />
         </div>
-        <div class="no-data-text">暂无考试安排</div>
-        <div class="no-data-text-warning">您当前没有通知。</div>
-        <div class="no-data-text-warning">请稍后再来</div>
+        <div class="no-data-text">
+          {{ $t("dashboard.announcement.noData") }}
+        </div>
+        <div class="no-data-text-warning">
+          {{ $t("dashboard.announcement.noNotification") }}
+        </div>
+        <div class="no-data-text-warning">
+          {{ $t("dashboard.announcement.comeBackLater") }}
+        </div>
       </div>
     </div>
   </div>
@@ -255,7 +267,7 @@ getData();
 }
 
 .countdown-warp {
-  width: 100px;
+  width: 110px;
   display: flex;
   justify-content: flex-end;
 }

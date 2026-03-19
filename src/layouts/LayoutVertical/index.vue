@@ -75,7 +75,7 @@
         <div
           v-show="activeDuan === 'admin'"
           class="aside-box"
-          :style="{ width: isCollapse ? '65px' : '240px' }"
+          :style="{ width: isCollapse ? '65px' : '208px' }"
         >
           <!-- <div class="logo flx-center">
             <img class="logo-img" src="/logo2.png" alt="logo" />
@@ -198,7 +198,7 @@ const calculateH5Size = () => {
 
   // 获取容器的实际可用尺寸
   const containerWidth = container.clientWidth - 100; // 减去padding
-  const containerHeight = container.clientHeight - 100; // 减去padding
+  const containerHeight = container.clientHeight - 160; // 减去padding
 
   // 常见H5页面宽高比（16:9）
   const aspectRatio = 9 / 16;
@@ -218,8 +218,8 @@ const calculateH5Size = () => {
     width = height * aspectRatio;
   }
 
-  width = Math.max(375, Math.round(width)); // 最小宽度375px
-  height = Math.max(667, Math.round(height)); // 最小高度667px
+  width = Math.max(291, Math.round(width)); // 最小宽度375px
+  height = Math.max(518, Math.round(height)); // 最小高度667px
 
   h5Size.value = {
     width,
@@ -389,20 +389,27 @@ onUnmounted(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f9fafb;
+  border-radius: 24px 0 0 24px;
+  background:
+    linear-gradient(to bottom, #c8e4ff, #d7e9fa, #d9eafa00),
+    url("@/assets/images/userbg.png");
+  background-repeat: no-repeat;
+  background-position: bottom center;
+  background-size: contain;
 
   .user-iframe-wrapper {
     flex: 1;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    padding: 20px;
+    padding-top: 40px;
+    box-sizing: border-box;
     overflow: auto;
+    position: relative;
   }
 
   .user-iframe {
-    border: 1px solid #e0e0e0;
-    border-radius: 30px;
+    border-radius: 24px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     background-color: #fff;
   }

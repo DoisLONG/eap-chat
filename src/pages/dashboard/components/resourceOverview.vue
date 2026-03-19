@@ -1,6 +1,6 @@
 <template>
   <div class="resource-overview">
-    <div class="title">资源总览</div>
+    <div class="title">{{ $t("dashboard.resource.title") }}</div>
     <div v-if="isHaveData" class="chart-container" ref="chartContainerRef">
       <svg ref="chartRef" class="chart" viewBox="0 0 200 200"></svg>
       <div
@@ -8,8 +8,10 @@
         class="tooltip"
         :style="{ left: tooltipX + 'px', top: tooltipY + 'px' }"
       >
-        <div>资源类型：{{ tooltipData.name }}</div>
-        <div>数量：{{ tooltipData.value }}</div>
+        <div>
+          {{ $t("dashboard.resource.resourceType") }} {{ tooltipData.name }}
+        </div>
+        <div>{{ $t("dashboard.resource.count") }} {{ tooltipData.value }}</div>
       </div>
     </div>
     <div v-else class="chart-container-nodata">
@@ -35,11 +37,41 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from "vue";
+import { ref, onMounted, nextTick, watch } from "vue";
 import { getResourceSummary } from "@/services/dashboard.service";
+import { useI18n } from "vue-i18n";
 
+const { t, locale } = useI18n();
 const chartRef = ref(null);
 const chartContainerRef = ref(null);
+
+// 监听语言切换
+watch(
+  () => locale.value,
+  () => {
+    // 语言切换时更新data中的国际化文本
+    updateDataNames();
+    nextTick(() => {
+      initChart();
+    });
+  },
+);
+
+// 更新data中的国际化名称
+const updateDataNames = () => {
+  data.value = data.value.map((item) => {
+    if (item.colorClass === "blue") {
+      return { ...item, name: t("dashboard.resource.questionBank") };
+    } else if (item.colorClass === "light-blue") {
+      return { ...item, name: t("dashboard.resource.materialLibrary") };
+    } else if (item.colorClass === "yellow") {
+      return { ...item, name: t("dashboard.resource.practiceMaterials") };
+    } else if (item.colorClass === "gray") {
+      return { ...item, name: t("dashboard.resource.robot") };
+    }
+    return item;
+  });
+};
 
 // Tooltip 相关状态
 const tooltipVisible = ref(false);
@@ -51,25 +83,25 @@ const isHaveData = ref(false);
 const data = ref([
   {
     value: 0,
-    name: "试题库试题",
+    name: t("dashboard.resource.questionBank"),
     color: "#1677FF",
     colorClass: "blue",
   },
   {
     value: 0,
-    name: "素材库素材",
+    name: t("dashboard.resource.materialLibrary"),
     color: "#86B8FF",
     colorClass: "light-blue",
   },
   {
     value: 0,
-    name: "练习资料",
+    name: t("dashboard.resource.practiceMaterials"),
     color: "#D3FF33",
     colorClass: "yellow",
   },
   {
     value: 0,
-    name: "机器人",
+    name: t("dashboard.resource.robot"),
     color: "#D9D9D9",
     colorClass: "gray",
   },
@@ -81,25 +113,25 @@ const getData = () => {
       data.value = [
         {
           value: info.sop_count,
-          name: "试题库试题",
+          name: t("dashboard.resource.questionBank"),
           color: "#1677FF",
           colorClass: "blue",
         },
         {
           value: info.material_count,
-          name: "素材库素材",
+          name: t("dashboard.resource.materialLibrary"),
           color: "#86B8FF",
           colorClass: "light-blue",
         },
         {
           value: info?.exercise_count || 0,
-          name: "练习资料",
+          name: t("dashboard.resource.practiceMaterials"),
           color: "#D3FF33",
           colorClass: "yellow",
         },
         {
           value: info.robot_count,
-          name: "机器人",
+          name: t("dashboard.resource.robot"),
           color: "#D9D9D9",
           colorClass: "gray",
         },

@@ -9,8 +9,11 @@ declare namespace Menu {
     children?: MenuOptions[];
   }
   interface MetaProps {
-    icon: string;
+    icon?: string;
     title: string;
+    i18nKey?: string;
+    iconPath?: string;
+    activeIconPath?: string;
     activeMenu?: string;
     isLink?: string;
     isHide: boolean;

@@ -1,18 +1,34 @@
 <template>
   <div class="study-task-dashboard">
     <div class="dashboard-header">
-      <div class="dashboard-title">学习任务看板</div>
+      <el-tooltip
+        :content="$t('dashboard.studyTask.title')"
+        placement="top"
+        effect="dark"
+        :disabled="!isStudyTaskTitleRef"
+      >
+        <div
+          ref="studyTaskTitleRef"
+          class="dashboard-title sle"
+          :style="{
+            width: language === 'zh' ? 'auto' : '120px',
+          }"
+          @mouseenter="checkOverflow($event)"
+        >
+          {{ $t("dashboard.studyTask.title") }}
+        </div>
+      </el-tooltip>
 
       <el-select
         v-model="timeDimension"
-        placeholder="时间维度"
+        :placeholder="$t('dashboard.studyTask.timeDimension')"
         class="time-select"
         @change="getData"
       >
         <!-- <el-option label="全部时间" value="all" /> -->
-        <el-option label="本周" value="week" />
-        <el-option label="本月" value="month" />
-        <el-option label="本季度" value="quarter" />
+        <el-option :label="$t('dashboard.studyTask.week')" value="week" />
+        <el-option :label="$t('dashboard.studyTask.month')" value="month" />
+        <el-option :label="$t('dashboard.studyTask.quarter')" value="quarter" />
         <template #prefix>
           <img src="@/assets/images/calendar.png" class="select-prefix" />
         </template>
@@ -30,17 +46,65 @@
           <div class="task-title">{{ task.task_name }}</div>
           <div class="task-stats">
             <div class="stat-item">
-              <div class="stat-label">实参/应参</div>
+              <el-tooltip
+                :content="$t('dashboard.studyTask.participantCount')"
+                placement="top"
+                effect="dark"
+                :disabled="language === 'zh'"
+              >
+                <div
+                  ref="participantCountRef"
+                  class="stat-label sle"
+                  :style="{
+                    width: '100%',
+                    textAlign: 'center',
+                  }"
+                >
+                  {{ $t("dashboard.studyTask.participantCount") }}
+                </div>
+              </el-tooltip>
               <div class="stat-value">
                 {{ task.participant_count }}/{{ task.should_participant_count }}
               </div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">学习时长</div>
+              <el-tooltip
+                :content="$t('dashboard.studyTask.studyDuration')"
+                placement="top"
+                effect="dark"
+                :disabled="language === 'zh'"
+              >
+                <div
+                  ref="participantCountRef"
+                  class="stat-label sle"
+                  :style="{
+                    width: '100%',
+                    textAlign: 'center',
+                  }"
+                >
+                  {{ $t("dashboard.studyTask.studyDuration") }}
+                </div>
+              </el-tooltip>
               <div class="stat-value">{{ task.study_duration }}</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">健康值</div>
+              <el-tooltip
+                :content="$t('dashboard.studyTask.healthStatus')"
+                placement="top"
+                effect="dark"
+                :disabled="language === 'zh'"
+              >
+                <div
+                  ref="participantCountRef"
+                  class="stat-label sle"
+                  :style="{
+                    width: '100%',
+                    textAlign: 'center',
+                  }"
+                >
+                  {{ $t("dashboard.studyTask.healthStatus") }}
+                </div>
+              </el-tooltip>
               <div
                 class="stat-value"
                 :class="{
@@ -57,14 +121,18 @@
     </div>
     <div v-else class="no-data">
       <img src="@/assets/images/nodata.png" class="no-data-icon" />
-      <div class="no-data-text">暂无学习任务</div>
+      <div class="no-data-text">{{ $t("dashboard.studyTask.noTask") }}</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { getTaskBoard } from "@/services/dashboard.service";
+import { useGlobalStore } from "@/stores/modules/global";
+
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
 
 const timeDimension = ref("week");
 const tasks = ref<
@@ -89,6 +157,31 @@ const getData = () => {
   });
 };
 getData();
+
+// 检测文本是否溢出
+const isTextOverflow = (el) => {
+  if (!el) return false;
+  return el.scrollWidth > el.clientWidth;
+};
+
+const studyTaskTitleRef = ref();
+
+const isStudyTaskTitleRef = ref(false);
+
+// 检查溢出并设置状态
+const checkOverflow = (event) => {
+  const el = event.target;
+  const refMap = {
+    studyTaskTitleRef: isStudyTaskTitleRef,
+  };
+
+  // 根据元素找到对应的ref和状态变量
+  Object.entries(refMap).forEach(([refName, statusRef]) => {
+    if (el === eval(refName).value) {
+      statusRef.value = isTextOverflow(el);
+    }
+  });
+};
 </script>
 
 <style scoped lang="scss">

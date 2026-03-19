@@ -30,19 +30,25 @@
       <div class="stat-change" v-if="item.change > 0">
         <img src="@/assets/images/up-icon.png" class="stat-change-icon" />
         <span class="positive">{{ item.change }}</span>
-        <span class="common">较上周</span>
-        <span class="positive">新增</span>
+        <span class="common">{{
+          $t("dashboard.overview.compareLastWeek")
+        }}</span>
+        <span class="positive">{{ $t("dashboard.overview.increase") }}</span>
       </div>
       <div class="stat-change" v-else-if="item.change < 0">
         <img src="@/assets/images/down-icon.png" class="stat-change-icon" />
         <span class="negative">{{ item.change }}</span>
-        <span class="common">较上周</span>
-        <span class="negative">下降</span>
+        <span class="common">{{
+          $t("dashboard.overview.compareLastWeek")
+        }}</span>
+        <span class="negative">{{ $t("dashboard.overview.decrease") }}</span>
       </div>
       <div class="stat-change" v-else>
         <img src="@/assets/images/unknown-icon.png" class="stat-change-icon" />
         <span class="neutral">-</span>
-        <span class="common">较上周</span>
+        <span class="common">{{
+          $t("dashboard.overview.compareLastWeek")
+        }}</span>
         <span class="neutral">-</span>
       </div>
     </div>
@@ -56,7 +62,9 @@ import totalStudyHoursIcon from "@/assets/images/total-study-hours.png";
 import activityIcon from "@/assets/images/activity.png";
 import testIcon from "@/assets/images/test.png";
 import { formatNumber } from "@/utils/index";
+import { useI18n } from "vue-i18n";
 
+const { t } = useI18n();
 const props = defineProps({
   data: {
     type: Object,
@@ -68,23 +76,23 @@ const { data } = toRefs(props);
 const overviewData = computed(() => {
   return [
     {
-      title: "用户数",
-      tooltip: "本周登录使用平台的用户数",
+      title: t("dashboard.overview.userCount"),
+      tooltip: t("dashboard.overview.userCountTooltip"),
       icon: userIcon,
       number: formatNumber(data.value.total_users?.statistics_user_count),
       change: Number(data.value.total_users?.compare_result) || 0,
     },
     {
-      title: "活跃用户",
-      tooltip: "本周内累计学习时长超过30分钟的活跃用户数",
+      title: t("dashboard.overview.activeUsers"),
+      tooltip: t("dashboard.overview.activeUsersTooltip"),
       tooltipWidth: 152,
       icon: activeUsersIcon,
       number: formatNumber(data.value.active_users?.statistics_active_users),
       change: Number(data.value.active_users?.compare_result) || 0,
     },
     {
-      title: "总学习时长(h)",
-      tooltip: "本周所有用户累计学习时长的总和(单位:小时)",
+      title: t("dashboard.overview.totalStudyHours"),
+      tooltip: t("dashboard.overview.totalStudyHoursTooltip"),
       icon: totalStudyHoursIcon,
       number: formatNumber(
         data.value.total_learn_seconds?.statistics_learn_seconds,
@@ -92,15 +100,15 @@ const overviewData = computed(() => {
       change: Number(data.value.total_learn_seconds?.compare_result) || 0,
     },
     {
-      title: "达标率(%)",
-      tooltip: "本周考试达标人数占所有参加考试人员的比例",
+      title: t("dashboard.overview.passRate"),
+      tooltip: t("dashboard.overview.passRateTooltip"),
       icon: activityIcon,
       number: data.value.avg_pass_rate?.statistics_avg_pass_rate,
       change: Number(data.value.avg_pass_rate?.compare_result) || 0,
     },
     {
-      title: "考试场次",
-      tooltip: "本周独立举办的考试场次数",
+      title: t("dashboard.overview.examCount"),
+      tooltip: t("dashboard.overview.examCountTooltip"),
       icon: testIcon,
       number: formatNumber(data.value.exam_count?.statistics_exam_count),
       change: Number(data.value.exam_count?.compare_result) || 0,

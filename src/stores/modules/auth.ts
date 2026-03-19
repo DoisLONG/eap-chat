@@ -41,7 +41,7 @@ export const useAuthStore = defineStore("sopai-auth", {
             path: "/knowledge/materialLibrary",
             name: "MaterialLibrary",
             meta: {
-              icon: "Folder",
+              // icon: "Folder",
               title: "素材库",
               i18nKey: "menu.materialLibrary",
               isLink: "",
@@ -71,7 +71,7 @@ export const useAuthStore = defineStore("sopai-auth", {
             path: "/trainingCenter/studyManagement",
             name: "StudyManagement",
             meta: {
-              icon: "List",
+              // icon: "List",
               title: "学习管理",
               i18nKey: "menu.studyManagement",
               isLink: "",
@@ -85,7 +85,7 @@ export const useAuthStore = defineStore("sopai-auth", {
             path: "/trainingCenter/practiceManagement",
             name: "PracticeManagement",
             meta: {
-              icon: "Menu",
+              // icon: "Menu",
               title: "练习管理",
               i18nKey: "menu.practiceManagement",
               isLink: "",
@@ -128,8 +128,9 @@ export const useAuthStore = defineStore("sopai-auth", {
             path: "/system/permissionManagement",
             name: "PermissionManagement",
             meta: {
-              icon: "Grid",
+              // icon: "Grid",
               title: "权限管理",
+              i18nKey: "menu.permissionManagement",
               isLink: "",
               isHide: false,
               isFull: false,
@@ -141,7 +142,7 @@ export const useAuthStore = defineStore("sopai-auth", {
                 path: "/system/permissionManagement/user",
                 name: "User",
                 meta: {
-                  icon: "User",
+                  // icon: "User",
                   title: "用户管理",
                   i18nKey: "menu.userManagement",
                   isLink: "",
@@ -155,7 +156,7 @@ export const useAuthStore = defineStore("sopai-auth", {
                 path: "/system/permissionManagement/company",
                 name: "Company",
                 meta: {
-                  icon: "School",
+                  // icon: "School",
                   title: "公司管理",
                   i18nKey: "menu.companyManagement",
                   isLink: "",
@@ -169,7 +170,7 @@ export const useAuthStore = defineStore("sopai-auth", {
                 path: "/system/permissionManagement/dept",
                 name: "Dept",
                 meta: {
-                  icon: "SetUp",
+                  // icon: "SetUp",
                   title: "部门管理",
                   i18nKey: "menu.deptment",
                   isLink: "",
@@ -183,7 +184,7 @@ export const useAuthStore = defineStore("sopai-auth", {
                 path: "/system/permissionManagement/position",
                 name: "Position",
                 meta: {
-                  icon: "WindPower",
+                  // icon: "WindPower",
                   title: "岗位管理",
                   i18nKey: "menu.position",
                   isLink: "",
