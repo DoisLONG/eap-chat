@@ -267,7 +267,7 @@ getData();
 }
 
 .countdown-warp {
-  width: 115px;
+  width: 118px;
   display: flex;
   justify-content: flex-end;
 }

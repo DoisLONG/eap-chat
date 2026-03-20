@@ -323,17 +323,19 @@ async function send() {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        id: examId.value,
-        session_id: examId.value,
-        source_file_name: ensureExcelFileName(sopName),
-        messages: (() => {
-          const filtered = [...messages];
-          if (filtered[filtered.length - 1].role === "assistant")
-            filtered.pop();
-          return filtered.map(({ role, content }) => ({ role, content }));
-        })(),
-        streaming: true,
-        stream_options: { include_usage: true },
+        input: {
+          id: examId.value,
+          session_id: examId.value,
+          source_file_name: ensureExcelFileName(sopName),
+          messages: (() => {
+            const filtered = [...messages];
+            if (filtered[filtered.length - 1].role === "assistant")
+              filtered.pop();
+            return filtered.map(({ role, content }) => ({ role, content }));
+          })(),
+          streaming: true,
+          stream_options: { include_usage: true },
+        },
       }),
     });
 
