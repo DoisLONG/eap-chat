@@ -20,7 +20,7 @@ chatApi.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // 响应拦截器 - 处理token过期等情况
@@ -38,7 +38,7 @@ chatApi.interceptors.response.use(
       }, 500);
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // 初始化考试会话
@@ -51,9 +51,13 @@ export async function streamExamAnswer(body, onChunk) {
   const ctrl = new AbortController();
   window.__chatAbort = ctrl;
 
+  const token = localStorage.getItem("token");
   const res = await fetch("/chatapi/v1/exams/answer", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(body),
     signal: ctrl.signal,
   });

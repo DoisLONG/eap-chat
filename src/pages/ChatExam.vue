@@ -253,9 +253,13 @@ function newSession() {
       conversation_id: "",
     };
   }
+  const token = localStorage.getItem("token");
   fetch("/chatapi/v1/exams/start", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(params),
   })
     .then((r) => r.json())
@@ -310,11 +314,13 @@ async function send() {
   const replyMsg = messages[messages.length - 1];
 
   try {
+    const token = localStorage.getItem("token");
     const res = await fetch("/chatapi/v1/exams/answer", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "text/event-stream",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         id: examId.value,
@@ -371,7 +377,7 @@ async function send() {
             // 1) 文档元数据
             if (Array.isArray(parsed?.documents) && parsed.documents.length) {
               docs = parsed.documents.filter(
-                (d) => d?.metadata?.filename && d.metadata.filename !== "none"
+                (d) => d?.metadata?.filename && d.metadata.filename !== "none",
               );
               continue;
             }
@@ -418,7 +424,7 @@ async function send() {
     // 结束后：追加来源文档，再一次性转 Markdown
     if (docs.length > 0) {
       replyMsg.raw += `\n\n<details><summary>📄 ${t(
-        "ChatExam.fromDoc"
+        "ChatExam.fromDoc",
       )}</summary>\n`;
       for (const d of docs) {
         const meta = d.metadata || {};

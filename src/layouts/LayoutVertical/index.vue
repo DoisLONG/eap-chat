@@ -183,7 +183,6 @@ const setFirst = () => {
     },
   });
 };
-// 提供activeDuan状态给子组件
 provide("activeDuan", activeDuan);
 
 const changeDuan = (val) => {
@@ -197,8 +196,8 @@ const calculateH5Size = () => {
   if (!container) return;
 
   // 获取容器的实际可用尺寸
-  const containerWidth = container.clientWidth - 100; // 减去padding
-  const containerHeight = container.clientHeight - 160; // 减去padding
+  const containerWidth = container.clientWidth - 100;
+  const containerHeight = container.clientHeight - 160;
 
   // 常见H5页面宽高比（16:9）
   const aspectRatio = 9 / 16;
@@ -218,8 +217,8 @@ const calculateH5Size = () => {
     width = height * aspectRatio;
   }
 
-  width = Math.max(291, Math.round(width)); // 最小宽度375px
-  height = Math.max(518, Math.round(height)); // 最小高度667px
+  width = Math.max(291, Math.round(width));
+  height = Math.max(518, Math.round(height));
 
   h5Size.value = {
     width,

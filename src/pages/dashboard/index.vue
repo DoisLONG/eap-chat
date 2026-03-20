@@ -26,7 +26,7 @@
         </div>
         <!-- 右侧 -->
         <div class="right-card" :style="{ width: rightCardWidth }">
-          <welcome />
+          <welcome @showGuide="isShowGuide = true" />
           <div class="area-card">
             <announcement />
           </div>
@@ -58,6 +58,8 @@
         </el-button>
       </div>
     </div>
+    <!-- 引导 -->
+    <startGuide v-if="isShowGuide" @close="isShowGuide = false" />
   </div>
 </template>
 
@@ -72,7 +74,9 @@ import welcome from "./components/welcome.vue";
 import announcement from "./components/announcement.vue";
 import studyTaskDashboard from "./components/studyTaskDashboard.vue";
 import resourceOverview from "./components/resourceOverview.vue";
+import startGuide from "./components/guide/guide.vue";
 import { getOverview } from "@/services/dashboard.service";
+import { getConfigs } from "@/services/user.service";
 
 const isOnline = ref(true); // 是否有网络
 const isChecking = ref(false); // 是否正在检查网络
@@ -101,7 +105,15 @@ const rightCardWidth = computed(() => {
 });
 const overviewData = ref([]);
 const isHeatmapShow = ref(true); // 是否显示热力图
+const isShowGuide = ref(false);
 
+const getUserConfig = async () => {
+  const res = await getConfigs();
+  if (res.data.status === 200) {
+    isShowGuide.value = res.data.data.dashboard_welcome_guide_pending === 0;
+  }
+};
+getUserConfig();
 // 当天日期
 const todayDate = computed(() => {
   const now = new Date();
@@ -126,7 +138,7 @@ const checkNetwork = async () => {
   isChecking.value = true;
   try {
     const response = await getOverview();
-    console.log("概览", response);
+    // console.log("概览", response);
     if (response.data.status === 200) {
       overviewData.value = response.data.data || {};
     }

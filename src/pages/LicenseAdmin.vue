@@ -432,9 +432,13 @@ async function openReview(row) {
     const taskId = row.task_id || "";
     if (!taskId) throw new Error(t("licenseAdmin.examLinkTip"));
 
+    const token = localStorage.getItem("token");
     const res = await fetch("/sop-api/v1/dataprep/task_status", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ task_id: taskId }),
     });
 

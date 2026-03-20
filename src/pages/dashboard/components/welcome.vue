@@ -7,6 +7,7 @@
         <el-button
           type="primary"
           class="guide-button"
+          @click="$emit('showGuide')"
           :style="{ width: language === 'en' ? '140px' : '100px' }"
           >{{ $t("dashboard.welcome.guideButton") }}</el-button
         >
