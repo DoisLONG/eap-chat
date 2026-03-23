@@ -52,9 +52,20 @@ export function formatFullDate(dateTime) {
   return formatDateTime(dateTime, "YYYY年MM月DD日 HH:mm:ss");
 }
 
+/**
+ * 格式化日期
+ * @param {string|Date} dateTime - 日期时间
+ * @returns {string} YYYY-MM-DD
+ */
+export const formatDate = (dateTime) => {
+  if (!dateTime) return "-";
+  const time = formatDateTime(dateTime);
+  return time.split(" ")[0];
+};
 // 默认导出常用的格式化函数
 export default {
   formatDateTime,
   formatShortDate,
   formatFullDate,
+  formatDate,
 };

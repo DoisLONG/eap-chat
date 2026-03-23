@@ -20,7 +20,7 @@ companyApi.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // 响应拦截器 - 处理token过期等情况
@@ -38,7 +38,7 @@ companyApi.interceptors.response.use(
       }, 500);
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // 新增公司
@@ -125,4 +125,19 @@ export function getPostPageList(parmas) {
   delete upParams.pageNum;
   delete upParams.pageSize;
   return companyApi.post("/v1/position/paginated", { ...upParams });
+}
+
+// 模型配置 获取模型配置列表
+export function getModelConfigList(params) {
+  return companyApi.get(`/v1/system/model-config/list`, { params });
+}
+
+// 模型配置 更新/新增模型配置
+export function updateModelConfig(params) {
+  return companyApi.post(`/v1/system/model-config/upsert`, { ...params });
+}
+
+// 模型配置 全部作用域连通性测试
+export function testAllModelConfig(params) {
+  return companyApi.post(`/v1/system/model-config/test-all`, { ...params });
 }

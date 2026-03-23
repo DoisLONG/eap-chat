@@ -149,7 +149,7 @@ const routes = [
       {
         path: "/system",
         name: "system",
-        redirect: "/system/permissionManagement",
+        redirect: "/system/modelSetting",
         meta: {
           icon: "Tools",
           i18nKey: "menu.system",
@@ -228,6 +228,38 @@ const routes = [
                   icon: "WindPower",
                   title: "岗位管理",
                   i18nKey: "menu.position",
+                  isLink: "",
+                  isHide: false,
+                  isFull: false,
+                  isAffix: false,
+                  isKeepAlive: false,
+                },
+              },
+            ],
+          },
+          {
+            path: "/system/modelSetting",
+            name: "ModelSetting",
+            component: () => import("@/pages/modelSetting/index.vue"),
+            meta: {
+              title: "模型配置",
+              i18nKey: "menu.modelManagement",
+              isLink: "",
+              isHide: false,
+              isFull: false,
+              isAffix: false,
+              isKeepAlive: false,
+            },
+            children: [
+              {
+                path: "/system/modelSetting/operate",
+                name: "modelSettingDetail",
+                component: () =>
+                  import("@/pages/modelSetting/detail/index.vue"),
+                meta: {
+                  title: "模型详情",
+                  i18nKey: "menu.modelManagement",
+                  activeMenu: "/system/modelSetting",
                   isLink: "",
                   isHide: false,
                   isFull: false,
