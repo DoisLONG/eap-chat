@@ -465,4 +465,170 @@ export default {
       },
     },
   },
+  modelSetting: {
+    index: {
+      title: "Model Configuration",
+      description:
+        "Manage data preprocessing, practice interaction, Embedding, and optional language model configuration schemes",
+      addConfig: "+ Add Configuration",
+      editConfig: "Edit Configuration",
+      copyConfig: "Copy Configuration",
+      deleteConfig: "Delete Configuration",
+      noConfig: "No model configurations",
+      status: {
+        success: "Running normally",
+        error: "Running abnormally",
+      },
+      updateTime: "Updated on",
+      defaultModelConfig: "Default Model Configuration",
+      llmConfig: "Large Model Configuration",
+      dataPreprocessing: "Data Preprocessing",
+      practiceInteraction: "Practice Interaction",
+      llmDescription:
+        "Used to replace and manage data preprocessing models and practice interaction models. Contains complete configurations for data preprocessing models and practice interaction models.",
+      embeddingVectorConfig: "Embedding Vector Configuration",
+      embeddingConfig: "Embedding Configuration",
+      embeddingDescription:
+        "Used for vectorized retrieval, knowledge matching, and other scenarios. Supports 1024-dimensional vector output. Compatible with system vector retrieval capabilities.",
+      asrSpeechRecognitionConfig: "ASR Speech Recognition Configuration",
+      asrConfig: "ASR Configuration",
+      asrDescription:
+        "Used for voice input and voice-to-text scenarios. The current configuration uses the whisper-large-v3 model.",
+    },
+    detail: {
+      title: "Model Configuration",
+      description:
+        "Unified management of data preprocessing, practice interaction, Embedding, and optional voice model configurations.",
+      cancel: "Cancel",
+      saveConfig: "Save Configuration",
+      navTitle: "Configuration Navigation",
+      suggestion: "Suggestions:",
+      suggestion1:
+        "For data preprocessing, prioritize models with high generation quality and stability;",
+      suggestion2:
+        "For practice interaction, prioritize models with fast response speed and low latency.",
+      llmConfigTitle: "I. Large Model Configuration",
+      llmConfigTitleSample: "Large Model Configuration",
+      embeddingConfigTitleSample: "Embedding Configuration",
+      asrConfigTitleSample: "ASR Configuration (Optional)",
+      connectivityTestTitleSample: "Connectivity Test and Status",
+      coreConfig: "Core Configuration",
+      llmConfigDesc:
+        "Used to replace and manage data preprocessing models and practice interaction models.",
+      dataPreprocessingModel: "Data Preprocessing Model",
+      recommendHighQuality: "Recommend High Quality",
+      dataPreprocessingDesc:
+        "Suitable for scenarios such as question generation, content understanding, and data processing. It is recommended to choose models with higher generation quality.",
+      practiceInteractionModel: "Practice Interaction Model",
+      recommendLowLatency: "Recommend Low Latency",
+      practiceInteractionDesc:
+        "Suitable for scenarios such as real-time Q&A, network feedback, and dialogue interaction. It is recommended to choose models with faster response speed.",
+      embeddingModel: "Embedding Model",
+      asrModel: "ASR Model",
+      embeddingConfigTitle: "II. Embedding Configuration",
+      require1024D: "Requires 1024-dimensional support",
+      embeddingConfigDesc:
+        "Used for vectorized retrieval, knowledge matching, and other scenarios. Please ensure the model supports 1024-dimensional vector output.",
+      embeddingConfigNote:
+        "Configuration Note: Embedding models need to be compatible with system vector retrieval capabilities. It is recommended to prioritize models that support 1024-dimensional output to avoid incompatibility with existing knowledge retrieval links.",
+      asrConfigTitle: "III. ASR Configuration (Optional)",
+      enableASR: "Enable ASR",
+      asrConfigDesc:
+        "Enable when the system needs voice input or voice-to-text conversion; if only text interaction is currently used, it can be configured later.",
+      connectivityTestTitle: "IV. Connectivity Test and Status",
+      noConfigToTest: "No configurable items to test",
+      oneClickTest: "One-click Test Connection",
+      connectivityTestDesc:
+        "It is recommended to test each item after configuration to avoid abnormal operation after saving.",
+      toBeTested: "To be tested",
+      testing: "Testing",
+      connectionNormal: "Connection normal",
+      connectionFailed: "Connection failed",
+      tip: "Tip",
+      confirm: "Confirm",
+      llmConfigNav: "Large Model Configuration",
+      embeddingConfigNav: "Embedding Configuration",
+      asrConfigNav: "ASR Configuration (Optional)",
+      connectivityTestNav: "Connectivity Test and Status",
+      configExists:
+        "You already have {models}. Do you want to continue adding?",
+      pleaseTestConnectivity: "Please test model connectivity first",
+      configSavedSuccessfully: "Configuration saved successfully",
+      configSaveFailed: "Configuration save failed",
+      noConfigChanges: "No configuration changes",
+      connectivityTestFailed: "Connectivity test failed",
+      pleaseFillAtLeastOneModel: "Please fill in at least one model name",
+      placeholders: {
+        apiKey: "Please enter API Key",
+        baseUrl: "Please enter Base URL",
+        modelName: "Please enter model name",
+        llmModelExample: "For example: gpt-4.1 / qwen-max / deepseek-v3",
+        practiceModelExample:
+          "For example: gpt-4o-mini / qwen-turbo / deepseek-chat",
+        embeddingModelExample:
+          "For example: text-embedding-3-large / bge-large-zh",
+        asrModelExample: "For example: whisper-large-v3",
+        urlExample: "For example: https://api.xxx.com/v1",
+      },
+      validation: {
+        required: "Please enter",
+        validUrl: "Please enter a valid URL",
+      },
+      llmConfig: {
+        title: "I. Large Model Configuration",
+        tag: "Core Configuration",
+        description:
+          "Used to replace and manage data preprocessing models and practice interaction models.",
+        dataprep: {
+          title: "Data Preprocessing Model",
+          recommend: "Recommend High Quality",
+          description:
+            "Suitable for scenarios such as question generation, content understanding, and data processing. It is recommended to choose models with higher generation quality.",
+        },
+        smartPractice: {
+          title: "Practice Interaction Model",
+          recommend: "Recommend Low Latency",
+          description:
+            "Suitable for scenarios such as real-time Q&A, network feedback, and dialogue interaction. It is recommended to choose models with faster response speed.",
+        },
+      },
+      embeddingConfig: {
+        title: "II. Embedding Configuration",
+        tag: "Requires 1024-dimensional support",
+        description:
+          "Used for vectorized retrieval, knowledge matching, and other scenarios. Please ensure the model supports 1024-dimensional vector output.",
+        note: "Configuration Note: Embedding models need to be compatible with system vector retrieval capabilities. It is recommended to prioritize models that support 1024-dimensional output to avoid incompatibility with existing knowledge retrieval links.",
+      },
+      asrConfig: {
+        title: "III. ASR Configuration (Optional)",
+        enable: "Enable ASR",
+        description:
+          "Enable when the system requires voice input or voice-to-text conversion; if only text interaction is currently used, it can be configured later.",
+      },
+      connectivityTest: {
+        title: "IV. Connectivity Test and Status",
+        testButton: "One-click Test Connection",
+        noTestConfig: "No testable configuration",
+        description:
+          "After configuration, it is recommended to test each item to avoid abnormal operation after saving.",
+        status: {
+          ready: "To be tested",
+          pending: "Testing",
+          success: "Connection normal",
+          failed: "Connection failed",
+        },
+      },
+      dialog: {
+        title: "Tips",
+        cancel: "Cancel",
+        confirm: "Confirm",
+      },
+      messages: {
+        testFirst: "Please perform model connectivity test first",
+        noConfigChange: "No configuration changes",
+        noModelName: "Please fill in at least one model name",
+        testFailed: "Connectivity test failed",
+      },
+    },
+  },
 };

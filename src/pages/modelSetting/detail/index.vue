@@ -2,9 +2,9 @@
   <div class="model-detail-container">
     <div class="header">
       <div class="header-content">
-        <div class="title">模型配置</div>
+        <div class="title">{{ t("modelSetting.detail.title") }}</div>
         <div class="desc">
-          统一管理数据预处理、陪练交互、Embedding 及可选语音模型配置。
+          {{ t("modelSetting.detail.description") }}
         </div>
       </div>
       <div>
@@ -13,17 +13,28 @@
           style="margin-right: 8px"
           class="cancel-btn"
           @click="handleBack"
-          >取消</el-button
+          >{{ t("modelSetting.detail.cancel") }}</el-button
         >
-        <el-button type="primary" class="add-btn" @click="handleSaveConfig"
-          >保存配置</el-button
+        <el-button
+          type="primary"
+          class="add-btn"
+          :style="{
+            width: language === 'zh' ? '108px' : '140px',
+          }"
+          @click="handleSaveConfig"
+          >{{ t("modelSetting.detail.saveConfig") }}</el-button
         >
       </div>
     </div>
     <div class="content">
-      <div class="content-left">
+      <div
+        class="content-left"
+        :style="{
+          width: language === 'zh' ? '200px' : '260px',
+        }"
+      >
         <div class="nav-container">
-          <div class="nav-title">配置导航</div>
+          <div class="nav-title">{{ t("modelSetting.detail.navTitle") }}</div>
           <div class="nav-items">
             <div
               v-for="(item, index) in navItems"
@@ -43,12 +54,14 @@
                 ['dataprep_llm', 'smart_practice_llm'].includes(editShowModle))
             "
           >
-            <div class="suggestion-title">建议：</div>
+            <div class="suggestion-title">
+              {{ t("modelSetting.detail.suggestion") }}
+            </div>
             <div class="suggestion-content">
               <p
                 v-if="operateMode === 'add' || editShowModle === 'dataprep_llm'"
               >
-                数据预处理优先选择生成质量高、稳定性强的模型；
+                {{ t("modelSetting.detail.suggestion1") }}
               </p>
               <p
                 v-if="
@@ -56,13 +69,20 @@
                   editShowModle === 'smart_practice_llm'
                 "
               >
-                陪练交互优先选择响应速度快、延迟低的模型。
+                {{ t("modelSetting.detail.suggestion2") }}
               </p>
             </div>
           </div>
         </div>
       </div>
-      <div class="content-right" ref="contentRightRef">
+      <div
+        class="content-right"
+        :style="{
+          width:
+            language === 'zh' ? 'calc(100% - 200px)' : 'calc(100% - 260px)',
+        }"
+        ref="contentRightRef"
+      >
         <div class="config-content">
           <el-form
             ref="formRef"
@@ -71,13 +91,31 @@
             label-position="top"
           >
             <!-- 大模型配置 -->
-            <div class="config-section" id="llm-config">
+            <div
+              class="config-section"
+              id="llm-config"
+              v-if="
+                operateMode === 'add' ||
+                (operateMode === 'edit' &&
+                  ['dataprep_llm', 'smart_practice_llm'].includes(
+                    editShowModle,
+                  ))
+              "
+            >
               <div class="section-header">
-                <h2>一、大模型配置</h2>
-                <span class="section-tag">核心配置</span>
+                <h2>
+                  {{
+                    operateMode === "edit"
+                      ? t("modelSetting.detail.llmConfigTitleSample")
+                      : t("modelSetting.detail.llmConfigTitle")
+                  }}
+                </h2>
+                <span class="section-tag">{{
+                  t("modelSetting.detail.coreConfig")
+                }}</span>
               </div>
               <p class="section-desc">
-                用于替换和管理数据预处理模型、陪练交互模型。
+                {{ t("modelSetting.detail.llmConfigDesc") }}
               </p>
 
               <div
@@ -97,32 +135,42 @@
                   "
                 >
                   <div class="model-header">
-                    <h3>数据预处理模型</h3>
-                    <span class="model-recommend">建议高质量</span>
+                    <h3>
+                      {{ t("modelSetting.detail.dataPreprocessingModel") }}
+                    </h3>
+                    <span class="model-recommend">{{
+                      t("modelSetting.detail.recommendHighQuality")
+                    }}</span>
                   </div>
                   <p class="model-desc">
-                    适用于题目生成、内容理解、数据处理等场景，建议选用生成质量更高的模型。
+                    {{ t("modelSetting.detail.dataPreprocessingDesc") }}
                   </p>
 
                   <el-form-item prop="dataprep_llm.modelName" class="form-item">
                     <label>Model Name</label>
                     <el-input
                       v-model="formData.dataprep_llm.modelName"
-                      placeholder="例如：gpt-4.1 / qwen-max / deepseek-v3"
+                      :placeholder="
+                        t('modelSetting.detail.placeholders.llmModelExample')
+                      "
                     />
                   </el-form-item>
                   <el-form-item prop="dataprep_llm.apiKey" class="form-item">
                     <label>API Key</label>
                     <el-input
                       v-model="formData.dataprep_llm.apiKey"
-                      placeholder="请输入 API Key"
+                      :placeholder="
+                        t('modelSetting.detail.placeholders.apiKey')
+                      "
                     />
                   </el-form-item>
                   <el-form-item prop="dataprep_llm.baseUrl" class="form-item">
                     <label>Base URL</label>
                     <el-input
                       v-model="formData.dataprep_llm.baseUrl"
-                      placeholder="例如：https://api.xxx.com/v1"
+                      :placeholder="
+                        t('modelSetting.detail.placeholders.urlExample')
+                      "
                     />
                   </el-form-item>
                 </div>
@@ -136,13 +184,15 @@
                   "
                 >
                   <div class="model-header">
-                    <h3>陪练交互模型</h3>
-                    <span class="model-recommend recommend-low-latency"
-                      >建议低延迟</span
-                    >
+                    <h3>
+                      {{ t("modelSetting.detail.practiceInteractionModel") }}
+                    </h3>
+                    <span class="model-recommend recommend-low-latency">{{
+                      t("modelSetting.detail.recommendLowLatency")
+                    }}</span>
                   </div>
                   <p class="model-desc">
-                    适用于实时问答、网络反馈、对话互动等场景，建议选用响应速度更快的模型。
+                    {{ t("modelSetting.detail.practiceInteractionDesc") }}
                   </p>
 
                   <el-form-item
@@ -152,7 +202,11 @@
                     <label>Model Name</label>
                     <el-input
                       v-model="formData.smart_practice_llm.modelName"
-                      placeholder="例如：gpt-4o-mini / qwen-turbo / deepseek-chat"
+                      :placeholder="
+                        t(
+                          'modelSetting.detail.placeholders.practiceModelExample',
+                        )
+                      "
                     />
                   </el-form-item>
                   <el-form-item
@@ -162,7 +216,9 @@
                     <label>API Key</label>
                     <el-input
                       v-model="formData.smart_practice_llm.apiKey"
-                      placeholder="请输入 API Key"
+                      :placeholder="
+                        t('modelSetting.detail.placeholders.apiKey')
+                      "
                     />
                   </el-form-item>
                   <el-form-item
@@ -172,7 +228,9 @@
                     <label>Base URL</label>
                     <el-input
                       v-model="formData.smart_practice_llm.baseUrl"
-                      placeholder="例如：https://api.xxx.com/v1"
+                      :placeholder="
+                        t('modelSetting.detail.placeholders.urlExample')
+                      "
                     />
                   </el-form-item>
                 </div>
@@ -189,11 +247,19 @@
               "
             >
               <div class="section-header">
-                <h2>二、Embedding 配置</h2>
-                <span class="section-tag tag-purple">需支持 1024 维</span>
+                <h2>
+                  {{
+                    operateMode === "edit"
+                      ? t("modelSetting.detail.embeddingConfigTitleSample")
+                      : t("modelSetting.detail.embeddingConfigTitle")
+                  }}
+                </h2>
+                <span class="section-tag tag-purple">{{
+                  t("modelSetting.detail.require1024D")
+                }}</span>
               </div>
               <p class="section-desc">
-                用于向量化检索、知识匹配等场景，请确保模型支持 1024 维向量输出。
+                {{ t("modelSetting.detail.embeddingConfigDesc") }}
               </p>
 
               <div class="form-grid">
@@ -205,14 +271,18 @@
                   <label>Model Name</label>
                   <el-input
                     v-model="formData.embedding.modelName"
-                    placeholder="例如：text-embedding-3-large / bge-large-zh"
+                    :placeholder="
+                      t(
+                        'modelSetting.detail.placeholders.embeddingModelExample',
+                      )
+                    "
                   />
                 </el-form-item>
                 <el-form-item prop="embedding.apiKey" class="form-item">
                   <label>API Key</label>
                   <el-input
                     v-model="formData.embedding.apiKey"
-                    placeholder="请输入 API Key"
+                    :placeholder="t('modelSetting.detail.placeholders.apiKey')"
                   />
                 </el-form-item>
                 <el-form-item
@@ -222,16 +292,16 @@
                   <label>Base URL</label>
                   <el-input
                     v-model="formData.embedding.baseUrl"
-                    placeholder="例如：https://api.xxx.com/v1"
+                    :placeholder="
+                      t('modelSetting.detail.placeholders.urlExample')
+                    "
                   />
                 </el-form-item>
               </div>
 
               <div class="config-note">
                 <p>
-                  配置说明：Embedding
-                  模型需要兼容系统向量检索能力，建议优先选择支持 1024
-                  维输出的模型，避免与现有知识检索链路不兼容。
+                  {{ t("modelSetting.detail.embeddingConfigNote") }}
                 </p>
               </div>
             </div>
@@ -246,9 +316,15 @@
               "
             >
               <div class="section-header">
-                <h2>三、ASR 配置（可选）</h2>
+                <h2>
+                  {{
+                    operateMode === "edit"
+                      ? t("modelSetting.detail.asrConfigTitleSample")
+                      : t("modelSetting.detail.asrConfigTitle")
+                  }}
+                </h2>
                 <div class="asr-toggle">
-                  <span>启用 ASR</span>
+                  <span>{{ t("modelSetting.detail.enableASR") }}</span>
                   <el-switch
                     v-model="formData.asr.enabled"
                     @change="handleASRChange"
@@ -256,7 +332,7 @@
                 </div>
               </div>
               <p class="section-desc">
-                当系统需要语音输入、语音转文字时启用；若当前仅使用文本交互，可先不配置。
+                {{ t("modelSetting.detail.asrConfigDesc") }}
               </p>
 
               <div class="form-grid">
@@ -269,7 +345,9 @@
                   <label>Model Name</label>
                   <el-input
                     v-model="formData.asr.modelName"
-                    placeholder="例如：whisper-large-v3"
+                    :placeholder="
+                      t('modelSetting.detail.placeholders.asrModelExample')
+                    "
                     :disabled="!formData.asr.enabled"
                   />
                 </el-form-item>
@@ -281,7 +359,7 @@
                   <label>API Key</label>
                   <el-input
                     v-model="formData.asr.apiKey"
-                    placeholder="请输入 API Key"
+                    :placeholder="t('modelSetting.detail.placeholders.apiKey')"
                     :disabled="!formData.asr.enabled"
                   />
                 </el-form-item>
@@ -293,7 +371,9 @@
                   <label>Base URL</label>
                   <el-input
                     v-model="formData.asr.baseUrl"
-                    placeholder="例如：https://api.xxx.com/v1"
+                    :placeholder="
+                      t('modelSetting.detail.placeholders.urlExample')
+                    "
                     :disabled="!formData.asr.enabled"
                   />
                 </el-form-item>
@@ -303,9 +383,15 @@
             <!-- 连通性测试与状态 -->
             <div class="config-section" id="connectivity-test">
               <div class="section-header">
-                <h2>四、连通性测试与状态</h2>
+                <h2>
+                  {{
+                    operateMode === "edit"
+                      ? t("modelSetting.detail.connectivityTestTitleSample")
+                      : t("modelSetting.detail.connectivityTestTitle")
+                  }}
+                </h2>
                 <el-tooltip
-                  content="暂无可测试配置"
+                  :content="t('modelSetting.detail.noConfigToTest')"
                   placement="top"
                   effect="dark"
                   :disabled="!isCanTest"
@@ -318,12 +404,12 @@
                     :disabled="isCanTest"
                     :loading="isTesting"
                   >
-                    一键测试连接</el-button
+                    {{ t("modelSetting.detail.oneClickTest") }}</el-button
                   >
                 </el-tooltip>
               </div>
               <p class="section-desc">
-                配置完成后建议逐项测试，避免保存后运行异常。
+                {{ t("modelSetting.detail.connectivityTestDesc") }}
               </p>
 
               <div class="status-grid">
@@ -332,7 +418,7 @@
                   v-if="formData.dataprep_llm?.modelName"
                   class="status-item"
                 >
-                  <h3>数据预处理模型</h3>
+                  <h3>{{ t("modelSetting.detail.dataPreprocessingModel") }}</h3>
                   <div
                     :class="[
                       'status-indicator',
@@ -359,12 +445,13 @@
                     </div>
                     {{
                       testStatus.dataprep_llm.status === "ready"
-                        ? "待测试"
+                        ? t("modelSetting.detail.toBeTested")
                         : testStatus.dataprep_llm.status === "pending"
-                          ? "测试中"
+                          ? t("modelSetting.detail.testing")
                           : testStatus.dataprep_llm.status === "success"
-                            ? "连接正常"
-                            : testStatus.dataprep_llm.message || "连接失败"
+                            ? t("modelSetting.detail.connectionNormal")
+                            : testStatus.dataprep_llm.message ||
+                              t("modelSetting.detail.connectionFailed")
                     }}
                   </div>
                 </div>
@@ -374,7 +461,9 @@
                   v-if="formData.smart_practice_llm?.modelName"
                   class="status-item"
                 >
-                  <h3>陪练交互模型</h3>
+                  <h3>
+                    {{ t("modelSetting.detail.practiceInteractionModel") }}
+                  </h3>
                   <div
                     :class="[
                       'status-indicator',
@@ -405,13 +494,13 @@
                     </div>
                     {{
                       testStatus.smart_practice_llm.status === "ready"
-                        ? "待测试"
+                        ? t("modelSetting.detail.toBeTested")
                         : testStatus.smart_practice_llm.status === "pending"
-                          ? "测试中"
+                          ? t("modelSetting.detail.testing")
                           : testStatus.smart_practice_llm.status === "success"
-                            ? "连接正常"
+                            ? t("modelSetting.detail.connectionNormal")
                             : testStatus.smart_practice_llm.message ||
-                              "连接失败"
+                              t("modelSetting.detail.connectionFailed")
                     }}
                   </div>
                 </div>
@@ -442,12 +531,13 @@
                     </div>
                     {{
                       testStatus.embedding.status === "ready"
-                        ? "待测试"
+                        ? t("modelSetting.detail.toBeTested")
                         : testStatus.embedding.status === "pending"
-                          ? "测试中"
+                          ? t("modelSetting.detail.testing")
                           : testStatus.embedding.status === "success"
-                            ? "连接正常"
-                            : testStatus.embedding.message || "连接失败"
+                            ? t("modelSetting.detail.connectionNormal")
+                            : testStatus.embedding.message ||
+                              t("modelSetting.detail.connectionFailed")
                     }}
                   </div>
                 </div>
@@ -474,12 +564,13 @@
                     </div>
                     {{
                       testStatus.asr.status === "ready"
-                        ? "待测试"
+                        ? t("modelSetting.detail.toBeTested")
                         : testStatus.asr.status === "pending"
-                          ? "测试中"
+                          ? t("modelSetting.detail.testing")
                           : testStatus.asr.status === "success"
-                            ? "连接正常"
-                            : testStatus.asr.message || "连接失败"
+                            ? t("modelSetting.detail.connectionNormal")
+                            : testStatus.asr.message ||
+                              t("modelSetting.detail.connectionFailed")
                     }}
                   </div>
                 </div>
@@ -489,25 +580,40 @@
         </div>
       </div>
     </div>
-    <el-dialog title="提示" v-model="dialogVisible" width="400px">
+    <el-dialog
+      :title="t('modelSetting.detail.tip')"
+      v-model="dialogVisible"
+      width="400px"
+    >
       <div class="dialog-content">
         {{ dialogContent }}
       </div>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="handleSave">确 定</el-button>
+        <el-button @click="dialogVisible = false">{{
+          t("modelSetting.detail.cancel")
+        }}</el-button>
+        <el-button type="primary" @click="handleSave">{{
+          t("modelSetting.detail.confirm")
+        }}</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { ElMessage } from "element-plus";
 import { useRouter } from "vue-router";
 import {
   updateModelConfig,
   testAllModelConfig,
 } from "@/services/company.service";
+import { useGlobalStore } from "@/stores/modules/global";
+
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
+
+const { t } = useI18n();
 
 const router = useRouter();
 const contentRightRef = ref(null);
@@ -574,8 +680,11 @@ onMounted(() => {
     if (config.scope === "dataprep_llm") {
       editShowModle.value = "dataprep_llm";
       navItems.value = [
-        { id: "llm-config", name: "大模型配置" },
-        { id: "connectivity-test", name: "连通性测试与状态" },
+        { id: "llm-config", name: t("modelSetting.detail.llmConfigNav") },
+        {
+          id: "connectivity-test",
+          name: t("modelSetting.detail.connectivityTestNav"),
+        },
       ];
       formData.value.dataprep_llm = {
         modelName: config.model,
@@ -585,8 +694,11 @@ onMounted(() => {
     } else if (config.scope === "smart_practice_llm") {
       editShowModle.value = "smart_practice_llm";
       navItems.value = [
-        { id: "llm-config", name: "大模型配置" },
-        { id: "connectivity-test", name: "连通性测试与状态" },
+        { id: "llm-config", name: t("modelSetting.detail.llmConfigNav") },
+        {
+          id: "connectivity-test",
+          name: t("modelSetting.detail.connectivityTestNav"),
+        },
       ];
       formData.value.smart_practice_llm = {
         modelName: config.model,
@@ -596,8 +708,14 @@ onMounted(() => {
     } else if (config.scope === "embedding") {
       editShowModle.value = "embedding";
       navItems.value = [
-        { id: "embedding-config", name: "Embedding 配置" },
-        { id: "connectivity-test", name: "连通性测试与状态" },
+        {
+          id: "embedding-config",
+          name: t("modelSetting.detail.embeddingConfigNav"),
+        },
+        {
+          id: "connectivity-test",
+          name: t("modelSetting.detail.connectivityTestNav"),
+        },
       ];
       formData.value.embedding = {
         modelName: config.model,
@@ -607,8 +725,11 @@ onMounted(() => {
     } else if (config.scope === "asr") {
       editShowModle.value = "asr";
       navItems.value = [
-        { id: "asr-config", name: "ASR 配置（可选）" },
-        { id: "connectivity-test", name: "连通性测试与状态" },
+        { id: "asr-config", name: t("modelSetting.detail.asrConfigNav") },
+        {
+          id: "connectivity-test",
+          name: t("modelSetting.detail.connectivityTestNav"),
+        },
       ];
       formData.value.asr = {
         modelName: config.model,
@@ -638,25 +759,33 @@ const isCanTest = computed(() => {
 const rules = ref({
   // 数据预处理模型
   "dataprep_llm.modelName": [
-    { required: false, message: "请输入模型名称", trigger: "blur" },
+    {
+      required: false,
+      message: t("modelSetting.detail.placeholders.modelName"),
+      trigger: "blur",
+    },
   ],
   "dataprep_llm.apiKey": [
-    { required: false, message: "请输入 API Key", trigger: "blur" },
+    {
+      required: false,
+      message: t("modelSetting.detail.placeholders.apiKey"),
+      trigger: "blur",
+    },
   ],
   "dataprep_llm.baseUrl": [
     {
       required: true,
-      message: "请输入 Base URL",
+      message: t("modelSetting.detail.placeholders.baseUrl"),
       trigger: "blur",
       validator: (rule, value, callback) => {
         if (formData.value.dataprep_llm.modelName && !value) {
-          callback(new Error("请输入 Base URL"));
+          callback(new Error(t("modelSetting.detail.placeholders.baseUrl")));
         } else if (formData.value.dataprep_llm.modelName && value) {
           // 验证 URL 格式
           const urlRegex =
             /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
           if (!urlRegex.test(value)) {
-            callback(new Error("请输入有效的 URL"));
+            callback(new Error(t("modelSetting.detail.validation.validUrl")));
           } else {
             callback();
           }
@@ -668,25 +797,33 @@ const rules = ref({
   ],
   // 陪练交互模型
   "smart_practice_llm.modelName": [
-    { required: false, message: "请输入模型名称", trigger: "blur" },
+    {
+      required: false,
+      message: t("modelSetting.detail.placeholders.modelName"),
+      trigger: "blur",
+    },
   ],
   "smart_practice_llm.apiKey": [
-    { required: false, message: "请输入 API Key", trigger: "blur" },
+    {
+      required: false,
+      message: t("modelSetting.detail.placeholders.apiKey"),
+      trigger: "blur",
+    },
   ],
   "smart_practice_llm.baseUrl": [
     {
       required: true,
-      message: "请输入 Base URL",
+      message: t("modelSetting.detail.placeholders.baseUrl"),
       trigger: "blur",
       validator: (rule, value, callback) => {
         if (formData.value.smart_practice_llm.modelName && !value) {
-          callback(new Error("请输入 Base URL"));
+          callback(new Error(t("modelSetting.detail.placeholders.baseUrl")));
         } else if (formData.value.smart_practice_llm.modelName && value) {
           // 验证 URL 格式
           const urlRegex =
             /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
           if (!urlRegex.test(value)) {
-            callback(new Error("请输入有效的 URL"));
+            callback(new Error(t("modelSetting.detail.validation.validUrl")));
           } else {
             callback();
           }
@@ -698,25 +835,33 @@ const rules = ref({
   ],
   // Embedding 配置
   "embedding.modelName": [
-    { required: false, message: "请输入模型名称", trigger: "blur" },
+    {
+      required: false,
+      message: t("modelSetting.detail.placeholders.modelName"),
+      trigger: "blur",
+    },
   ],
   "embedding.apiKey": [
-    { required: false, message: "请输入 API Key", trigger: "blur" },
+    {
+      required: false,
+      message: t("modelSetting.detail.placeholders.apiKey"),
+      trigger: "blur",
+    },
   ],
   "embedding.baseUrl": [
     {
       required: true,
-      message: "请输入 Base URL",
+      message: t("modelSetting.detail.placeholders.baseUrl"),
       trigger: "blur",
       validator: (rule, value, callback) => {
         if (formData.value.embedding.modelName && !value) {
-          callback(new Error("请输入 Base URL"));
+          callback(new Error(t("modelSetting.detail.placeholders.baseUrl")));
         } else if (formData.value.embedding.modelName && value) {
           // 验证 URL 格式
           const urlRegex =
             /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
           if (!urlRegex.test(value)) {
-            callback(new Error("请输入有效的 URL"));
+            callback(new Error(t("modelSetting.detail.validation.validUrl")));
           } else {
             callback();
           }
@@ -730,11 +875,11 @@ const rules = ref({
   "asr.modelName": [
     {
       required: true,
-      message: "请输入模型名称",
+      message: t("modelSetting.detail.placeholders.modelName"),
       trigger: "blur",
       validator: (rule, value, callback) => {
         if (formData.value.asr.enabled && !value) {
-          callback(new Error("请输入模型名称"));
+          callback(new Error(t("modelSetting.detail.placeholders.modelName")));
         } else {
           callback();
         }
@@ -744,11 +889,11 @@ const rules = ref({
   "asr.apiKey": [
     {
       required: false,
-      message: "请输入 API Key",
+      message: t("modelSetting.detail.placeholders.apiKey"),
       trigger: "blur",
       validator: (rule, value, callback) => {
         if (formData.value.asr.enabled && !value) {
-          callback(new Error("请输入 API Key"));
+          callback(new Error(t("modelSetting.detail.placeholders.apiKey")));
         } else {
           callback();
         }
@@ -758,7 +903,7 @@ const rules = ref({
   "asr.baseUrl": [
     {
       required: false,
-      message: "请输入 Base URL",
+      message: t("modelSetting.detail.placeholders.baseUrl"),
       trigger: "blur",
       validator: (rule, value, callback) => {
         if (
@@ -766,7 +911,7 @@ const rules = ref({
           formData.value.asr.modelName &&
           !value
         ) {
-          callback(new Error("请输入 Base URL"));
+          callback(new Error(t("modelSetting.detail.placeholders.baseUrl")));
         } else if (
           formData.value.asr.enabled &&
           formData.value.asr.modelName &&
@@ -776,7 +921,7 @@ const rules = ref({
           const urlRegex =
             /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
           if (!urlRegex.test(value)) {
-            callback(new Error("请输入有效的 URL"));
+            callback(new Error(t("modelSetting.detail.validation.validUrl")));
           } else {
             callback();
           }
@@ -809,30 +954,32 @@ const handleSaveConfig = () => {
               formData.value.dataprep_llm.modelName &&
               existsConfig.includes("dataprep_llm")
             ) {
-              str += "数据预处理模型 ";
+              str += t("modelSetting.detail.dataPreprocessingModel") + " ";
             }
             if (
               formData.value.smart_practice_llm.modelName &&
               existsConfig.includes("smart_practice_llm")
             ) {
-              str += "陪练交互模型 ";
+              str += t("modelSetting.detail.practiceInteractionModel") + " ";
             }
             if (
               formData.value.embedding.modelName &&
               existsConfig.includes("embedding")
             ) {
-              str += "Embedding 模型 ";
+              str += t("modelSetting.detail.embeddingModel") + " ";
             }
             if (
               formData.value.asr.enabled &&
               formData.value.asr.modelName &&
               existsConfig.includes("asr")
             ) {
-              str += "ASR 模型";
+              str += t("modelSetting.detail.asrModel");
             }
             if (str) {
               dialogVisible.value = true;
-              dialogContent.value = `您已存在${str}，是否继续添加？`;
+              dialogContent.value = t("modelSetting.detail.configExists", {
+                models: str,
+              });
               return;
             }
           }
@@ -908,21 +1055,23 @@ const handleSave = () => {
       !item.last_test_status,
   );
   if (isNotTested) {
-    ElMessage.error("请先进行模型连通性测试");
+    ElMessage.error(t("modelSetting.detail.pleaseTestConnectivity"));
     return;
   }
   if (configData.configs.length > 0) {
     console.log("表单验证通过，准备保存配置:", configData);
     updateModelConfig(configData).then((res) => {
       if (res.data.status === 200) {
-        ElMessage.success("配置保存成功");
+        ElMessage.success(t("modelSetting.detail.configSavedSuccessfully"));
         router.back();
       } else {
-        ElMessage.error(res.data.message || "配置保存失败");
+        ElMessage.error(
+          res.data.message || t("modelSetting.detail.configSaveFailed"),
+        );
       }
     });
   } else {
-    ElMessage.error("无配置修改");
+    ElMessage.error(t("modelSetting.detail.noConfigChanges"));
   }
 };
 // 测试连通性
@@ -980,7 +1129,7 @@ const handleTestConnectivity = () => {
             testStatus.value[item.scope].message = item.summary;
           });
         } else {
-          ElMessage.error("连通性测试失败");
+          ElMessage.error(t("modelSetting.detail.connectivityTestFailed"));
           // 更新测试状态
           res.data.results.forEach((item) => {
             testStatus.value[item.scope].status = "failed";
@@ -991,15 +1140,71 @@ const handleTestConnectivity = () => {
         isTesting.value = false;
       });
   } else {
-    ElMessage.warning("请至少填写一个模型名称");
+    ElMessage.warning(t("modelSetting.detail.pleaseFillAtLeastOneModel"));
   }
 };
 const navItems = ref([
-  { id: "llm-config", name: "大模型配置" },
-  { id: "embedding-config", name: "Embedding 配置" },
-  { id: "asr-config", name: "ASR 配置（可选）" },
-  { id: "connectivity-test", name: "连通性测试与状态" },
+  { id: "llm-config", name: t("modelSetting.detail.llmConfigNav") },
+  { id: "embedding-config", name: t("modelSetting.detail.embeddingConfigNav") },
+  { id: "asr-config", name: t("modelSetting.detail.asrConfigNav") },
+  {
+    id: "connectivity-test",
+    name: t("modelSetting.detail.connectivityTestNav"),
+  },
 ]);
+
+// 监听语言变化，更新导航项文案
+watch(language, () => {
+  navItems.value = [
+    { id: "llm-config", name: t("modelSetting.detail.llmConfigNav") },
+    {
+      id: "embedding-config",
+      name: t("modelSetting.detail.embeddingConfigNav"),
+    },
+    { id: "asr-config", name: t("modelSetting.detail.asrConfigNav") },
+    {
+      id: "connectivity-test",
+      name: t("modelSetting.detail.connectivityTestNav"),
+    },
+  ];
+
+  // 如果是编辑模式，重新设置导航项
+  const editConfig = localStorage.getItem("editConfig");
+  if (editConfig) {
+    const config = JSON.parse(editConfig);
+    if (
+      config.scope === "dataprep_llm" ||
+      config.scope === "smart_practice_llm"
+    ) {
+      navItems.value = [
+        { id: "llm-config", name: t("modelSetting.detail.llmConfigNav") },
+        {
+          id: "connectivity-test",
+          name: t("modelSetting.detail.connectivityTestNav"),
+        },
+      ];
+    } else if (config.scope === "embedding") {
+      navItems.value = [
+        {
+          id: "embedding-config",
+          name: t("modelSetting.detail.embeddingConfigNav"),
+        },
+        {
+          id: "connectivity-test",
+          name: t("modelSetting.detail.connectivityTestNav"),
+        },
+      ];
+    } else if (config.scope === "asr") {
+      navItems.value = [
+        { id: "asr-config", name: t("modelSetting.detail.asrConfigNav") },
+        {
+          id: "connectivity-test",
+          name: t("modelSetting.detail.connectivityTestNav"),
+        },
+      ];
+    }
+  }
+});
 
 const handleNavClick = (index) => {
   activeNavItem.value = index;
@@ -1107,8 +1312,10 @@ watch(
     background: #fff;
     border-radius: 10px;
     padding: 16px;
-    height: 398px;
+    //min-height: 398px;
     box-sizing: border-box;
+    flex-shrink: 0;
+    align-self: flex-start;
     .nav-container {
       .nav-title {
         height: 16px;

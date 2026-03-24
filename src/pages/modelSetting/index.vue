@@ -5,13 +5,19 @@
       <template v-if="!Component">
         <div class="header">
           <div class="header-content">
-            <div class="title">模型配置</div>
+            <div class="title">{{ t("modelSetting.index.title") }}</div>
             <div class="desc">
-              管理数据预处理、陪练交互、Embedding及可选语言模型配置方案
+              {{ t("modelSetting.index.description") }}
             </div>
           </div>
-          <el-button type="primary" class="add-btn" @click="handleAddConfig"
-            >+ 新增配置</el-button
+          <el-button
+            type="primary"
+            class="add-btn"
+            :style="{
+              width: language === 'zh' ? '108px' : '140px',
+            }"
+            @click="handleAddConfig"
+            >{{ t("modelSetting.index.addConfig") }}</el-button
           >
         </div>
         <div class="config-grid" v-if="configItems.length">
@@ -34,28 +40,34 @@
                 >
                   <img src="@/assets/images/more-icon.png" alt="" />
                 </div>
-                <div class="dropdown-menu" v-if="item.isDropdownVisible">
+                <div
+                  class="dropdown-menu"
+                  :style="{
+                    width: language === 'zh' ? '120px' : '170px',
+                  }"
+                  v-if="item.isDropdownVisible"
+                >
                   <div
                     class="menu-item"
                     @click.stop="handleMenuClick(item, 'edit')"
                   >
                     <img src="@/assets/images/edit.png" alt="" />
-                    编辑配置
+                    {{ t("modelSetting.index.editConfig") }}
                   </div>
-                  <div
+                  <!-- <div
                     class="menu-item"
                     @click.stop="handleMenuClick(item, 'copy')"
                   >
                     <img src="@/assets/images/copy.png" alt="" />
-                    复制配置
+                    {{ t("modelSetting.index.copyConfig") }}
                   </div>
                   <div
                     class="menu-item"
                     @click.stop="handleMenuClick(item, 'delete')"
                   >
                     <img src="@/assets/images/delete.png" alt="" />
-                    删除配置
-                  </div>
+                    {{ t("modelSetting.index.deleteConfig") }}
+                  </div> -->
                 </div>
               </div>
             </div>
@@ -83,7 +95,8 @@
                 {{ item.statusText }}
               </div>
               <span class="update-time"
-                >更新与 <span>{{ item.updateTime }}</span></span
+                >{{ t("modelSetting.index.updateTime") }}
+                <span>{{ item.updateTime }}</span></span
               >
             </div>
           </div>
@@ -96,7 +109,7 @@
               alt="no-data"
             />
           </div>
-          <div class="no-data-text">暂无模型配置</div>
+          <div class="no-data-text">{{ t("modelSetting.index.noConfig") }}</div>
         </div>
       </template>
       <template v-else>
@@ -107,13 +120,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import successIcon from "@/assets/images/success.png";
 import pendingIcon from "@/assets/images/pedding.png";
 import errorIcon from "@/assets/images/error.png";
 import { useRouter } from "vue-router";
 import { getModelConfigList } from "@/services/company.service";
 import { formatDate } from "@/utils/dateFormat";
+import { useGlobalStore } from "@/stores/modules/global";
+
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
+
+const { t } = useI18n();
 
 const router = useRouter();
 // 配置项数据
@@ -139,54 +159,62 @@ const configItems = ref([
   // },
 ]);
 
-const configLabel = {
-  dataprep_llm: {
-    type: "llm",
-    typeText: "LLM",
-    title: "默认模型配置",
-    subtitle: "大模型配置",
-    tags: [{ name: "数据预处理", status: "success" }],
-    description:
-      "用于替换和管理数据预处理模型、陪练交互模型。包含数据预处理模型和陪练交互模型的完整配置。",
-  },
-  smart_practice_llm: {
-    type: "llm",
-    typeText: "LLM",
-    title: "默认模型配置",
-    subtitle: "大模型配置",
-    tags: [{ name: "陪练交互", status: "success" }],
-    description:
-      "用于替换和管理数据预处理模型、陪练交互模型。包含数据预处理模型和陪练交互模型的完整配置。",
-  },
-  embedding: {
-    type: "embedding",
-    typeText: "Emb",
-    title: "Embedding 向量配置",
-    subtitle: "Embedding 配置",
-    tags: [{ name: "Embedding", status: "success" }],
-    description:
-      "用于向量化检索、知识匹配等场景，支持 1024 维向量输出。兼容系统向量检索能力。",
-  },
-  asr: {
-    type: "asr",
-    typeText: "ASR",
-    title: "ASR 语音识别配置",
-    subtitle: "ASR 配置",
-    tags: [{ name: "ASR", status: "success" }],
-    description:
-      "用于语音输入、语音转文字场景。当前配置使用 whisper-large-v3 模型。",
-  },
-};
+const configLabel = computed(() => {
+  return {
+    dataprep_llm: {
+      type: "llm",
+      typeText: "LLM",
+      title: t("modelSetting.index.defaultModelConfig"),
+      subtitle: t("modelSetting.index.llmConfig"),
+      tags: [
+        { name: t("modelSetting.index.dataPreprocessing"), status: "success" },
+      ],
+      description: t("modelSetting.index.llmDescription"),
+    },
+    smart_practice_llm: {
+      type: "llm",
+      typeText: "LLM",
+      title: t("modelSetting.index.defaultModelConfig"),
+      subtitle: t("modelSetting.index.llmConfig"),
+      tags: [
+        {
+          name: t("modelSetting.index.practiceInteraction"),
+          status: "success",
+        },
+      ],
+      description: t("modelSetting.index.llmDescription"),
+    },
+    embedding: {
+      type: "embedding",
+      typeText: "Emb",
+      title: t("modelSetting.index.embeddingVectorConfig"),
+      subtitle: t("modelSetting.index.embeddingConfig"),
+      tags: [{ name: "Embedding", status: "success" }],
+      description: t("modelSetting.index.embeddingDescription"),
+    },
+    asr: {
+      type: "asr",
+      typeText: "ASR",
+      title: t("modelSetting.index.asrSpeechRecognitionConfig"),
+      subtitle: t("modelSetting.index.asrConfig"),
+      tags: [{ name: "ASR", status: "success" }],
+      description: t("modelSetting.index.asrDescription"),
+    },
+  };
+});
 const getConfigList = async () => {
   const res = await getModelConfigList();
   if (res.data.status === 200) {
     const data = res.data.results || [];
     configItems.value = data.map((item) => ({
       ...item,
-      ...configLabel[item.scope],
+      ...configLabel.value[item.scope],
       updateTime: item.updated_at ? formatDate(item.updated_at) : "-",
       status: item.last_test_status,
-      statusText: item.last_test_status === "success" ? "运行正常" : "运行异常",
+      statusText:
+        item.last_test_status === "success"
+          ? t("modelSetting.index.status.success")
+          : t("modelSetting.index.status.error"),
       isDropdownVisible: false,
       dropdownContainer: null,
     }));
@@ -238,6 +266,11 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside);
+});
+
+// 监听语言变化，重新获取配置列表以更新文案
+watch(language, () => {
+  getConfigList();
 });
 </script>
 
@@ -398,7 +431,8 @@ onUnmounted(() => {
   }
   .dropdown-menu {
     width: 120px;
-    height: 124px;
+    height: 52px;
+    // height: 124px;
     position: absolute;
     padding-top: 8px;
     box-sizing: border-box;

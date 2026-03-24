@@ -152,8 +152,9 @@ const queryPost = () => {
     const data = res.data.results || [];
     postList.value = data.map((item: any) => ({
       label: item.position_name,
-      value: Number(item.position_id) || item.position_id,
+      value: item.position_id,
     }));
+    console.log("postList.value", postList.value);
   });
 };
 queryPost();

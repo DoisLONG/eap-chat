@@ -138,7 +138,12 @@ const title = computed(() => {
   return t("common.check");
 });
 
-const operateInfo = ref<any>({ ...rowInfo.value });
+const operateInfo = ref<any>({
+  ...rowInfo.value,
+  department_id: rowInfo.value.department_id
+    ? Number(rowInfo.value.department_id)
+    : "",
+});
 const drawerVisible = ref(true);
 const drawerProps = ref<DrawerProps>({
   isView: type.value === "check",
@@ -189,8 +194,8 @@ const handleSubmit = () => {
         type.value === "create"
           ? addPost
           : type.value === "update"
-          ? updatePost
-          : undefined;
+            ? updatePost
+            : undefined;
       const res = await api!(operateInfo.value);
       if (res.data.status !== 200) {
         ElMessage.error({ message: res.data.msg || t("common.operateError") });
@@ -202,7 +207,7 @@ const handleSubmit = () => {
         message: t(
           type.value === "create"
             ? "positionManagement.operateSuccess"
-            : "positionManagement.editSuccess"
+            : "positionManagement.editSuccess",
         ),
       });
     } catch (error) {
