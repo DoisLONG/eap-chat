@@ -102,14 +102,31 @@
               :value="oitem.sop_id"
             />
             <template #prefix>
-              <span class="select-label">{{
-                currentSopLabel || $t("dashboard.gradesRank.selectSop")
-              }}</span>
-              <img
-                src="@/assets/images/arrow-down.png"
-                class="select-prefix"
-                :class="{ 'rotate-180': isDeptDropdownOpen }"
-              />
+              <div class="select-wrapper">
+                <el-tooltip
+                  :content="
+                    currentSopLabel || $t('dashboard.gradesRank.selectSop')
+                  "
+                  placement="top"
+                  effect="dark"
+                  :disabled="!isCurrentSopTitleRef"
+                >
+                  <div
+                    ref="currentSopTitleRef"
+                    class="select-label sle"
+                    @mouseenter="checkOverflow($event)"
+                  >
+                    {{
+                      currentSopLabel || $t("dashboard.gradesRank.selectSop")
+                    }}
+                  </div>
+                </el-tooltip>
+                <img
+                  src="@/assets/images/arrow-down.png"
+                  class="select-prefix"
+                  :class="{ 'rotate-180': isDeptDropdownOpen }"
+                />
+              </div>
             </template>
           </el-select>
         </div>
@@ -119,13 +136,52 @@
           class="exam-info-card"
           v-if="exam_info && JSON.stringify(exam_info) !== '{}'"
         >
-          <div class="exam-title">{{ currentSopLabel }}</div>
+          <el-tooltip
+            :content="currentSopLabel"
+            placement="top"
+            effect="dark"
+            :disabled="!isCurrentSopLabelRef"
+          >
+            <div
+              ref="currentSopLabelRef"
+              class="exam-title sle"
+              @mouseenter="checkOverflow($event)"
+            >
+              {{ currentSopLabel }}
+            </div>
+          </el-tooltip>
           <div class="exam-info-item">
             <img src="@/assets/images/building.png" class="exam-info-icon" />
-            <span
-              >{{ $t("dashboard.gradesRank.examInfo.department")
-              }}{{ exam_info?.sop_title || "-" }}</span
-            >
+            <div class="exam-info-content">
+              <el-tooltip
+                :content="$t('dashboard.gradesRank.examInfo.department')"
+                placement="top"
+                effect="dark"
+                :disabled="!isDepartmentNameRef"
+              >
+                <div
+                  ref="departmentNameRef"
+                  class="label sle"
+                  @mouseenter="checkOverflow($event)"
+                >
+                  {{ $t("dashboard.gradesRank.examInfo.department") }}
+                </div>
+              </el-tooltip>
+              <el-tooltip
+                :content="exam_info?.sop_title || '-'"
+                placement="top"
+                effect="dark"
+                :disabled="!isDepartmentRef"
+              >
+                <div
+                  ref="departmenteRef"
+                  class="value sle"
+                  @mouseenter="checkOverflow($event)"
+                >
+                  {{ exam_info?.sop_title || "-" }}
+                </div>
+              </el-tooltip>
+            </div>
           </div>
           <div class="exam-info-item">
             <img src="@/assets/images/calendar.png" class="exam-info-icon" />
@@ -467,10 +523,18 @@ const isTextOverflow = (el) => {
 const totalParticipantsRef = ref();
 const completionRateRef = ref();
 const rankingTitleRef = ref();
+const departmenteRef = ref();
+const departmentNameRef = ref();
+const currentSopLabelRef = ref();
+const currentSopTitleRef = ref();
 
 const isTotalParticipantsRef = ref(false);
 const isCompletionRate = ref(false);
 const isRankingTitleRef = ref(false);
+const isDepartmentRef = ref(false);
+const isDepartmentNameRef = ref(false);
+const isCurrentSopLabelRef = ref(false);
+const isCurrentSopTitleRef = ref(false);
 
 // 检查溢出并设置状态
 const checkOverflow = (event) => {
@@ -479,6 +543,10 @@ const checkOverflow = (event) => {
     totalParticipantsRef: isTotalParticipantsRef,
     completionRateRef: isCompletionRate,
     rankingTitleRef: isRankingTitleRef,
+    departmenteRef: isDepartmentRef,
+    departmentNameRef: isDepartmentNameRef,
+    currentSopLabelRef: isCurrentSopLabelRef,
+    currentSopTitleRef: isCurrentSopTitleRef,
   };
 
   // 根据元素找到对应的ref和状态变量
@@ -565,6 +633,14 @@ const checkOverflow = (event) => {
 .exam-select-dropdown :deep(.el-select__suffix) {
   display: none;
 }
+.select-wrapper {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  .select-label {
+    max-width: calc(100% - 55px);
+  }
+}
 
 .exam-select {
   margin-bottom: 24px;
@@ -587,6 +663,8 @@ const checkOverflow = (event) => {
 
 .exam-info-card {
   padding: 16px 24px;
+  width: 100%;
+  box-sizing: border-box;
   background-color: #fafbfc;
   border-radius: 8px;
 }
@@ -597,6 +675,7 @@ const checkOverflow = (event) => {
   font-size: 18px;
   font-weight: 500;
   color: #0f172b;
+  width: 100%;
 }
 .exam-info-no-data {
   width: 100%;
@@ -627,6 +706,18 @@ const checkOverflow = (event) => {
   height: 20px;
   color: #62748e;
   margin-top: 8px;
+  .exam-info-content {
+    width: calc(100% - 16px);
+    display: flex;
+    align-items: center;
+    .label {
+      width: 72px;
+    }
+    .value {
+      width: calc(100% - 72px);
+      text-align: left;
+    }
+  }
   .exam-info-icon {
     width: 16px;
     height: 16px;
