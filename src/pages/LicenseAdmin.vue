@@ -316,12 +316,12 @@ const ruleFormRef = ref<FormInstance>();
 const proTable = ref<ProTableInstance>();
 const initParam = reactive({});
 
-const strategyList = [
+const strategyList = computed(() => [
   { label: t("licenseAdmin.allMode"), value: "all" },
   { label: t("licenseAdmin.stepMode"), value: "step" },
   { label: t("licenseAdmin.errorMode"), value: "error" },
   { label: t("licenseAdmin.dataMode"), value: "data" },
-];
+]);
 const handleSearch = (params: any) => {
   proTable.value?.handleAlignsearch(params);
 };

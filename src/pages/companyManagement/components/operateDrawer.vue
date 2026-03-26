@@ -8,7 +8,7 @@
   >
     <el-form
       ref="ruleFormRef"
-      label-width="100px"
+      :label-width="language === 'zh' ? '100px' : '140px'"
       label-suffix=" :"
       :rules="rules"
       :disabled="drawerProps.isView"
@@ -82,6 +82,10 @@ import { ref, reactive, toRefs, computed } from "vue";
 import { ElMessage, FormInstance } from "element-plus";
 import { updateCompany, addCompany } from "@/services/company.service";
 import { useI18n } from "vue-i18n";
+import { useGlobalStore } from "@/stores/modules/global";
+
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
 const { t } = useI18n();
 
 const emits = defineEmits(["close", "refresh"]);
@@ -123,8 +127,8 @@ const handleSubmit = () => {
         type.value === "create"
           ? addCompany
           : type.value === "update"
-          ? updateCompany
-          : undefined;
+            ? updateCompany
+            : undefined;
       const res = await api!(operateInfo.value);
       if (res.data.status !== 200) {
         ElMessage.error({ message: res.data.msg || t("common.operateError") });
@@ -136,7 +140,7 @@ const handleSubmit = () => {
         message: t(
           type.value === "create"
             ? "companyManagement.operateSuccess"
-            : "companyManagement.editSuccess"
+            : "companyManagement.editSuccess",
         ),
       });
     } catch (error) {

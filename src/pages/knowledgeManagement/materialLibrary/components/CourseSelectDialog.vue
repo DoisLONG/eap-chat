@@ -61,7 +61,7 @@
         </el-table-column>
         <el-table-column
           type="index"
-          width="60"
+          width="70"
           :label="$t('common.index')"
           align="center"
         />
@@ -148,12 +148,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from "vue";
+import { ref, reactive, watch, computed } from "vue";
 import { getCourseList } from "@/services/mobile.service";
 import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { Search, RefreshLeft, Document } from "@element-plus/icons-vue";
+import { useGlobalStore } from "@/stores/modules/global";
 
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
 const { t } = useI18n();
 
 const props = defineProps<{
@@ -190,7 +193,7 @@ watch(
       // 打开对话框时重置并加载数据
       initDialog();
     }
-  }
+  },
 );
 
 // 监听当前课程ID变化
@@ -201,7 +204,7 @@ watch(
       selectedCourseId.value = val;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 // 监听 dialogVisible 变化
@@ -242,7 +245,7 @@ const loadCourseList = async () => {
       // 如果有选中的课程ID，找到对应的课程对象
       if (selectedCourseId.value) {
         const found = courseList.value.find(
-          (item) => item.course_id === selectedCourseId.value
+          (item) => item.course_id === selectedCourseId.value,
         );
         if (found) {
           selectedCourse.value = found;

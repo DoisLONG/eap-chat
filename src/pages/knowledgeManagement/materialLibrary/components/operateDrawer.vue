@@ -8,7 +8,7 @@
   >
     <el-form
       ref="ruleFormRef"
-      label-width="120px"
+      :label-width="language === 'zh' ? '120px' : '140px'"
       label-suffix=" :"
       :rules="rules"
       :disabled="drawerProps.isView"
@@ -222,6 +222,10 @@ import { uploadMaterial, updateMaterial } from "@/services/mobile.service";
 import CourseSelectDialog from "./CourseSelectDialog.vue";
 
 import { useI18n } from "vue-i18n";
+import { useGlobalStore } from "@/stores/modules/global";
+
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
 const { t } = useI18n();
 
 const emits = defineEmits(["close", "refresh"]);

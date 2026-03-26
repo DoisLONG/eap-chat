@@ -73,7 +73,7 @@
 </template>
 
 <script setup lang="tsx" name="useProTable">
-import { ref, reactive } from "vue";
+import { ref, reactive, computed } from "vue";
 import ProTable from "@/components/ProTable/index.vue";
 import OperateDrawer from "./components/operateDrawer.vue";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -82,6 +82,7 @@ import { CirclePlus, Delete, EditPen, View } from "@element-plus/icons-vue";
 import { getPostPageList, deletePost } from "@/services/company.service";
 import { useHandleData } from "@/hooks/useHandleData";
 import { useI18n } from "vue-i18n";
+
 const { t } = useI18n();
 
 const proTable = ref<ProTableInstance>();
@@ -160,7 +161,7 @@ const deleteAccount = async (params) => {
     deletePost,
     { position_id: params.position_id },
     t("positionManagement.deleteTip", { name: params.position_name }),
-    t
+    t,
   );
 
   proTable.value?.getTableList();
@@ -176,7 +177,7 @@ const batchDelete = async (ids) => {
       type: "warning",
       confirmButtonText: t("common.confirm"),
       cancelButtonText: t("common.cancel"),
-    }
+    },
   )
     .then(async () => {
       await Promise.all(ids.map((id) => deletePost({ position_id: id })));
