@@ -998,4 +998,7 @@ const checkOverflow = (event) => {
 .change-icon {
   font-size: 12px;
 }
+.exam-select :deep(.el-select__prefix) {
+  width: 100% !important;
+}
 </style>

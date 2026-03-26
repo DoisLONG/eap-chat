@@ -5,6 +5,14 @@ export default {
     welcome: "Welcome",
     title: "Management System",
   },
+  layout: {
+    userEnd: "User End",
+    adminEnd: "Admin End",
+    welcomeTip: "We noticed you're browsing the user end～",
+    switchTip:
+      "If you need to manage system data, configure permissions, or publish training tasks, you can click 'Switch to Admin End' to enter the backend management mode with one click!",
+    iKnow: "I know",
+  },
   tabs: {
     refresh: "Refresh",
     maximize: "Maximize",

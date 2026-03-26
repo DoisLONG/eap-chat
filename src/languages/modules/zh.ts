@@ -5,6 +5,13 @@ export default {
     welcome: "欢迎使用",
     title: "管理系统",
   },
+  layout: {
+    userEnd: "用户端",
+    adminEnd: "管理端",
+    welcomeTip: "发现你正在用户端浏览～",
+    switchTip: "如果需要管理系统数据、配置权限或发布培训任务等，可以点击「切换至管理端」，一键进入后台管理模式！",
+    iKnow: "我知道了",
+  },
   tabs: {
     refresh: "刷新",
     maximize: "最大化",

@@ -23,10 +23,14 @@ const i18n = useI18n();
 onMounted(() => {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get("token");
+  const lang = urlParams.get("lang");
   if (token) {
     localStorage.setItem("token", token);
   }
-  const language = globalStore.language ?? getBrowserLang();
+  let language = globalStore.language ?? getBrowserLang();
+  if (lang) {
+    language = lang;
+  }
   i18n.locale.value = language;
   globalStore.setGlobalState("language", language as LanguageType);
 });

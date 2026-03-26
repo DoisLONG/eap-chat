@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import NProgress from "@/config/nprogress";
+import { useUserStore } from "@/stores/modules/user";
 const AppLayout = () => import("../layouts/index.vue");
 // const Chat = () => import('../pages/Chat.vue')
 
@@ -282,13 +283,23 @@ const router = createRouter({
   routes,
 });
 
-// 登录守卫：公开页直接放行，其余需要 token
+// 登录守卫：公开页直接放行，其余需要 token 和权限
 router.beforeEach((to, from, next) => {
   // 1.NProgress 开始
   NProgress.start();
   if (to.meta?.public) return next();
   const token = localStorage.getItem("token");
   if (!token) return next({ path: "/login", query: { redirect: to.fullPath } });
+
+  // 检查模型配置页面的权限，只有 superadmin 可以访问
+  const userStore = useUserStore();
+  const isSuperAdmin = userStore.userInfo.name === "superadmin";
+  const isModelSettingRoute = to.path.includes("/system/modelSetting");
+
+  if (isModelSettingRoute && !isSuperAdmin) {
+    return next({ path: "/dashboard" });
+  }
+
   next();
 });
 /**

@@ -19,7 +19,14 @@
                 alt="logo"
               />
             </div>
-            <div class="text">用户端</div>
+            <div
+              class="text"
+              :style="{
+                fontSize: language === 'zh' ? '14px' : '12px',
+              }"
+            >
+              {{ $t("layout.userEnd") }}
+            </div>
           </div>
           <div
             class="duan-item"
@@ -51,7 +58,7 @@
               </template>
               <div class="duan-popover-content">
                 <div class="header">
-                  <span class="title">管理端</span>
+                  <span class="title">{{ $t("layout.adminEnd") }}</span>
                   <div class="img" @click="setFirst">
                     <img
                       style="width: 16px; height: 16px"
@@ -60,16 +67,24 @@
                   </div>
                 </div>
                 <div class="content">
-                  <div>👋 发现你正在用户端浏览～</div>
-                  如果需要管理系统数据、配置权限或发布培训任务等，
-                  可以点击「切换至管理端」，一键进入后台管理模式！
+                  <div>👋 {{ $t("layout.welcomeTip") }}</div>
+                  {{ $t("layout.switchTip") }}
                 </div>
                 <div class="footer">
-                  <el-button @click="setFirst"> 我知道了 </el-button>
+                  <el-button @click="setFirst">{{
+                    $t("layout.iKnow")
+                  }}</el-button>
                 </div>
               </div>
             </el-popover>
-            <div class="text">管理端</div>
+            <div
+              class="text"
+              :style="{
+                fontSize: language === 'zh' ? '14px' : '12px',
+              }"
+            >
+              {{ $t("layout.adminEnd") }}
+            </div>
           </div>
         </div>
         <div
@@ -122,6 +137,7 @@
       >
         <div class="user-iframe-wrapper">
           <iframe
+            v-if="isReset"
             :src="userUrl"
             class="user-iframe"
             :style="{
@@ -138,7 +154,7 @@
 </template>
 
 <script setup name="layoutVertical">
-import { computed, ref, provide } from "vue";
+import { computed, ref, provide, nextTick } from "vue";
 import { useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/modules/auth";
 import { useGlobalStore } from "@/stores/modules/global";
@@ -153,6 +169,7 @@ const route = useRoute();
 const authStore = useAuthStore();
 const globalStore = useGlobalStore();
 const accordion = computed(() => globalStore.accordion);
+const language = computed(() => globalStore.language);
 const isCollapse = computed(() => globalStore.isCollapse);
 const lang = computed(() => globalStore.language);
 const menuList = computed(() => authStore.showMenuListGet);
@@ -199,8 +216,8 @@ const calculateH5Size = () => {
   const containerWidth = container.clientWidth - 100;
   const containerHeight = container.clientHeight - 160;
 
-  // 常见H5页面宽高比（16:9）
-  const aspectRatio = 9 / 16;
+  // 常见H5页面宽高比(384/817)
+  const aspectRatio = 0.47;
 
   let width, height;
 
@@ -226,16 +243,32 @@ const calculateH5Size = () => {
   };
 };
 
-// 监听窗口大小变化
-onMounted(() => {
+// 语言变化后链接需要重置
+const isReset = ref(true);
+watch(
+  () => language.value,
+  () => {
+    isReset.value = false;
+    setIframeUrl();
+    nextTick(() => {
+      isReset.value = true;
+    });
+  },
+);
+
+const setIframeUrl = () => {
   const token = localStorage.getItem("token");
   const origin =
     window.location.hostname === "localhost"
       ? "http://14.103.176.8:5174"
       : window.location.origin;
-  userUrl.value = `${origin}/eap/#/?token=${token}`;
-  // userUrl.value = `http://localhost:8888/eap/#/?token=${token}`;
+  userUrl.value = `${origin}/eap/#/?token=${token}&lang=${language.value}`;
+  // userUrl.value = `http://localhost:8888/eap/#/?token=${token}&lang=${language.value}`;
   // console.log("userUrl.value", userUrl.value);
+};
+// 监听窗口大小变化
+onMounted(() => {
+  setIframeUrl();
   calculateH5Size();
   window.addEventListener("resize", calculateH5Size);
 });
