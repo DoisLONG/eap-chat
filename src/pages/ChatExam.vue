@@ -254,20 +254,16 @@
 
       <div class="mobile-voice-entry">
         <div
-          class="hold-to-talk"
-          :class="{
-            pressing: voicePressing,
-            cancel: voiceCanceled,
-          }"
-          @touchstart.prevent="onHoldStart"
-          @touchmove.prevent="onHoldMove"
-          @touchend.prevent="onHoldEnd"
-          @touchcancel.prevent="onHoldEnd"
-          @pointerdown.prevent="onHoldStart"
-          @pointermove.prevent="onHoldMove"
-          @pointerup.prevent="onHoldEnd"
-          @pointercancel.prevent="onHoldEnd"
-        >
+            class="hold-to-talk"
+            :class="{
+              pressing: voicePressing,
+              cancel: voiceCanceled,
+            }"
+            @touchstart.prevent="onHoldStart"
+            @touchmove.prevent="onHoldMove"
+            @touchend.prevent="onHoldEnd"
+            @touchcancel.prevent="onHoldEnd"
+          >
           <template v-if="voicePressing">
             <div class="voice-bars">
               <span v-for="n in 28" :key="n"></span>
@@ -339,6 +335,7 @@ import { useUserStore } from "@/stores/modules/user";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import { synthesizeXfyunTts } from "@/services/xfyunTts";
+import { transcribeXfyunAsr } from "@/services/xfyunAsr";
 
 const { t, locale } = useI18n();
 
@@ -380,12 +377,14 @@ const ttsLoading = ref(false);
 const audioPlaying = ref(false);
 const recognizedText = ref("");
 
-let recognition = null;
-const speechSupported = ref(false);
-let ignoreRecognitionResult = false;
-
 let pressStartY = 0;
 let currentAudio = null;
+
+let mediaRecorder = null;
+let mediaStream = null;
+let audioChunks = [];
+let discardRecord = false;
+
 function releaseAudio(audio) {
   if (audio?.__blobUrl) {
     URL.revokeObjectURL(audio.__blobUrl);
@@ -479,6 +478,9 @@ function newSession() {
     content: t("ChatExam.beginTip") || "准备开始考试",
   });
 
+  recognizedText.value = "";
+  input.value = "";
+
   let params = {
     user_id: String(userInfo.value.id),
     sop_id: sopId,
@@ -545,99 +547,133 @@ function toSpeechText(text = "") {
     .trim();
 }
 
-// ========== 浏览器原生语音识别 ==========
-function getSpeechRecognitionCtor() {
-  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
-}
-
-function getRecognitionLang() {
+// ========== 讯飞 ASR ==========
+function getAsrLanguage() {
   const lang = locale.value || "zh";
-  if (lang === "en") return "en-US";
-  if (lang === "th") return "th-TH";
-  return "zh-CN";
+  if (lang === "en") return "en_us";
+  return "zh_cn";
 }
 
-function initSpeechRecognition() {
-  const Ctor = getSpeechRecognitionCtor();
+function cleanupRecorder() {
+  if (mediaStream) {
+    mediaStream.getTracks().forEach((track) => track.stop());
+    mediaStream = null;
+  }
 
-  if (!Ctor) {
-    speechSupported.value = false;
+  mediaRecorder = null;
+  audioChunks = [];
+}
+
+async function startRecord() {
+  if (recording.value || asrLoading.value) return;
+
+  if (!window.isSecureContext) {
+    ElMessage.warning("麦克风录音需要 HTTPS 或 localhost，当前访问地址不安全");
     return;
   }
 
-  speechSupported.value = true;
-  recognition = new Ctor();
-  recognition.lang = getRecognitionLang();
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
+  if (!navigator.mediaDevices?.getUserMedia) {
+    ElMessage.warning("当前浏览器不支持麦克风采集");
+    return;
+  }
 
-  recognition.onstart = () => {
-    recording.value = true;
-    asrLoading.value = true;
-  };
-
-  recognition.onresult = (event) => {
-    if (ignoreRecognitionResult) return;
-
-    const transcript = event?.results?.[0]?.[0]?.transcript?.trim?.() || "";
-
-    if (transcript) {
-      recognizedText.value = transcript;
-      input.value = input.value ? `${input.value}\n${transcript}` : transcript;
-      ElMessage.success("识别成功，已填入输入框");
-    } else {
-      ElMessage.warning("未识别到有效内容");
-    }
-  };
-
-  recognition.onerror = (event) => {
-    if (ignoreRecognitionResult && event?.error === "aborted") return;
-    console.error("[speech recognition error]", event);
-    ElMessage.error("语音识别失败");
-  };
-
-  recognition.onend = () => {
-    recording.value = false;
-    asrLoading.value = false;
-    voicePressing.value = false;
-    voiceCanceled.value = false;
-    ignoreRecognitionResult = false;
-
-    if (isMobile.value) {
-      mobileInputMode.value = "text";
-    }
-  };
-}
-
-function startRecord() {
-  if (!recognition) {
-    ElMessage.warning("当前浏览器不支持语音识别，建议使用 Chrome");
+  if (typeof MediaRecorder === "undefined") {
+    ElMessage.warning("当前浏览器不支持录音");
     return;
   }
 
   try {
-    recognition.lang = getRecognitionLang();
-    recognition.start();
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : "";
+
+    mediaRecorder = new MediaRecorder(
+      mediaStream,
+      mimeType ? { mimeType } : undefined,
+    );
+
+    audioChunks = [];
+    discardRecord = false;
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        audioChunks.push(event.data);
+      }
+    };
+
+    mediaRecorder.onstart = () => {
+      recording.value = true;
+    };
+
+    mediaRecorder.onstop = async () => {
+      recording.value = false;
+
+      const blob = new Blob(audioChunks, {
+        type: mimeType || "audio/webm",
+      });
+
+      cleanupRecorder();
+
+      if (discardRecord) {
+        discardRecord = false;
+        voiceCanceled.value = false;
+        voicePressing.value = false;
+        if (isMobile.value) mobileInputMode.value = "text";
+        return;
+      }
+
+      asrLoading.value = true;
+
+      try {
+        const text = await transcribeXfyunAsr(blob, {
+          language: getAsrLanguage(),
+          domain: "iat",
+          accent: "mandarin",
+          onProgress: (partialText) => {
+            recognizedText.value = partialText || "";
+          },
+        });
+
+        const finalText = String(text || "").trim();
+
+        if (finalText) {
+          recognizedText.value = finalText;
+          input.value = input.value ? `${input.value}\n${finalText}` : finalText;
+          ElMessage.success("识别成功，已填入输入框");
+        } else {
+          ElMessage.warning("未识别到有效内容");
+        }
+      } catch (err) {
+        console.error("[xfyun asr error]", err);
+        ElMessage.error(err?.message || "语音识别失败");
+      } finally {
+        asrLoading.value = false;
+        voiceCanceled.value = false;
+        voicePressing.value = false;
+        if (isMobile.value) mobileInputMode.value = "text";
+      }
+    };
+
+    mediaRecorder.start();
   } catch (err) {
-    console.error("[recognition.start error]", err);
-    // ElMessage.error("无法启动语音识别");
+    console.error("[startRecord error]", err);
+    cleanupRecorder();
+    ElMessage.error(err?.message || "无法启动录音");
   }
 }
 
 function stopRecord() {
-  if (!recognition) return;
+  if (!mediaRecorder || mediaRecorder.state === "inactive") return;
 
   try {
-    recognition.stop();
+    mediaRecorder.stop();
   } catch (err) {
-    console.error("[recognition.stop error]", err);
+    console.error("[stopRecord error]", err);
   }
-}
-
-function toggleRecord() {
-  if (recording.value) stopRecord();
-  else startRecord();
 }
 
 function getPointerY(event) {
@@ -646,10 +682,6 @@ function getPointerY(event) {
 }
 
 function switchToVoiceMode() {
-  if (!speechSupported.value) {
-    ElMessage.warning("当前浏览器不支持语音识别，建议使用 Chrome");
-    return;
-  }
   mobileInputMode.value = "voice";
 }
 
@@ -659,21 +691,17 @@ function switchToTextMode() {
   voiceCanceled.value = false;
 
   if (recording.value) {
-    ignoreRecognitionResult = true;
+    discardRecord = true;
     stopRecord();
   }
 }
 
-async function onHoldStart(event) {
+function onHoldStart(event) {
   if (recording.value || asrLoading.value) return;
-  if (!speechSupported.value) {
-    ElMessage.warning("当前浏览器不支持语音识别，建议使用 Chrome");
-    return;
-  }
 
   pressStartY = getPointerY(event);
   voiceCanceled.value = false;
-  ignoreRecognitionResult = false;
+  discardRecord = false;
   voicePressing.value = true;
 
   startRecord();
@@ -691,10 +719,7 @@ function onHoldMove(event) {
 function onHoldEnd() {
   if (!voicePressing.value) return;
 
-  if (voiceCanceled.value) {
-    ignoreRecognitionResult = true;
-  }
-
+  discardRecord = voiceCanceled.value;
   voicePressing.value = false;
 
   if (recording.value) {
@@ -800,6 +825,7 @@ async function send() {
 
   messages.push({ id: Date.now() + "", role: "user", content: text });
   input.value = "";
+  recognizedText.value = "";
   await nextTick();
   scrollBottom();
 
@@ -945,7 +971,7 @@ function endExam() {
 }
 
 onMounted(() => {
-  initSpeechRecognition();
+  updateViewport();
   loadSessions();
   newSession();
   window.addEventListener("resize", updateViewport, { passive: true });
@@ -954,12 +980,12 @@ onMounted(() => {
 onUnmounted(() => {
   stopAudio();
 
-  if (recognition) {
-    try {
-      recognition.stop();
-    } catch {}
+  if (recording.value) {
+    discardRecord = true;
+    stopRecord();
   }
 
+  cleanupRecorder();
   window.removeEventListener("resize", updateViewport);
 
   if (!examId.value) return;
@@ -969,6 +995,7 @@ onUnmounted(() => {
   });
 });
 </script>
+
 <style scoped>
 .chat-page {
   height: 100vh;
