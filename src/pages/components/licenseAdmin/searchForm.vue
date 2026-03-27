@@ -80,12 +80,18 @@ import { BreakPoint } from "@/components/Grid/interface";
 import { Delete, Search, ArrowDown, ArrowUp } from "@element-plus/icons-vue";
 import Grid from "@/components/Grid/index.vue";
 import GridItem from "@/components/Grid/components/GridItem.vue";
+import { storeToRefs } from "pinia";
 import {
   getCompanyList,
   getPostList,
   getDeptList,
 } from "@/services/company.service";
 import { useI18n } from "vue-i18n";
+import { useUserStore } from "@/stores/modules/user";
+
+const userStore = useUserStore();
+const { userInfo } = storeToRefs(userStore);
+
 const { t } = useI18n();
 
 const searchCol = { xs: 1, sm: 2, md: 2, lg: 3, xl: 4 };
@@ -144,7 +150,7 @@ const queryPost = () => {
 queryPost();
 
 const columns = computed(() => {
-  return [
+  let searchOption = [
     {
       prop: "keyword",
       label: t("licenseAdmin.keyword"),
@@ -153,44 +159,57 @@ const columns = computed(() => {
         el: "input",
       },
     },
-    {
-      prop: "company_id",
-      label: t("licenseAdmin.company"),
-      placeholder: t("licenseAdmin.companyPlaceholder"),
-      enum: companyList.value,
-      change: () => {
-        queryDept();
-        postList.value = [];
-        searchParam.value.department_id = "";
-        searchParam.value.position_id = "";
-      },
-      search: {
-        el: "select",
-      },
-    },
-    {
-      prop: "department_id",
-      label: t("licenseAdmin.deptment"),
-      placeholder: t("licenseAdmin.deptmentPlaceholder"),
-      enum: deptList.value,
-      change: () => {
-        queryPost();
-        searchParam.value.position_id = "";
-      },
-      search: {
-        el: "select",
-      },
-    },
-    {
-      prop: "position_id",
-      label: t("licenseAdmin.position"),
-      placeholder: t("licenseAdmin.positionPlaceholder"),
-      enum: postList.value,
-      search: {
-        el: "select",
-      },
-    },
   ];
+  if (userInfo.value?.name === "superadmin") {
+    searchOption = [
+      {
+        prop: "keyword",
+        label: t("licenseAdmin.keyword"),
+        placeholder: t("licenseAdmin.keywordPlaceholder"),
+        search: {
+          el: "input",
+        },
+      },
+      {
+        prop: "company_id",
+        label: t("licenseAdmin.company"),
+        placeholder: t("licenseAdmin.companyPlaceholder"),
+        enum: companyList.value,
+        change: () => {
+          queryDept();
+          postList.value = [];
+          searchParam.value.department_id = "";
+          searchParam.value.position_id = "";
+        },
+        search: {
+          el: "select",
+        },
+      },
+      {
+        prop: "department_id",
+        label: t("licenseAdmin.deptment"),
+        placeholder: t("licenseAdmin.deptmentPlaceholder"),
+        enum: deptList.value,
+        change: () => {
+          queryPost();
+          searchParam.value.position_id = "";
+        },
+        search: {
+          el: "select",
+        },
+      },
+      {
+        prop: "position_id",
+        label: t("licenseAdmin.position"),
+        placeholder: t("licenseAdmin.positionPlaceholder"),
+        enum: postList.value,
+        search: {
+          el: "select",
+        },
+      },
+    ];
+  }
+  return searchOption;
 });
 
 // 获取响应式设置

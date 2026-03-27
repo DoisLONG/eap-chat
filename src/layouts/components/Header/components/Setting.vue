@@ -1,13 +1,9 @@
 <template>
-  <!-- <el-dropdown> -->
-  <div class="avatar">
-    <img src="@/assets/images/user.png" alt="avatar" />
-    <div class="avatar-info">
-      <div class="name">{{ userInfo.name }}</div>
-      <div class="role">{{ userInfo.role?.name }}</div>
+  <el-dropdown>
+    <div class="avatar">
+      <img :src="settingIcon" alt="avatar" />
     </div>
-  </div>
-  <!-- <template #dropdown>
+    <template #dropdown>
       <el-dropdown-menu>
         <el-dropdown-item @click="showPwdDrawer = true">
           <el-icon><Edit /></el-icon>{{ $t("header.changePassword") }}
@@ -17,7 +13,7 @@
         </el-dropdown-item>
       </el-dropdown-menu>
     </template>
-  </el-dropdown> -->
+  </el-dropdown>
   <UpdatePwd v-if="showPwdDrawer" @close="showPwdDrawer = false" />
 </template>
 
@@ -29,6 +25,7 @@ import { ElMessageBox, ElMessage } from "element-plus";
 import { useUserStore } from "@/stores/modules/user";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
+import settingIcon from "@/assets/images/setting.png";
 const { t } = useI18n();
 
 const router = useRouter();

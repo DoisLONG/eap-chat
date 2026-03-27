@@ -86,6 +86,9 @@
               {{ $t("layout.adminEnd") }}
             </div>
           </div>
+          <div class="user-setting">
+            <Setting />
+          </div>
         </div>
         <div
           v-show="activeDuan === 'admin'"
@@ -159,6 +162,7 @@ import { useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/modules/auth";
 import { useGlobalStore } from "@/stores/modules/global";
 import Main from "@/layouts/components/Main/index.vue";
+import Setting from "@/layouts/components/Header/components/Setting.vue";
 import { onMounted, onUnmounted, watch } from "vue";
 import ToolBarLeft from "@/layouts/components/Header/ToolBarLeft.vue";
 import ToolBarRight from "@/layouts/components/Header/ToolBarRight.vue";
@@ -258,12 +262,12 @@ watch(
 
 const setIframeUrl = () => {
   const token = localStorage.getItem("token");
-  const origin =
-    window.location.hostname === "localhost"
-      ? "http://14.103.176.8:5174"
-      : window.location.origin;
-  userUrl.value = `${origin}/eap/#/?token=${token}&lang=${language.value}`;
-  // userUrl.value = `http://localhost:8888/eap/#/?token=${token}&lang=${language.value}`;
+  // const origin =
+  //   window.location.hostname === "localhost"
+  //     ? "http://14.103.176.8:5174"
+  //     : window.location.origin;
+  // userUrl.value = `${origin}/eap/#/?token=${token}&lang=${language.value}`;
+  userUrl.value = `http://localhost:8888/eap/#/?token=${token}&lang=${language.value}`;
   // console.log("userUrl.value", userUrl.value);
 };
 // 监听窗口大小变化
@@ -337,6 +341,17 @@ onUnmounted(() => {
 
       padding-top: 32px;
       box-sizing: border-box;
+      position: relative;
+      .user-setting {
+        width: 80px;
+        height: 80px;
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
       .duan-item {
         display: flex;
         flex-direction: column;
