@@ -1,7 +1,7 @@
 <template>
   <div class="chat-page">
     <!-- Header -->
-    <header class="chat-header">
+    <header class="chat-header" :class="{ 'chat-header-mobile': isMobile }">
       <div class="left">
         <div class="brand">
           <img src="/logo1.png" class="logo" />
@@ -1049,7 +1049,7 @@ onUnmounted(() => {
 }
 
 .right {
-  gap: 10px;
+  gap: 5px;
 }
 
 .brand {
@@ -1084,6 +1084,15 @@ onUnmounted(() => {
   margin-top: 2px;
   font-size: 12px;
   color: #94a3b8;
+}
+.chat-header-mobile {
+  height: 62px !important;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  .title {
+    max-width: 80vw !important;
+  }
 }
 
 /* Layout */

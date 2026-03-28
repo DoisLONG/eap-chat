@@ -2,7 +2,7 @@
   <el-dialog
     v-model="drawerVisible"
     :title="$t('SopPicker.mixMode')"
-    width="350px"
+    :width="getWidth()"
     :close-on-click-modal="false"
     @close="emits('close')"
   >
@@ -90,6 +90,9 @@ const { t } = useI18n();
 
 const emits = defineEmits(["close", "confirm"]);
 
+const getWidth = () => {
+  return window.innerWidth > 390 ? "350px" : window.innerWidth - 40;
+};
 const rules = reactive({
   company_id: [
     { required: true, message: t("companyManagement.companyPlaceholder") },
@@ -205,14 +208,14 @@ const filterByCompany = (companyId: string | number) => {
 
   // 筛选该公司的部门
   filteredDeptList.value = deptList.value.filter(
-    (dept) => dept.company_id == companyId
+    (dept) => dept.company_id == companyId,
   );
 
   // 如果当前选中的部门不属于该公司，则清空部门和岗位选择
   if (
     operateInfo.value.department_id &&
     !filteredDeptList.value.some(
-      (dept) => dept.id == operateInfo.value.department_id
+      (dept) => dept.id == operateInfo.value.department_id,
     )
   ) {
     operateInfo.value.department_id = "";
@@ -234,14 +237,14 @@ const filterByDepartment = (deptId: string | number) => {
 
   // 筛选该部门的岗位
   filteredPostList.value = postList.value.filter(
-    (post) => post.dept_id == deptId
+    (post) => post.dept_id == deptId,
   );
 
   // 如果当前选中的岗位不属于该部门，则清空岗位选择
   if (
     operateInfo.value.position_id &&
     !filteredPostList.value.some(
-      (post) => post.id == operateInfo.value.position_id
+      (post) => post.id == operateInfo.value.position_id,
     )
   ) {
     operateInfo.value.position_id = "";
