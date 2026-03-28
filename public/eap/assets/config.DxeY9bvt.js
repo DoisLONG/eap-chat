@@ -1,1 +1,0 @@
-let a,s,t;a="/userapi",s="/mobileapi",t="/sop-api";const p="http://210.22.113.18:19080/ai/ai-learn-index.html",e="https://14.103.176.8:5174/chat/sop",i="https://14.103.176.8:5174/h5Preview";export{p as A,a as B,i as P,t as S,e as T,s as m};

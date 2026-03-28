@@ -9,7 +9,8 @@ export default {
     userEnd: "用户端",
     adminEnd: "管理端",
     welcomeTip: "发现你正在用户端浏览～",
-    switchTip: "如果需要管理系统数据、配置权限或发布培训任务等，可以点击「切换至管理端」，一键进入后台管理模式！",
+    switchTip:
+      "如果需要管理系统数据、配置权限或发布培训任务等，可以点击「切换至管理端」，一键进入后台管理模式！",
     iKnow: "我知道了",
   },
   tabs: {
@@ -259,6 +260,8 @@ export default {
     fromDoc: "来源文档",
     errorTip: "出错了，请稍后重试",
     testOver: "考试已结束",
+    playQuestion: "播放题目",
+    stopPlay: "停止播放",
   },
   materialLibrary: {
     add: "上传素材",

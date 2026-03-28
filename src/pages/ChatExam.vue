@@ -111,29 +111,30 @@
 
     <!-- Footer -->
     <footer class="chat-input">
-  <div class="composer-card">
-    <!-- 桌面端保持原样 -->
-    <template v-if="!isMobile">
-      <div class="voice-toolbar">
-        <el-button
-          size="small"
-          round
-          :loading="ttsLoading"
-          @click="playAssistantAudio"
-        >
-          播放当前题目/回复
-        </el-button>
+      <div class="composer-card">
+        <!-- 桌面端保持原样 -->
+        <template v-if="!isMobile">
+          <div class="voice-toolbar">
+            <el-button
+              size="small"
+              round
+              :loading="ttsLoading"
+              @click="playAssistantAudio"
+            >
+              <!-- 播放当前题目/回复 -->
+              {{ $t("ChatExam.playQuestion") }}
+            </el-button>
 
-        <el-button
-          size="small"
-          round
-          :disabled="!audioPlaying"
-          @click="stopAudio"
-        >
-          停止播报
-        </el-button>
+            <el-button
+              size="small"
+              round
+              :disabled="!audioPlaying"
+              @click="stopAudio"
+            >
+              {{ $t("ChatExam.stopPlay") }}
+            </el-button>
 
-        <!-- <el-button
+            <!-- <el-button
           size="small"
           round
           :type="recording ? 'danger' : 'primary'"
@@ -142,80 +143,94 @@
         >
           {{ recording ? "结束录音" : "开始说话" }}
         </el-button> -->
-      </div>
+          </div>
 
-      <div v-if="recognizedText" class="voice-result">
-        <span class="voice-result-label">识别结果：</span>
-        <span class="voice-result-text">{{ recognizedText }}</span>
-        <el-button size="small" link type="primary" @click="useRecognizedText">
-          重新填入
-        </el-button>
-      </div>
+          <div v-if="recognizedText" class="voice-result">
+            <span class="voice-result-label">识别结果：</span>
+            <span class="voice-result-text">{{ recognizedText }}</span>
+            <el-button
+              size="small"
+              link
+              type="primary"
+              @click="useRecognizedText"
+            >
+              重新填入
+            </el-button>
+          </div>
 
-      <div class="input-shell">
-        <el-input
-          v-model="input"
-          class="chat-textarea"
-          type="textarea"
-          :autosize="{ minRows: 1, maxRows: 5 }"
-          :placeholder="$t('ChatExam.tip')"
-          @keydown.enter.prevent="onEnter"
-          @keydown.shift.enter.stop
-        />
-        <el-button
-          class="send-btn"
-          type="primary"
-          round
-          :loading="sending"
-          :disabled="!input.trim()"
-          @click="send"
-        >
-          {{ messages.length <= 1 ? $t("ChatExam.begin") : $t("ChatExam.send") }}
-        </el-button>
-      </div>
-    </template>
+          <div class="input-shell">
+            <el-input
+              v-model="input"
+              class="chat-textarea"
+              type="textarea"
+              :autosize="{ minRows: 1, maxRows: 5 }"
+              :placeholder="$t('ChatExam.tip')"
+              @keydown.enter.prevent="onEnter"
+              @keydown.shift.enter.stop
+            />
+            <el-button
+              class="send-btn"
+              type="primary"
+              round
+              :loading="sending"
+              :disabled="!input.trim()"
+              @click="send"
+            >
+              {{
+                messages.length <= 1
+                  ? $t("ChatExam.begin")
+                  : $t("ChatExam.send")
+              }}
+            </el-button>
+          </div>
+        </template>
 
-    <!-- 移动端：文本模式 -->
-    <template v-else-if="mobileInputMode === 'text'">
-      <div class="mobile-tools">
-        <el-button
-          class="mobile-mini-btn"
-          round
-          :loading="ttsLoading"
-          @click="playAssistantAudio"
-        >
-          播放题目
-        </el-button>
+        <!-- 移动端：文本模式 -->
+        <template v-else-if="mobileInputMode === 'text'">
+          <div class="mobile-tools">
+            <el-button
+              class="mobile-mini-btn"
+              round
+              :loading="ttsLoading"
+              @click="playAssistantAudio"
+            >
+              {{ $t("ChatExam.playQuestion") }}
+            </el-button>
 
-        <el-button
-          class="mobile-mini-btn"
-          round
-          :disabled="!audioPlaying"
-          @click="stopAudio"
-        >
-          停止播放
-        </el-button>
-      </div>
+            <el-button
+              class="mobile-mini-btn"
+              round
+              :disabled="!audioPlaying"
+              @click="stopAudio"
+            >
+              {{ $t("ChatExam.stopPlay") }}
+            </el-button>
+          </div>
 
-      <div v-if="recognizedText" class="voice-result mobile-voice-result">
-        <span class="voice-result-label">识别结果：</span>
-        <span class="voice-result-text">{{ recognizedText }}</span>
-        <el-button size="small" link type="primary" @click="useRecognizedText">
-          重新填入
-        </el-button>
-      </div>
+          <div v-if="recognizedText" class="voice-result mobile-voice-result">
+            <span class="voice-result-label">识别结果：</span>
+            <span class="voice-result-text">{{ recognizedText }}</span>
+            <el-button
+              size="small"
+              link
+              type="primary"
+              @click="useRecognizedText"
+            >
+              重新填入
+            </el-button>
+          </div>
 
-      <div class="mobile-text-entry">
-        <el-input
-          v-model="input"
-          class="mobile-chat-input"
-          type="textarea"
-          :autosize="{ minRows: 1, maxRows: 4 }"
-          :placeholder="$t('ChatExam.tip')"
-          @keydown.enter.prevent="onEnter"
-          @keydown.shift.enter.stop
-        />
-        <button
+          <div class="mobile-text-entry">
+            <el-input
+              v-model="input"
+              class="mobile-chat-input"
+              type="textarea"
+              :autosize="{ minRows: 1, maxRows: 4 }"
+              :placeholder="$t('ChatExam.tip')"
+              @keydown.enter.prevent="onEnter"
+              @keydown.shift.enter.stop
+            />
+            <!-- <button
           class="mode-icon-btn"
           type="button"
           @click="switchToVoiceMode"
@@ -227,70 +242,74 @@
               d="M12 15a3 3 0 0 0 3-3V7a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a1 1 0 1 1 2 0a7 7 0 0 1-6 6.92V21h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-2.08A7 7 0 0 1 5 12a1 1 0 1 1 2 0a5 5 0 0 0 10 0z"
             />
           </svg>
-        </button>
-      </div>
+        </button> -->
+          </div>
 
-      <el-button
-        class="mobile-send-btn"
-        type="primary"
-        round
-        :loading="sending"
-        :disabled="!input.trim()"
-        @click="send"
-      >
-        {{ messages.length <= 1 ? $t("ChatExam.begin") : $t("ChatExam.send") }}
-      </el-button>
-    </template>
-
-    <!-- 移动端：语音模式 -->
-    <template v-else>
-      <div class="mobile-voice-hint">
-        {{
-          voicePressing
-            ? (voiceCanceled ? "松开取消发送" : "松开发送，上移取消")
-            : "点击下方区域并按住说话"
-        }}
-      </div>
-
-      <div class="mobile-voice-entry">
-        <div
-            class="hold-to-talk"
-            :class="{
-              pressing: voicePressing,
-              cancel: voiceCanceled,
-            }"
-            @touchstart.prevent="onHoldStart"
-            @touchmove.prevent="onHoldMove"
-            @touchend.prevent="onHoldEnd"
-            @touchcancel.prevent="onHoldEnd"
+          <el-button
+            class="mobile-send-btn"
+            type="primary"
+            round
+            :loading="sending"
+            :disabled="!input.trim()"
+            @click="send"
           >
-          <template v-if="voicePressing">
-            <div class="voice-bars">
-              <span v-for="n in 28" :key="n"></span>
-            </div>
-          </template>
-          <template v-else>
-            <span class="hold-label">按住说话</span>
-          </template>
-        </div>
+            {{
+              messages.length <= 1 ? $t("ChatExam.begin") : $t("ChatExam.send")
+            }}
+          </el-button>
+        </template>
 
-        <button
-          class="mode-icon-btn keyboard"
-          type="button"
-          @click="switchToTextMode"
-          aria-label="切换为键盘输入"
-        >
-          <svg viewBox="0 0 24 24" class="mode-icon">
-            <path
-              fill="currentColor"
-              d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm0 2v10h16V7H4zm2 2h2v2H6V9zm3 0h2v2H9V9zm3 0h2v2h-2V9zm3 0h2v2h-2V9zm-9 3h2v2H6v-2zm3 0h8v2H9v-2z"
-            />
-          </svg>
-        </button>
+        <!-- 移动端：语音模式 -->
+        <template v-else>
+          <div class="mobile-voice-hint">
+            {{
+              voicePressing
+                ? voiceCanceled
+                  ? "松开取消发送"
+                  : "松开发送，上移取消"
+                : "点击下方区域并按住说话"
+            }}
+          </div>
+
+          <div class="mobile-voice-entry">
+            <div
+              class="hold-to-talk"
+              :class="{
+                pressing: voicePressing,
+                cancel: voiceCanceled,
+              }"
+              @touchstart.prevent="onHoldStart"
+              @touchmove.prevent="onHoldMove"
+              @touchend.prevent="onHoldEnd"
+              @touchcancel.prevent="onHoldEnd"
+            >
+              <template v-if="voicePressing">
+                <div class="voice-bars">
+                  <span v-for="n in 28" :key="n"></span>
+                </div>
+              </template>
+              <template v-else>
+                <span class="hold-label">按住说话</span>
+              </template>
+            </div>
+
+            <button
+              class="mode-icon-btn keyboard"
+              type="button"
+              @click="switchToTextMode"
+              aria-label="切换为键盘输入"
+            >
+              <svg viewBox="0 0 24 24" class="mode-icon">
+                <path
+                  fill="currentColor"
+                  d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm0 2v10h16V7H4zm2 2h2v2H6V9zm3 0h2v2H9V9zm3 0h2v2h-2V9zm3 0h2v2h-2V9zm-9 3h2v2H6v-2zm3 0h8v2H9v-2z"
+                />
+              </svg>
+            </button>
+          </div>
+        </template>
       </div>
-    </template>
-  </div>
-</footer>
+    </footer>
 
     <el-drawer
       v-if="isMobile"
@@ -319,14 +338,7 @@
 </template>
 
 <script setup>
-import {
-  ref,
-  reactive,
-  onMounted,
-  nextTick,
-  onUnmounted,
-  computed,
-} from "vue";
+import { ref, reactive, onMounted, nextTick, onUnmounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { endExamSession } from "@/services/chat.service";
@@ -642,7 +654,9 @@ async function startRecord() {
 
         if (finalText) {
           recognizedText.value = finalText;
-          input.value = input.value ? `${input.value}\n${finalText}` : finalText;
+          input.value = input.value
+            ? `${input.value}\n${finalText}`
+            : finalText;
           ElMessage.success("识别成功，已填入输入框");
         } else {
           ElMessage.warning("未识别到有效内容");
@@ -1370,9 +1384,7 @@ onUnmounted(() => {
   }
 
   .chat-input {
-    padding:
-      6px
-      calc(8px + env(safe-area-inset-right))
+    padding: 6px calc(8px + env(safe-area-inset-right))
       calc(10px + env(safe-area-inset-bottom))
       calc(8px + env(safe-area-inset-left));
   }
@@ -1460,7 +1472,7 @@ onUnmounted(() => {
 
 .mobile-text-entry {
   display: grid;
-  grid-template-columns: 1fr 52px;
+  /* grid-template-columns: 1fr 52px; */
   gap: 10px;
   align-items: center;
 }
@@ -1662,9 +1674,7 @@ onUnmounted(() => {
   }
 
   .chat-input {
-    padding:
-      6px
-      calc(8px + env(safe-area-inset-right))
+    padding: 6px calc(8px + env(safe-area-inset-right))
       calc(10px + env(safe-area-inset-bottom))
       calc(8px + env(safe-area-inset-left));
   }

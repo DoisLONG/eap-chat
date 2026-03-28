@@ -210,6 +210,11 @@ const changeDuan = (val) => {
   if (isFirst.value && val === "admin") return;
   activeDuan.value = val;
   localStorage.setItem("activeDuan", val);
+  if (val === "user") {
+    nextTick(() => {
+      calculateH5Size();
+    });
+  }
 };
 
 const calculateH5Size = () => {
@@ -241,6 +246,7 @@ const calculateH5Size = () => {
   width = Math.max(291, Math.round(width));
   height = Math.max(518, Math.round(height));
 
+  console.warn("h5Size", width, height);
   h5Size.value = {
     width,
     height,

@@ -262,6 +262,8 @@ export default {
     fromDoc: "Source Document",
     errorTip: "Something went wrong, please try again later",
     testOver: "Exam ended",
+    playQuestion: "Play Question",
+    stopPlay: "Stop Play",
   },
   materialLibrary: {
     add: "Upload Material",

@@ -261,6 +261,8 @@ export default {
     fromDoc: "มาจากเอกสาร",
     errorTip: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้งในภายหลัง",
     testOver: "การสอบสิ้นสุดแล้ว",
+    playQuestion: "เล่นคำถาม",
+    stopPlay: "หยุดเล่น",
   },
   materialLibrary: {
     add: "อัปโหลดสื่อการเรียนรู้",
