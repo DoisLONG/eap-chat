@@ -230,19 +230,19 @@
               @keydown.enter.prevent="onEnter"
               @keydown.shift.enter.stop
             />
-            <!-- <button
-          class="mode-icon-btn"
-          type="button"
-          @click="switchToVoiceMode"
-          aria-label="切换为语音输入"
-        >
-          <svg viewBox="0 0 24 24" class="mode-icon">
-            <path
-              fill="currentColor"
-              d="M12 15a3 3 0 0 0 3-3V7a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a1 1 0 1 1 2 0a7 7 0 0 1-6 6.92V21h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-2.08A7 7 0 0 1 5 12a1 1 0 1 1 2 0a5 5 0 0 0 10 0z"
-            />
-          </svg>
-        </button> -->
+            <button
+              class="mode-icon-btn"
+              type="button"
+              @click="switchToVoiceMode"
+              aria-label="切换为语音输入"
+            >
+              <svg viewBox="0 0 24 24" class="mode-icon">
+                <path
+                  fill="currentColor"
+                  d="M12 15a3 3 0 0 0 3-3V7a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3zm5-3a1 1 0 1 1 2 0a7 7 0 0 1-6 6.92V21h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-2.08A7 7 0 0 1 5 12a1 1 0 1 1 2 0a5 5 0 0 0 10 0z"
+                />
+              </svg>
+            </button>
           </div>
 
           <el-button
@@ -1481,7 +1481,7 @@ onUnmounted(() => {
 
 .mobile-text-entry {
   display: grid;
-  /* grid-template-columns: 1fr 52px; */
+  grid-template-columns: 1fr 52px;
   gap: 10px;
   align-items: center;
 }
