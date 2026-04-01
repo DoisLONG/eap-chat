@@ -202,7 +202,7 @@ const deleteAccount = async (params) => {
     deleteMaterial,
     { id: params.material_id },
     t("materialLibrary.deleteTip", { name: params.title }),
-    t
+    t,
   );
 
   proTable.value?.getTableList();
@@ -218,7 +218,7 @@ const batchDelete = async (ids) => {
       type: "warning",
       confirmButtonText: t("common.confirm"),
       cancelButtonText: t("common.cancel"),
-    }
+    },
   )
     .then(async () => {
       await Promise.all(ids.map((id) => deleteMaterial({ id })));
@@ -236,15 +236,11 @@ const fileTitle = ref("");
 const operateOfficeVisible = ref(false);
 
 const checkPreView = async (row) => {
-  console.log("row", row);
   if (row.file_url) {
-    const res = await getOssSign({ oss_uri: row.file_url });
-    if (res.data.code === 0) {
-      fileSrc.value = res.data.data;
-      fileType.value = row.file_type;
-      fileTitle.value = row.title;
-      operateOfficeVisible.value = true;
-    }
+    fileSrc.value = `/mobileapi/${row.file_url}`;
+    fileType.value = row.file_type;
+    fileTitle.value = row.title;
+    operateOfficeVisible.value = true;
   }
 };
 

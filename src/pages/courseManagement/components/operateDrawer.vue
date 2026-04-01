@@ -884,24 +884,16 @@ const generateVideoCover = (videoUrl: string): Promise<string> => {
                 const coverFile = new File([blob], `cover_${Date.now()}.jpg`, {
                   type: "image/jpeg",
                 });
-
                 const formData = new FormData();
                 formData.append("file", coverFile);
-
                 const ossRes = await uploadOss(formData);
-
                 if (ossRes.data.code === 0) {
                   // 获取上传后的OSS URL用于预览
-                  const signRes = await getOssSign({
-                    oss_uri: ossRes.data.data,
-                  });
-                  if (signRes.data.code === 0) {
-                    resolve(signRes.data.data);
-                    // 同时存储OSS URI用于提交
-                    operateInfo.value.cover_oss_uri = ossRes.data.data;
-                  } else {
-                    reject(new Error("获取封面预览URL失败"));
-                  }
+                  const signRes = `/mobileapi/api/v1/files/access?uri=${encodeURIComponent(ossRes.data.data)}`;
+                  // console.log("signRes:", signRes);
+                  resolve(signRes);
+                  // 同时存储OSS URI用于提交
+                  operateInfo.value.cover_oss_uri = ossRes.data.data;
                 } else {
                   reject(new Error("封面上传失败"));
                 }
@@ -980,10 +972,10 @@ const getVideoDuration = (file: File): Promise<number> => {
 
 const getVideoPreviewUrl = async (ossUri: string) => {
   try {
-    const res = await getOssSign({ oss_uri: ossUri });
-    if (res.data.code === 0) {
-      videoPreviewUrl.value = res.data.data;
-    }
+    // const res = await getOssSign({ oss_uri: ossUri });
+    // if (res.data.code === 0) {
+    videoPreviewUrl.value = `/mobileapi/${ossUri}`;
+    // }
   } catch (error) {
     console.error("获取视频预览URL失败:", error);
   }
@@ -1043,26 +1035,19 @@ const handleFileUpload = async (file: File) => {
     if (ossRes.data.code == 0 && ossRes.data.data) {
       uploadedFileUrl.value = ossRes.data.data;
       // 解析oss文件地址
-      getOssSign({ oss_uri: ossRes.data.data }).then(async (oss) => {
-        console.log("oss", oss);
-
-        if (oss.data.code == 0) {
-          const canViewurl = oss.data.data;
-
-          // 自动生成视频封面并上传到OSS
-          coverGenerating.value = true;
-          try {
-            const coverPreviewUrl = await generateVideoCover(canViewurl);
-            coverUrl.value = coverPreviewUrl;
-            console.log("封面OSS URI:", operateInfo.value.cover_oss_uri);
-          } catch (error: any) {
-            console.error("生成视频封面失败:", error);
-            ElMessage.warning("视频封面生成失败: " + error.message);
-          } finally {
-            coverGenerating.value = false;
-          }
-        }
-      });
+      const canViewurl = `/mobileapi/api/v1/files/access?uri=${encodeURIComponent(ossRes.data.data)}`;
+      // 自动生成视频封面并上传到OSS
+      coverGenerating.value = true;
+      try {
+        const coverPreviewUrl = await generateVideoCover(canViewurl);
+        coverUrl.value = coverPreviewUrl;
+        console.log("封面OSS URI:", operateInfo.value.cover_oss_uri);
+      } catch (error: any) {
+        console.error("生成视频封面失败:", error);
+        ElMessage.warning("视频封面生成失败: " + error.message);
+      } finally {
+        coverGenerating.value = false;
+      }
     }
 
     // 2. 创建视频分析任务

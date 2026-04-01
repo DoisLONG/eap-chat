@@ -16,7 +16,7 @@ mobileApi.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // 响应拦截器 - 处理token过期等情况
@@ -34,7 +34,7 @@ mobileApi.interceptors.response.use(
       }, 500);
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 // 获取课程列表
@@ -89,7 +89,7 @@ export function uploadMaterial(formData) {
     // 上传进度回调
     onUploadProgress: (progressEvent) => {
       const percentCompleted = Math.round(
-        (progressEvent.loaded * 100) / progressEvent.total
+        (progressEvent.loaded * 100) / progressEvent.total,
       );
       console.log(`上传进度: ${percentCompleted}%`);
     },
@@ -134,7 +134,7 @@ export function uploadOss(formData, onUploadProgress) {
       onUploadProgress ||
       ((progressEvent) => {
         const percentCompleted = Math.round(
-          (progressEvent.loaded * 100) / progressEvent.total
+          (progressEvent.loaded * 100) / progressEvent.total,
         );
         console.log(`上传进度: ${percentCompleted}%`);
       }),
@@ -144,4 +144,9 @@ export function uploadOss(formData, onUploadProgress) {
 // 解析oss链接
 export function getOssSign(params) {
   return mobileApi.post("/api/v1/oss/sign", { ...params });
+}
+
+// 解析oss链接 获取文件流
+export function getOssFile(uri) {
+  return mobileApi.get("/api/v1/files/access", { params: { uri } });
 }
