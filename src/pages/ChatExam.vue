@@ -394,12 +394,14 @@ const audioPlaying = ref(false);
 const recognizedText = ref("");
 
 let pressStartY = 0;
+let pressStartTime = 0;
 let currentAudio = null;
 
 let mediaRecorder = null;
 let mediaStream = null;
 let audioChunks = [];
 let discardRecord = false;
+let holdTimer = null;
 
 function releaseAudio(audio) {
   if (audio?.__blobUrl) {
@@ -623,6 +625,7 @@ async function startRecord() {
     };
 
     mediaRecorder.onstart = () => {
+      if (isFastClick.value) return;
       recording.value = true;
     };
 
@@ -715,15 +718,21 @@ function switchToTextMode() {
   }
 }
 
+const isFastClick = ref(false);
 function onHoldStart(event) {
   if (recording.value || asrLoading.value) return;
 
   pressStartY = getPointerY(event);
+  pressStartTime = Date.now();
   voiceCanceled.value = false;
   discardRecord = false;
   voicePressing.value = true;
+  isFastClick.value = false;
 
-  startRecord();
+  // 设置长按定时器，只有按下超过500毫秒才开始录音
+  holdTimer = setTimeout(() => {
+    startRecord();
+  }, 500);
 }
 
 function onHoldMove(event) {
@@ -738,13 +747,32 @@ function onHoldMove(event) {
 function onHoldEnd() {
   if (!voicePressing.value) return;
 
+  // 清除长按定时器
+  if (holdTimer) {
+    clearTimeout(holdTimer);
+    holdTimer = null;
+  }
+
+  // 检查是否是快速点击（按下时间不足500毫秒）
+  const pressDuration = Date.now() - pressStartTime;
+  if (pressDuration < 500) {
+    isFastClick.value = true;
+    voicePressing.value = false;
+    voiceCanceled.value = false;
+    return;
+  }
+
   discardRecord = voiceCanceled.value;
   voicePressing.value = false;
+  voiceCanceled.value = false;
 
   if (recording.value) {
     stopRecord();
   } else {
-    voiceCanceled.value = false;
+    recording.value = false;
+    isFastClick.value = true;
+    // 即使录音还没开始，也要重置状态
+    cleanupRecorder();
   }
 }
 
@@ -1002,6 +1030,10 @@ onUnmounted(() => {
   if (recording.value) {
     discardRecord = true;
     stopRecord();
+  }
+  if (holdTimer) {
+    clearTimeout(holdTimer);
+    holdTimer = null;
   }
 
   cleanupRecorder();
