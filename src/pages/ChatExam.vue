@@ -1018,11 +1018,18 @@ onUnmounted(() => {
 <style scoped>
 :deep(.markdown-body h3),
 :deep(.markdown-body ul),
-:deep(.markdown-body p) {
+:deep(.markdown-body p),
+:deep(.markdown-body h2) {
   margin: 0 !important;
 }
 :deep(.markdown-body h3) {
-  line-height: 1.2;
+  line-height: 1.2 !important;
+}
+:deep(.markdown-body ul) {
+  padding: 0 20px !important;
+}
+:deep(.markdown-body) {
+  padding-bottom: 0 !important;
 }
 .chat-page {
   height: 100vh;
