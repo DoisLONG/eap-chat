@@ -282,6 +282,10 @@
               @touchmove.prevent="onHoldMove"
               @touchend.prevent="onHoldEnd"
               @touchcancel.prevent="onHoldEnd"
+              @mousedown.prevent="onHoldStart"
+              @mousemove.prevent="onHoldMove"
+              @mouseup.prevent="onHoldEnd"
+              @mouseleave.prevent="onHoldEnd"
             >
               <template v-if="voicePressing">
                 <div class="voice-bars">
