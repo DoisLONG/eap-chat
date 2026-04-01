@@ -578,6 +578,7 @@ function cleanupRecorder() {
 
   mediaRecorder = null;
   audioChunks = [];
+  recording.value = false;
 }
 
 async function startRecord() {
@@ -1015,6 +1016,14 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+:deep(.markdown-body h3),
+:deep(.markdown-body ul),
+:deep(.markdown-body p) {
+  margin: 0 !important;
+}
+:deep(.markdown-body h3) {
+  line-height: 1.2;
+}
 .chat-page {
   height: 100vh;
   display: grid;
@@ -1217,7 +1226,7 @@ onUnmounted(() => {
 
 .bubble {
   position: relative;
-  padding: 14px 16px;
+  padding: 14px 16px 0 14px;
   border-radius: 22px;
   line-height: 1.75;
   font-size: 15px;
