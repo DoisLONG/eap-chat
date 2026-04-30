@@ -131,9 +131,12 @@ const handleSubmit = () => {
             : undefined;
       const res = await api!(operateInfo.value);
       if (res.data.status !== 200) {
-        ElMessage.error({ message: res.data.msg || t("common.operateError") });
-        return;
-      }
+      ElMessage.error({
+        message: res.data.message || res.data.msg || t("common.operateError"),
+      });
+      return;
+    }
+
       emits("close");
       emits("refresh");
       ElMessage.success({
@@ -143,8 +146,15 @@ const handleSubmit = () => {
             : "companyManagement.editSuccess",
         ),
       });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      ElMessage.error({
+        message:
+          error?.response?.data?.message ||
+          error?.response?.data?.msg ||
+          error?.message ||
+          t("common.operateError"),
+      });
     }
   });
 };
