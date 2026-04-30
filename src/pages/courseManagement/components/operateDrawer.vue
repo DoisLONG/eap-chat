@@ -358,52 +358,81 @@
                     v-if="row.editing"
                     v-model="row.keyword"
                     size="small"
+                    class="keyword-editor"
                     @blur="saveKeyword(row, $index)"
                     @keyup.enter="saveKeyword(row, $index)"
                   />
-                  <span v-else @dblclick="editKeyword(row)">{{
-                    row.keyword
-                  }}</span>
+                  <span v-else @dblclick="editKeyword(row)">
+                    {{ row.keyword }}
+                  </span>
+
+
                 </template>
               </el-table-column>
               <el-table-column
                 prop="start"
                 :label="$t('common.startTime')"
                 min-width="100"
+                align="center"
               >
                 <template #default="{ row, $index }">
-                  <el-input
-                    v-if="row.editing"
-                    v-model="row.start"
-                    size="small"
-                    placeholder="00:00"
-                    maxlength="5"
-                    @blur="saveKeyword(row, $index)"
-                    @keyup.enter="saveKeyword(row, $index)"
-                    @input="validateTimeInput($event, row, 'start')"
-                  />
-                  <span v-else @dblclick="editKeyword(row)">{{
-                    row.start
-                  }}</span>
+                  <div v-if="row.editing" class="time-editor">
+                    <el-input
+                      v-model="row._startMinute"
+                      maxlength="2"
+                      size="small"
+                      class="time-editor__part time-editor__part--minute"
+                      @input="normalizeTimeDraft(row, '_startMinute')"
+                      @blur="padTimeDraft(row, '_startMinute')"
+                      @keyup.enter="saveKeyword(row, $index)"
+                    />
+                    <span class="time-editor__colon">:</span>
+                    <el-input
+                      v-model="row._startSecond"
+                      maxlength="2"
+                      size="small"
+                      class="time-editor__part time-editor__part--second"
+                      @input="normalizeTimeDraft(row, '_startSecond')"
+                      @blur="padTimeDraft(row, '_startSecond')"
+                      @keyup.enter="saveKeyword(row, $index)"
+                    />
+                  </div>
+                  <span v-else class="time-text" @dblclick="editKeyword(row)">
+                    {{ row.start }}
+                  </span>
                 </template>
               </el-table-column>
               <el-table-column
                 prop="end"
                 :label="$t('common.endTime')"
                 min-width="100"
+                align="center"
               >
                 <template #default="{ row, $index }">
-                  <el-input
-                    v-if="row.editing"
-                    v-model="row.end"
-                    size="small"
-                    placeholder="00:00"
-                    maxlength="5"
-                    @blur="saveKeyword(row, $index)"
-                    @keyup.enter="saveKeyword(row, $index)"
-                    @input="validateTimeInput($event, row, 'end')"
-                  />
-                  <span v-else @dblclick="editKeyword(row)">{{ row.end }}</span>
+                  <div v-if="row.editing" class="time-editor">
+                    <el-input
+                      v-model="row._endMinute"
+                      maxlength="2"
+                      size="small"
+                      class="time-editor__part time-editor__part--minute"
+                      @input="normalizeTimeDraft(row, '_endMinute')"
+                      @blur="padTimeDraft(row, '_endMinute')"
+                      @keyup.enter="saveKeyword(row, $index)"
+                    />
+                    <span class="time-editor__colon">:</span>
+                    <el-input
+                      v-model="row._endSecond"
+                      maxlength="2"
+                      size="small"
+                      class="time-editor__part time-editor__part--second"
+                      @input="normalizeTimeDraft(row, '_endSecond')"
+                      @blur="padTimeDraft(row, '_endSecond')"
+                      @keyup.enter="saveKeyword(row, $index)"
+                    />
+                  </div>
+                  <span v-else class="time-text" @dblclick="editKeyword(row)">
+                    {{ row.end }}
+                  </span>
                 </template>
               </el-table-column>
               <el-table-column :label="$t('common.operate')" width="100">
@@ -807,11 +836,16 @@ const addKeyword = () => {
     keyword: "",
     start: "00:00",
     end: "00:00",
+    _startMinute: "00",
+    _startSecond: "00",
+    _endMinute: "00",
+    _endSecond: "00",
     editing: true,
   });
 };
 
 const editKeyword = (row: any) => {
+  initTimeDraft(row);
   row.editing = true;
 };
 
@@ -820,6 +854,8 @@ const saveKeyword = (row: any, index: number) => {
     ElMessage.warning(t("course.keywordRequired"));
     return;
   }
+
+  commitTimeDraft(row);
 
   // 验证开始时间格式
   if (row.start && !validateTimeFormat(row.start)) {
@@ -921,21 +957,62 @@ const generateVideoCover = (videoUrl: string): Promise<string> => {
   });
 };
 
-const validateTimeInput = (value: string, row: any, field: string) => {
-  // 只允许数字和冒号
-  const cleanValue = value.replace(/[^\d:]/g, "");
+type TimeDraftField =
+  | "_startMinute"
+  | "_startSecond"
+  | "_endMinute"
+  | "_endSecond";
 
-  if (cleanValue.length === 2 && !cleanValue.includes(":")) {
-    row[field] = cleanValue + ":";
-  } else if (cleanValue.length <= 5) {
-    row[field] = cleanValue;
-  }
-
-  // if (cleanValue.length === 5) {
-  //   if (!validateTimeFormat(cleanValue)) {
-  //   }
-  // }
+const clampTimePart = (value: unknown, max: number): number => {
+  const numericValue = Number(value ?? 0);
+  if (Number.isNaN(numericValue)) return 0;
+  return Math.min(Math.max(Math.trunc(numericValue), 0), max);
 };
+
+const splitTimeParts = (timeStr: string) => {
+  const [minute = "0", second = "0"] = String(timeStr || "00:00").split(":");
+  return {
+    minute: clampTimePart(minute, 59),
+    second: clampTimePart(second, 59),
+  };
+};
+
+const formatTimeParts = (minute: number, second: number): string => {
+  return `${minute.toString().padStart(2, "0")}:${second
+    .toString()
+    .padStart(2, "0")}`;
+};
+
+const initTimeDraft = (row: any) => {
+  const start = splitTimeParts(row.start);
+  const end = splitTimeParts(row.end);
+
+  row._startMinute = start.minute.toString().padStart(2, "0");
+  row._startSecond = start.second.toString().padStart(2, "0");
+  row._endMinute = end.minute.toString().padStart(2, "0");
+  row._endSecond = end.second.toString().padStart(2, "0");
+};
+
+const normalizeTimeDraft = (row: any, field: TimeDraftField) => {
+  row[field] = String(row[field] ?? "").replace(/\D/g, "").slice(0, 2);
+};
+
+const padTimeDraft = (row: any, field: TimeDraftField) => {
+  normalizeTimeDraft(row, field);
+  row[field] = String(clampTimePart(row[field], 59)).padStart(2, "0");
+};
+
+const commitTimeDraft = (row: any) => {
+  row.start = formatTimeParts(
+    clampTimePart(row._startMinute, 59),
+    clampTimePart(row._startSecond, 59),
+  );
+  row.end = formatTimeParts(
+    clampTimePart(row._endMinute, 59),
+    clampTimePart(row._endSecond, 59),
+  );
+};
+
 
 // 视频加载完成事件
 const onVideoLoaded = (event: Event) => {
@@ -1389,6 +1466,29 @@ onMounted(() => {
 }
 </style> -->
 <style scoped lang="scss">
+.keyword-editor {
+  width: 180px;
+}
+
+:deep(.el-table .keyword-editor .el-input__wrapper) {
+  padding: 0 8px;
+  background-color: #fff !important;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px #dcdfe6 inset !important;
+}
+
+:deep(.el-table .keyword-editor .el-input__wrapper:hover),
+:deep(.el-table .keyword-editor .el-input__wrapper.is-focus) {
+  background-color: #fff !important;
+  box-shadow: 0 0 0 1px #409eff inset !important;
+}
+
+:deep(.el-table .keyword-editor .el-input__inner) {
+  height: 26px;
+  line-height: 26px;
+  color: #606266;
+  font-size: inherit;
+}
 .upload-container {
   width: 100%;
 }
@@ -1738,6 +1838,57 @@ onMounted(() => {
 :deep(.el-table .el-input) {
   --el-input-border-color: transparent;
   --el-input-focus-border-color: #409eff;
+  font-size: inherit;
+  color: #606266;
+}
+
+:deep(.el-table .el-input__inner) {
+  font-size: inherit;
+  color: inherit;
+}
+
+.time-editor {
+  display: inline-grid;
+  grid-template-columns: 32px 12px 32px;
+  align-items: center;
+  justify-content: center;
+  width: 86px;
+  margin: 0 auto;
+  color: #606266;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.time-editor__part {
+  width: 32px;
+}
+
+.time-editor__colon {
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-align: center;
+}
+
+.time-text {
+  display: inline-block;
+  width: 5ch;
+  margin: 0 auto;
+  color: #606266;
+  font-variant-numeric: tabular-nums;
+}
+
+
+:deep(.time-editor__part .el-input__inner) {
+  height: 26px;
+  line-height: 26px;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 :deep(.el-table .el-input__wrapper) {
@@ -1749,6 +1900,23 @@ onMounted(() => {
     background-color: #fff;
     box-shadow: 0 0 0 1px #409eff inset;
   }
+}
+
+:deep(.time-editor__part .el-input__wrapper),
+:deep(.time-editor__part .el-input__wrapper:hover),
+:deep(.time-editor__part .el-input__wrapper.is-focus) {
+  padding: 0 2px;
+  background-color: #fff;
+  border-radius: 6px;
+}
+
+:deep(.time-editor__part .el-input__wrapper) {
+  box-shadow: 0 0 0 1px #dcdfe6 inset;
+}
+
+:deep(.time-editor__part .el-input__wrapper:hover),
+:deep(.time-editor__part .el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #409eff inset;
 }
 
 // 操作按钮样式
