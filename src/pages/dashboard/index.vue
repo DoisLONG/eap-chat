@@ -17,9 +17,9 @@
             v-if="isHeatmapShow"
             :areasize="heatmapAreaSize"
           />
-          <div class="area-card">
+          <!-- <div class="area-card">
             <deptCompletionRate />
-          </div>
+          </div> -->
           <div class="area-card">
             <gradesRank />
           </div>

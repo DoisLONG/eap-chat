@@ -3,60 +3,68 @@
     v-model="drawerVisible"
     :destroy-on-close="true"
     size="450px"
-    title="修改密码"
+    :title="$t('header.changePassword')"
     @close="emits('close')"
   >
     <el-form
       ref="ruleFormRef"
-      label-width="100px"
+      :label-width="language === 'zh' ? '120px' : '170px'"
       label-suffix=" :"
       :rules="rules"
       :model="userInfo"
     >
-      <el-form-item label="旧密码" prop="old_password">
+      <el-form-item :label="$t('updatePwd.oldPassword')" prop="old_password">
         <el-input
           v-model="userInfo!.old_password"
-          placeholder="请填写旧密码"
+          :placeholder="$t('updatePwd.oldPasswordPlaceholder')"
           clearable
           type="password"
         ></el-input>
       </el-form-item>
-      <el-form-item label="新密码" prop="new_password">
+      <el-form-item :label="$t('updatePwd.newPassword')" prop="new_password">
         <el-input
           v-model="userInfo!.new_password"
-          placeholder="请填写新密码"
+          :placeholder="$t('updatePwd.newPasswordPlaceholder')"
           clearable
           type="password"
         ></el-input>
       </el-form-item>
-      <el-form-item label="确认新密码" prop="confirmpassword">
+      <el-form-item
+        :label="$t('updatePwd.confirmPassword')"
+        prop="confirmpassword"
+      >
         <el-input
           v-model="userInfo!.confirmpassword"
-          placeholder="请确认新密码"
+          :placeholder="$t('updatePwd.confirmPasswordPlaceholder')"
           clearable
           type="password"
         ></el-input>
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="emits('close')">取消</el-button>
-      <el-button type="primary" @click="handleSubmit">确定</el-button>
+      <el-button @click="emits('close')">{{ $t("common.cancel") }}</el-button>
+      <el-button type="primary" @click="handleSubmit">{{
+        $t("common.confirm")
+      }}</el-button>
     </template>
   </el-drawer>
 </template>
 
 <script setup lang="ts" name="UserDrawer">
-import { ref, reactive } from "vue";
+import { ref, reactive, computed } from "vue";
 import { ElMessage, FormInstance } from "element-plus";
-
+import { $t } from "@/languages";
+import { useGlobalStore } from "@/stores/modules/global";
 import { changePwd } from "@/services/user.service";
 
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
 const emits = defineEmits(["close", "refresh"]);
 const rules = reactive({
   old_password: [
     {
       required: true,
-      message: "请输入至少8位密码",
+      message: $t("userManagement.pwd"),
       min: 8,
       trigger: "blur",
     },
@@ -64,7 +72,7 @@ const rules = reactive({
   new_password: [
     {
       required: true,
-      message: "请输入至少8位密码",
+      message: $t("userManagement.pwd"),
       min: 8,
       trigger: "blur",
     },
@@ -72,7 +80,7 @@ const rules = reactive({
   confirmpassword: [
     {
       required: true,
-      message: "请输入至少8位密码",
+      message: $t("userManagement.pwd"),
       min: 8,
       trigger: "blur",
     },
@@ -92,17 +100,17 @@ const handleSubmit = () => {
   ruleFormRef.value!.validate(async (valid) => {
     if (!valid) return;
     if (userInfo.value.new_password !== userInfo.value.confirmpassword) {
-      ElMessage.error({ message: "两次输入的密码不一致！" });
+      ElMessage.error({ message: $t("userManagement.pwdError") });
       return;
     }
     try {
       const res = await changePwd!(userInfo.value);
       if (res.data.status !== 200) {
-        ElMessage.error({ message: res.data.message || "操作失败！" });
+        ElMessage.error({ message: res.data.message || $t("updatePwd.fail") });
         return;
       }
       emits("close");
-      ElMessage.success({ message: `重设密码成功！` });
+      ElMessage.success({ message: $t("updatePwd.success") });
     } catch (error) {
       console.log(error);
     }

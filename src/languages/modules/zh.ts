@@ -1,6 +1,16 @@
 export default {
   填空题: "填空题",
   问答题: "问答题",
+  updatePwd: {
+    oldPassword: "旧密码",
+    newPassword: "新密码",
+    confirmPassword: "确认新密码",
+    oldPasswordPlaceholder: "请填写旧密码",
+    newPasswordPlaceholder: "请填写新密码",
+    confirmPasswordPlaceholder: "请确认新密码",
+    success: "重设密码成功！",
+    fail: "操作失败！",
+  },
   guide: {
     start: {
       imageAlt: "引导图片",
@@ -30,8 +40,10 @@ export default {
       uploadTitle: "上传资料",
       desc1: "· 填必填项：输入带 * 的「课程名称」「所属类别」",
       desc2: "· 补充信息：按需填写课程描述、标签，以及公司 / 部门 / 岗位范围。",
-      desc3: "· 上传视频：点击上传区上传课程视频（支持 MP4/MOV 格式，大小不超 2GB）。",
-      desc4: "· 添加章节：视频解析后系统分段字幕，也可点击右侧编辑「+ 添加章节」。",
+      desc3:
+        "· 上传视频：点击上传区上传课程视频（支持 MP4/MOV 格式，大小不超 2GB）。",
+      desc4:
+        "· 添加章节：视频解析后系统分段字幕，也可点击右侧编辑「+ 添加章节」。",
       desc5: "· 完成创建：确认信息无误后，点击右下角「创建课程」即可✅",
       altStep1: "学习管理引导图",
       altStep2: "新增课程引导图",
@@ -47,7 +59,8 @@ export default {
       desc1: "· 上传类型：选择对应的业务分类（如生产、服务）；",
       desc2: "· 解析模式：四种解析模式，根据类型和需求完整提取文件内容；",
       desc3: "· 选择文件：拖拽或点击上传 .xlsx/.xls 格式文件；",
-      desc4: "· 公司 / 部门 / 岗位：指定文档适用范围，确保权限可控。填写完成后点「开始导入」，系统自动生成规程。",
+      desc4:
+        "· 公司 / 部门 / 岗位：指定文档适用范围，确保权限可控。填写完成后点「开始导入」，系统自动生成规程。",
       altStep1: "练习管理引导图",
       altStep2: "导入文档引导图",
       altStep3: "上传资料引导图",
@@ -59,7 +72,8 @@ export default {
       aiParseDesc: "上传您的企业标准作业规程文档，AI解析并自动生成题库。",
       questionTitle: "📝 生成关联试题",
       questionTitleSub: "（支持人工编辑）",
-      questionDesc: "一键生成配套考核试题，同时支持人工复核与二次编辑，灵活调整考题内容。还可一键同步至知识库，帮您打通「落地 - 培训考核 - 知识沉淀」全流程，高效完成标准化作业的考核与复用。",
+      questionDesc:
+        "一键生成配套考核试题，同时支持人工复核与二次编辑，灵活调整考题内容。还可一键同步至知识库，帮您打通「落地 - 培训考核 - 知识沉淀」全流程，高效完成标准化作业的考核与复用。",
       altStep1: "AI智能解析引导图",
       altStep1Extra: "AI智能解析进度引导图",
       altStep2: "关联试题生成引导图",
@@ -333,6 +347,7 @@ export default {
     testOver: "考试已结束",
     playQuestion: "播放题目",
     stopPlay: "停止播放",
+    history: "历史",
   },
   materialLibrary: {
     add: "上传素材",

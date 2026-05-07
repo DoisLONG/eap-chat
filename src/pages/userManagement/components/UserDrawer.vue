@@ -2,13 +2,13 @@
   <el-drawer
     v-model="drawerVisible"
     :destroy-on-close="true"
-    size="450px"
+    size="500px"
     :title="title"
     @close="emits('close')"
   >
     <el-form
       ref="ruleFormRef"
-      :label-width="language === 'zh' ? '100px' : '140px'"
+      :label-width="language === 'zh' ? '100px' : '160px'"
       label-suffix=" :"
       :rules="rules"
       :disabled="drawerProps.isView"

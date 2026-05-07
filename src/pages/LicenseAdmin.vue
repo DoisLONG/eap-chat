@@ -108,6 +108,7 @@
           <el-form-item
             style="width: 50%"
             :label="$t('licenseAdmin.uploadType')"
+            :label-width="language === 'th' ? '160px' : '110px'"
             prop="file_type"
           >
             <el-select
@@ -126,6 +127,7 @@
           <el-form-item
             style="width: 50%"
             :label="$t('licenseAdmin.analysisMode')"
+            :label-width="language === 'zh' ? '110px' : '160px'"
             prop="strategy"
           >
             <el-select
@@ -188,6 +190,7 @@
             style="width: 50%"
             :label="$t('licenseAdmin.deptment')"
             prop="department_id"
+            :label-width="language === 'en' ? '160px' : '110px'"
           >
             <el-select
               v-model="importDlg!.department_id"
@@ -223,6 +226,7 @@
             style="width: 50%"
             :label="$t('common.publishTime')"
             prop="start_time"
+            :label-width="language === 'en' ? '160px' : '110px'"
           >
             <el-date-picker
               style="width: 100%"
@@ -305,6 +309,11 @@ import {
 import { useUserStore } from "@/stores/modules/user";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
+import { useGlobalStore } from "@/stores/modules/global";
+
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
+
 const { t } = useI18n();
 
 const userStore = useUserStore();
@@ -643,12 +652,14 @@ const rules = reactive({
 });
 
 // sop文件（excel、pdf），操作规程（word、pdf）、应急演练（word、pdf），风险识别卡（excel）
-const uploadTypeList = [
-  { label: t("licenseAdmin.sopFile"), value: "sop" },
-  { label: t("licenseAdmin.operation"), value: "operation" },
-  { label: t("licenseAdmin.emergency"), value: "emergency_drill" },
-  { label: t("licenseAdmin.risk"), value: "risk" },
-];
+const uploadTypeList = computed(() => {
+  return [
+    { label: t("licenseAdmin.sopFile"), value: "sop" },
+    { label: t("licenseAdmin.operation"), value: "operation" },
+    { label: t("licenseAdmin.emergency"), value: "emergency_drill" },
+    { label: t("licenseAdmin.risk"), value: "risk" },
+  ];
+});
 // 公司部门岗位
 const companyList = ref<{ label: string; value: string }[]>([]);
 const deptList = ref<{ label: string; value: string }[]>([]);

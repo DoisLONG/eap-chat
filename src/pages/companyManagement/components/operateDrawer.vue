@@ -2,13 +2,13 @@
   <el-drawer
     v-model="drawerVisible"
     :destroy-on-close="true"
-    size="450px"
+    size="500px"
     :title="title"
     @close="emits('close')"
   >
     <el-form
       ref="ruleFormRef"
-      :label-width="language === 'zh' ? '100px' : '140px'"
+      :label-width="language === 'zh' ? '100px' : '160px'"
       label-suffix=" :"
       :rules="rules"
       :disabled="drawerProps.isView"
@@ -131,11 +131,11 @@ const handleSubmit = () => {
             : undefined;
       const res = await api!(operateInfo.value);
       if (res.data.status !== 200) {
-      ElMessage.error({
-        message: res.data.message || res.data.msg || t("common.operateError"),
-      });
-      return;
-    }
+        ElMessage.error({
+          message: res.data.message || res.data.msg || t("common.operateError"),
+        });
+        return;
+      }
 
       emits("close");
       emits("refresh");

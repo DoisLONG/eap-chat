@@ -1,14 +1,26 @@
 export default {
   填空题: "Fill in the Blank",
   问答题: "QA",
+  updatePwd: {
+    oldPassword: "Old Password",
+    newPassword: "New Password",
+    confirmPassword: "Confirm Password",
+    oldPasswordPlaceholder: "Please enter old password",
+    newPasswordPlaceholder: "Please enter new password",
+    confirmPasswordPlaceholder: "Please confirm new password",
+    success: "Password reset successful!",
+    fail: "Operation failed!",
+  },
   guide: {
     start: {
       imageAlt: "Guide image",
       skip: "Skip Guide",
       welcome: "Welcome👏👏👏",
       systemTitle: "BlueDot Intelligent Practice System",
-      descPrefix: "This is your enterprise procedure management workspace. It supports ",
-      descHighlight: "permission settings, document import, filtering, editing, and question review",
+      descPrefix:
+        "This is your enterprise procedure management workspace. It supports ",
+      descHighlight:
+        "permission settings, document import, filtering, editing, and question review",
       descSuffix: " across the full lifecycle.",
       quickStart: "Let's quickly get familiar with the core features.",
       startLearning: "Start Learning",
@@ -25,14 +37,19 @@ export default {
       finish: "Finish",
     },
     step1: {
-      sidebarClickStudyManagement: "Step 1: Click Study Management in the sidebar",
+      sidebarClickStudyManagement:
+        "Step 1: Click Study Management in the sidebar",
       clickCreateCourse: "Step 2: Click Create Course",
       uploadTitle: "Upload Materials",
       desc1: "· Required fields: enter the required Course Name and Category.",
-      desc2: "· Additional information: fill in the course description, tags, and company / department / position scope as needed.",
-      desc3: "· Upload video: click the upload area to upload a course video. MP4/MOV formats are supported, up to 2GB.",
-      desc4: "· Add chapters: after video parsing, the system generates segmented subtitles. You can also click '+ Add Chapter' on the right.",
-      desc5: "· Complete creation: after confirming the information, click 'Create Course' in the lower-right corner.",
+      desc2:
+        "· Additional information: fill in the course description, tags, and company / department / position scope as needed.",
+      desc3:
+        "· Upload video: click the upload area to upload a course video. MP4/MOV formats are supported, up to 2GB.",
+      desc4:
+        "· Add chapters: after video parsing, the system generates segmented subtitles. You can also click '+ Add Chapter' on the right.",
+      desc5:
+        "· Complete creation: after confirming the information, click 'Create Course' in the lower-right corner.",
       altStep1: "Study management guide image",
       altStep2: "Create course guide image",
       altStep3: "Course basic information guide image",
@@ -41,13 +58,18 @@ export default {
       altLine: "Guide connection line",
     },
     step2: {
-      sidebarClickPracticeManagement: "Step 1: Click Practice Management in the sidebar",
+      sidebarClickPracticeManagement:
+        "Step 1: Click Practice Management in the sidebar",
       clickImportDocument: "Step 2: Click Import Document",
       uploadTitle: "💾 Upload Materials",
-      desc1: "· Upload type: select the corresponding business category, such as production or service.",
-      desc2: "· Parsing mode: choose from four parsing modes to extract file content based on the scenario.",
-      desc3: "· Select file: drag and drop or click to upload .xlsx/.xls files.",
-      desc4: "· Company / Department / Position: define the applicable scope of the document to keep permissions under control. After filling in the information, click 'Start Import' and the system will generate the procedure automatically.",
+      desc1:
+        "· Upload type: select the corresponding business category, such as production or service.",
+      desc2:
+        "· Parsing mode: choose from four parsing modes to extract file content based on the scenario.",
+      desc3:
+        "· Select file: drag and drop or click to upload .xlsx/.xls files.",
+      desc4:
+        "· Company / Department / Position: define the applicable scope of the document to keep permissions under control. After filling in the information, click 'Start Import' and the system will generate the procedure automatically.",
       altStep1: "Practice management guide image",
       altStep2: "Import document guide image",
       altStep3: "Upload materials guide image",
@@ -56,10 +78,12 @@ export default {
     },
     step3: {
       aiParseTitle: "🤖 AI Intelligent Parsing",
-      aiParseDesc: "Upload your enterprise SOP documents. AI will parse them and automatically generate a question bank.",
+      aiParseDesc:
+        "Upload your enterprise SOP documents. AI will parse them and automatically generate a question bank.",
       questionTitle: "📝 Generate Related Questions",
       questionTitleSub: "(Manual editing supported)",
-      questionDesc: "Generate assessment questions with one click, while also supporting manual review and secondary editing. You can also sync them to the knowledge base with one click, connecting implementation, training assessment, and knowledge accumulation into a full workflow.",
+      questionDesc:
+        "Generate assessment questions with one click, while also supporting manual review and secondary editing. You can also sync them to the knowledge base with one click, connecting implementation, training assessment, and knowledge accumulation into a full workflow.",
       altStep1: "AI intelligent parsing guide image",
       altStep1Extra: "AI intelligent parsing progress guide image",
       altStep2: "Related question generation guide image",
@@ -67,7 +91,8 @@ export default {
     },
     step4: {
       parseTitle: "System Parses Materials",
-      parseDesc: "AI parses SOP documents and automatically generates question banks and exam tasks.",
+      parseDesc:
+        "AI parses SOP documents and automatically generates question banks and exam tasks.",
       altStep1: "System material parsing guide image",
       altStep1Extra: "System parsing progress guide image",
     },
@@ -335,6 +360,7 @@ export default {
     testOver: "Exam ended",
     playQuestion: "Play Question",
     stopPlay: "Stop Play",
+    history: "History",
   },
   materialLibrary: {
     add: "Upload Material",

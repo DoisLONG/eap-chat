@@ -8,8 +8,7 @@
   >
     <el-form
       ref="ruleFormRef"
-      label-width="70px"
-      label-suffix=" :"
+      :label-width="language === 'en' ? '90px' : '70px'"
       :rules="rules"
       :model="operateInfo"
     >
@@ -77,12 +76,16 @@
 </template>
 
 <script setup lang="ts" name="UserDrawer">
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import { FormInstance } from "element-plus";
 import { getCascaderList } from "@/services/sop.api";
 import { useUserStore } from "@/stores/modules/user";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
+import { useGlobalStore } from "@/stores/modules/global";
+
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
 
 const userStore = useUserStore();
 const { userInfo } = storeToRefs(userStore);

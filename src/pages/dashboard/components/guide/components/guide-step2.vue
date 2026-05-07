@@ -228,7 +228,7 @@ const prevStep = () => {
     }
     .step2-text {
       position: absolute;
-      top: -58px;
+      top: -101px;
       left: 121px;
       font-size: 18px;
       color: #01021d;

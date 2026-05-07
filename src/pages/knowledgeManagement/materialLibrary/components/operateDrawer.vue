@@ -8,7 +8,7 @@
   >
     <el-form
       ref="ruleFormRef"
-      :label-width="language === 'zh' ? '120px' : '140px'"
+      :label-width="language === 'zh' ? '120px' : '170px'"
       label-suffix=" :"
       :rules="rules"
       :disabled="drawerProps.isView"
@@ -19,7 +19,7 @@
       <el-form-item :label="$t('materialLibrary.name')" prop="title">
         <el-input
           v-model="operateInfo.title"
-          :placeholder="$t('common.pleaseInput') + $t('materialLibrary.name')"
+          :placeholder="$t('materialLibrary.searchKeyword')"
           clearable
         />
       </el-form-item>
@@ -235,7 +235,7 @@ const rules = computed(() => ({
   title: [
     {
       required: true,
-      message: t("common.pleaseInput") + t("materialLibrary.name"),
+      message: t("materialLibrary.searchKeyword"),
       trigger: "blur",
     },
   ],
@@ -320,12 +320,14 @@ const handleClearCourse = () => {
 };
 
 // 素材分类选项
-const categoryOptions = ref([
-  { label: "安全培训", value: "安全培训" },
-  { label: "技能提升", value: "技能提升" },
-  { label: "入职培训", value: "入职培训" },
-  { label: "产品培训", value: "产品培训" },
-]);
+const categoryOptions = computed(() => {
+  return [
+    { label: t("course.safetyTraining"), value: "安全培训" },
+    { label: t("course.skillImprovement"), value: "技能提升" },
+    { label: t("course.onboardingTraining"), value: "入职培训" },
+    { label: t("course.productTraining"), value: "产品培训" },
+  ];
+});
 
 // 公司变更处理
 const changeCompany = () => {

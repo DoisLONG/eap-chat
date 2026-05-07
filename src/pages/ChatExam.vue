@@ -31,7 +31,7 @@
           round
           @click="showHistory = !showHistory"
         >
-          历史
+          {{ $t("ChatExam.history") }}
         </el-button>
 
         <el-button

@@ -13,7 +13,10 @@
           v-bind="getResponsive()"
           :index="index"
         >
-          <el-form-item v-if="item.search.el === 'input'" label-width="80px">
+          <el-form-item
+            v-if="item.search.el === 'input'"
+            :label-width="language === 'zh' ? '80px' : '160px'"
+          >
             <template #label>
               <el-space :size="4">
                 <span>{{ item.label }}</span>
@@ -88,6 +91,10 @@ import {
 } from "@/services/company.service";
 import { useI18n } from "vue-i18n";
 import { useUserStore } from "@/stores/modules/user";
+import { useGlobalStore } from "@/stores/modules/global";
+
+const globalStore = useGlobalStore();
+const language = computed(() => globalStore.language);
 
 const userStore = useUserStore();
 const { userInfo } = storeToRefs(userStore);
