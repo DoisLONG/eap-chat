@@ -1,95 +1,137 @@
 <template>
-  <siderLeft :step="1"></siderLeft>
+  <siderLeft :step="1" />
+
   <div v-if="step === 1" class="guide-right">
     <div class="sidebar">
       <div class="step-img-content">
-        <img class="step-img" :src="step11" alt="上传学习资料" />
-        <img class="step-dot" :src="step1Dot" alt="上传学习资料" />
+        <img
+          class="step-img"
+          :src="guideAssets.step11"
+          :alt="$t('guide.step1.altStep1')"
+        />
+        <img
+          class="step-dot"
+          :src="step1Dot"
+          :alt="$t('guide.step1.altPointer')"
+        />
       </div>
+
       <div class="line-container">
-        <img class="line" :src="line" alt="上传学习资料" />
+        <img class="line" :src="line" :alt="$t('guide.step1.altLine')" />
       </div>
-      <div class="step-text">第一步 侧边栏点击<span>学习管理</span></div>
+
+      <div class="step-text">
+        {{ $t("guide.step1.sidebarClickStudyManagement") }}
+      </div>
     </div>
+
     <el-button type="primary" size="large" @click="nextStep" class="next-btn">
-      下一步
+      {{ $t("guide.action.next") }}
     </el-button>
   </div>
+
   <div v-if="step === 2" class="guide-right">
     <div class="sidebar">
       <div class="step2-img-content">
-        <img class="step-img" :src="step12" alt="上传学习资料" />
-        <img class="step-dot" :src="step2Dot" alt="上传学习资料" />
+        <img
+          class="step-img"
+          :src="guideAssets.step12"
+          :alt="$t('guide.step1.altStep2')"
+        />
+        <img
+          class="step-dot"
+          :src="step2Dot"
+          :alt="$t('guide.step1.altPointer')"
+        />
       </div>
+
       <div class="line2-container">
-        <img class="line" :src="line2" alt="上传学习资料" />
+        <img class="line" :src="line2" :alt="$t('guide.step1.altLine')" />
       </div>
-      <div class="step2-text">第二步 点击<span>新增课程</span></div>
+
+      <div class="step2-text">
+        {{ $t("guide.step1.clickCreateCourse") }}
+      </div>
     </div>
+
     <el-button type="text" v-if="step > 1" @click="prevStep" class="prev-btn">
-      上一步
+      {{ $t("guide.action.prev") }}
     </el-button>
+
     <el-button type="primary" size="large" @click="nextStep" class="next-btn">
-      下一步
+      {{ $t("guide.action.next") }}
     </el-button>
   </div>
+
   <div v-if="step === 3" class="guide-right">
     <div class="sidebar">
       <div style="display: flex; width: 100%">
         <div class="step3-img-content">
-          <img class="step-img" :src="step13" alt="上传学习资料" />
-          <img class="step-dot" :src="step3Dot" alt="上传学习资料" />
+          <img
+            class="step-img"
+            :src="guideAssets.step13"
+            :alt="$t('guide.step1.altStep3')"
+          />
+          <img
+            class="step-dot"
+            :src="step3Dot"
+            :alt="$t('guide.step1.altPointer')"
+          />
         </div>
+
         <div class="step4-img-content">
-          <img class="step-img" :src="step14" alt="上传学习资料" />
-          <img class="step-dot" :src="step4Dot" alt="上传学习资料" />
+          <img
+            class="step-img"
+            :src="guideAssets.step14"
+            :alt="$t('guide.step1.altStep4')"
+          />
+          <img
+            class="step-dot"
+            :src="step4Dot"
+            :alt="$t('guide.step1.altPointer')"
+          />
         </div>
       </div>
-      <div class="sidebar-title">上传资料</div>
+
+      <div class="sidebar-title">
+        {{ $t("guide.step1.uploadTitle") }}
+      </div>
+
       <div class="sidebar-desc">
-        <div class="desc-item">
-          · 填必填项：输入带 * 的「课程名称」「所属类别」
-        </div>
-        <div class="desc-item">
-          · 补充信息：按需填写课程描述、标签，以及公司 / 部门 / 岗位范围。
-        </div>
-        <div class="desc-item">
-          · 上传视频：点击上传区上传课程视频（支持 MP4/MOV 格式，大小不超
-          2GB）。
-        </div>
-        <div class="desc-item">
-          · 添加章节：视频解析后系统分段字幕, 也可点击右侧编辑「+ 添加章节」。
-        </div>
-        <div class="desc-item">
-          · 完成创建：确认信息无误后，点击右下角「创建课程」即可✅
-        </div>
+        <div class="desc-item">{{ $t("guide.step1.desc1") }}</div>
+        <div class="desc-item">{{ $t("guide.step1.desc2") }}</div>
+        <div class="desc-item">{{ $t("guide.step1.desc3") }}</div>
+        <div class="desc-item">{{ $t("guide.step1.desc4") }}</div>
+        <div class="desc-item">{{ $t("guide.step1.desc5") }}</div>
       </div>
     </div>
+
     <el-button type="text" v-if="step > 1" @click="prevStep" class="prev-btn">
-      上一步
+      {{ $t("guide.action.prev") }}
     </el-button>
+
     <el-button type="primary" size="large" @click="nextStep" class="next-btn">
-      下一个
+      {{ $t("guide.action.next") }}
     </el-button>
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
-import step11 from "@/assets/images/guide/step1-1.png";
 import step1Dot from "@/assets/images/guide/step1-dot.png";
 import line from "@/assets/images/guide/line.png";
-import step12 from "@/assets/images/guide/step1-2.png";
 import step2Dot from "@/assets/images/guide/step2-dot.png";
 import line2 from "@/assets/images/guide/line2.png";
-import step13 from "@/assets/images/guide/step1-3.png";
-import step14 from "@/assets/images/guide/step1-4.png";
 import step3Dot from "@/assets/images/guide/step3-dot.png";
 import step4Dot from "@/assets/images/guide/step4-dot.png";
 import siderLeft from "./siderLeft.vue";
+import { useGuideAssets } from "../useGuideAssets";
 
 const emit = defineEmits(["nextStep"]);
+
 const step = ref(1);
+const { guideAssets } = useGuideAssets();
+
 const nextStep = () => {
   if (step.value < 3) {
     step.value++;
@@ -97,13 +139,13 @@ const nextStep = () => {
     emit("nextStep");
   }
 };
+
 const prevStep = () => {
   if (step.value > 1) {
     step.value--;
   }
 };
 </script>
-
 <style scoped lang="scss">
 .guide-right {
   flex: 1;
@@ -152,12 +194,15 @@ const prevStep = () => {
       font-size: 18px;
       color: #01021d;
       font-weight: 400;
-      height: 40px;
-      line-height: 40px;
+      min-height: 40px;
+      line-height: 28px;
       border: 2px solid #1677ff;
       border-radius: 20px;
-      padding: 0 12px;
+      padding: 5px 14px;
       box-sizing: border-box;
+      max-width: 420px;
+      white-space: normal;
+      word-break: break-word;
       span {
         font-weight: 600;
       }
@@ -197,17 +242,20 @@ const prevStep = () => {
     }
     .step2-text {
       position: absolute;
-      top: -53px;
+      top: -58px;
       left: 121px;
       font-size: 18px;
       color: #01021d;
       font-weight: 400;
-      height: 40px;
-      line-height: 40px;
+      min-height: 40px;
+      line-height: 28px;
       border: 2px solid #1677ff;
       border-radius: 20px;
-      padding: 0 12px;
+      padding: 5px 14px;
       box-sizing: border-box;
+      max-width: 420px;
+      white-space: normal;
+      word-break: break-word;
       span {
         font-weight: 600;
       }
@@ -268,11 +316,13 @@ const prevStep = () => {
       padding-left: 32px;
       margin-top: 12px;
       .desc-item {
-        height: 20px;
-        line-height: 20px;
+        height: auto;
+        min-height: 20px;
+        line-height: 1.55;
         font-size: 14px;
         color: #4d4d60;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
+        word-break: break-word;
       }
     }
   }

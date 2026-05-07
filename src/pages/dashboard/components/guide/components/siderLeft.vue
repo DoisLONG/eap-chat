@@ -1,54 +1,56 @@
 <template>
   <div class="guide-left">
     <div class="welcome-section">
-      <div class="welcome-title">欢迎使用👏</div>
-      <div class="system-title">BEAT智能陪练系统</div>
-      <div class="system-desc">我们一起来快速熟悉核心功能吧～</div>
+      <div class="welcome-title">{{ $t("guide.start.welcome") }}</div>
+      <div class="system-title">{{ $t("guide.start.systemTitle") }}</div>
+      <div class="system-desc">{{ $t("guide.start.quickStart") }}</div>
     </div>
 
     <div class="steps-section">
       <div
         v-for="(item, index) in stepList"
-        :key="item.text"
+        :key="item.textKey"
         class="step-item"
         :class="{ active: index === step - 1 }"
       >
         <div class="step-icon">
-          <img :src="item.icon" alt="上传学习资料" />
+          <img :src="item.icon" :alt="$t(item.textKey)" />
         </div>
-        <div class="step-text">{{ item.text }}</div>
+        <div class="step-text">{{ $t(item.textKey) }}</div>
       </div>
     </div>
   </div>
 </template>
+
 <script setup>
 import step1Icon from "@/assets/images/guide/step1.png";
 import step2Icon from "@/assets/images/guide/step2.png";
 import step3Icon from "@/assets/images/guide/step3.png";
 import step4Icon from "@/assets/images/guide/step4.png";
 
-const props = defineProps({
+defineProps({
   step: {
     type: Number,
     default: 1,
   },
 });
+
 const stepList = [
   {
     icon: step1Icon,
-    text: "上传学习资料",
+    textKey: "guide.sidebar.uploadLearningMaterials",
   },
   {
     icon: step2Icon,
-    text: "生成练习题库",
+    textKey: "guide.sidebar.generatePracticeBank",
   },
   {
     icon: step3Icon,
-    text: "复核并生成题库",
+    textKey: "guide.sidebar.reviewAndGenerateBank",
   },
   {
     icon: step4Icon,
-    text: "发布培训任务",
+    textKey: "guide.sidebar.publishTrainingTask",
   },
 ];
 </script>
@@ -64,26 +66,34 @@ const stepList = [
 }
 
 .welcome-section {
+  width: 230px;
+
   .welcome-title,
   .system-title {
-    height: 32px;
-    line-height: 32px;
     font-size: 24px;
     font-weight: 600;
     color: #01021d;
+    line-height: 1.25;
+    height: auto;
+    word-break: break-word;
+  }
+
+  .system-title {
+    margin-top: 4px;
   }
 
   .system-desc {
-    margin-top: 8px;
+    margin-top: 10px;
     font-size: 14px;
     color: #4d4d60;
-    height: 22px;
-    line-height: 22px;
+    line-height: 1.5;
+    height: auto;
+    word-break: break-word;
   }
 }
 
 .steps-section {
-  margin-top: 78px;
+  margin-top: 96px;
   display: flex;
   flex-direction: column;
 

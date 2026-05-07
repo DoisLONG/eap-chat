@@ -1,51 +1,67 @@
 <template>
-   <!-- 左侧引导内容 -->
-      <div class="guide-left">
-        <img :src="guide" alt="引导图片" />
-        <div class="skip-btn-content">
-          <el-button type="plain" @click="skipGuide" class="skip-btn"
-            >跳过引导</el-button
-          >
-        </div>
-      </div>
+  <!-- 左侧引导内容 -->
+  <div class="guide-left">
+    <img :src="guideAssets.guide" :alt="$t('guide.start.imageAlt')" />
 
-      <!-- 右侧欢迎信息 -->
-      <div class="guide-right">
-        <div class="close-btn" @click="$emit('close')">
-            <img style="width: 21px; height: 21px;" src="@/assets/images/close.png"
-        </div>
-        <div class="welcome-title">欢迎使用👏👏👏</div>
-        <div class="system-title">BlueDot智能陪练系统</div>
-        <div class="system-desc">
-          这里是您企业规程管理工作台，支持<span>权限设定、文档导入、筛选、编辑及复核试题</span>关联等等全生命周期管理。
-接下来我们快速熟悉核心功能吧～
-        </div>
-        <div class="system-desc">接下来我们快速熟悉核心功能吧～</div>
-        <el-button
-          type="primary"
-          size="large"
-          @click="$emit('startLearning')"
-          class="start-btn"
-        >
-          开始学习
-        </el-button>
-      </div>
-    
+    <div class="skip-btn-content">
+      <el-button type="plain" @click="skipGuide" class="skip-btn">
+        {{ $t("guide.start.skip") }}
+      </el-button>
+    </div>
+  </div>
+
+  <!-- 右侧欢迎信息 -->
+  <div class="guide-right">
+    <div class="close-btn" @click="$emit('close')">
+      <img
+        style="width: 21px; height: 21px"
+        src="@/assets/images/close.png"
+        :alt="$t('common.close')"
+      />
+    </div>
+
+    <div class="welcome-title">
+      {{ $t("guide.start.welcome") }}
+    </div>
+
+    <div class="system-title">
+      {{ $t("guide.start.systemTitle") }}
+    </div>
+
+    <div class="system-desc">
+      {{ $t("guide.start.quickStart") }}
+    </div>
+
+    <el-button
+      type="primary"
+      size="large"
+      @click="$emit('startLearning')"
+      class="start-btn"
+    >
+      {{ $t("guide.start.startLearning") }}
+    </el-button>
+  </div>
 </template>
+
 <script setup>
-import guide from "@/assets/images/guide/guide.png";
 import { setConfigs } from "@/services/user.service";
+import { useGuideAssets } from "../useGuideAssets";
 
 const emit = defineEmits(["close", "startLearning"]);
+
+const { guideAssets } = useGuideAssets();
+
 const skipGuide = () => {
   setConfigs({
     payload: {
       dashboard_welcome_guide_pending: 1,
     },
   });
+
   emit("close");
 };
 </script>
+
 <style scoped lang="scss">
 .skip-btn {
   background-color: #fafafc;
@@ -56,9 +72,11 @@ const skipGuide = () => {
   line-height: 32px;
   border-radius: 8px;
 }
+
 .skip-btn:hover {
   background-color: #eceff4;
 }
+
 .close-btn {
   cursor: pointer;
   height: 30px;
@@ -68,6 +86,7 @@ const skipGuide = () => {
   align-items: center;
   justify-content: center;
 }
+
 .close-btn:hover {
   background-color: #f5f7fa;
 }
@@ -76,11 +95,13 @@ const skipGuide = () => {
   position: relative;
   width: 466px;
   height: 466px;
+
   img {
     width: 100%;
     height: 100%;
     object-fit: contain;
   }
+
   .skip-btn-content {
     position: absolute;
     top: 24px;
@@ -95,6 +116,7 @@ const skipGuide = () => {
   justify-content: center;
   position: relative;
   padding-left: 40px;
+
   .close-btn {
     position: absolute;
     top: 24px;
@@ -102,23 +124,30 @@ const skipGuide = () => {
   }
 }
 
-.welcome-title, .system-title {
-  height: 38px;
-  line-height: 38px;
-  font-size: 24px;
-  color: #01021D;
-  font-weight: 600;
-}
+.welcome-title,
 .system-title {
-  margin-bottom: 24px;
+  width: 320px;
+  font-size: 24px;
+  color: #01021d;
+  font-weight: 600;
+  line-height: 1.3;
+  height: auto;
+  word-break: break-word;
+}
+
+.system-title {
+  margin-top: 4px;
+  margin-bottom: 16px;
 }
 
 .system-desc {
-  width: 254px;
-  line-height: 22px;
+  width: 320px;
+  line-height: 1.5;
   font-size: 14px;
   font-weight: 400;
-  color: #4D4D60;
+  color: #4d4d60;
+  word-break: break-word;
+
   span {
     font-weight: 600;
   }

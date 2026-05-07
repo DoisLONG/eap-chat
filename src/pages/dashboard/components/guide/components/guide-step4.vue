@@ -1,42 +1,54 @@
 <template>
-  <siderLeft :step="4"></siderLeft>
+  <siderLeft :step="4" />
+
   <div class="guide-right">
     <div class="sidebar">
       <div class="step-img-content">
-        <img class="step-img" :src="step31" alt="上传学习资料" />
-        <img class="step-img1" :src="step311" alt="上传学习资料" />
+        <img
+          class="step-img"
+          :src="guideAssets.step31"
+          :alt="$t('guide.step4.altStep1')"
+        />
+        <img
+          class="step-img1"
+          :src="guideAssets.step311"
+          :alt="$t('guide.step4.altStep1Extra')"
+        />
       </div>
 
-      <div class="sidebar-title" style="margin-top: 114px">系统解析资料</div>
+      <div class="sidebar-title" style="margin-top: 114px">
+        {{ $t("guide.step4.parseTitle") }}
+      </div>
+
       <div class="sidebar-desc">
-        <div class="desc-item">AI解析SOP文档,自动生成题库和考试任务</div>
+        <div class="desc-item">
+          {{ $t("guide.step4.parseDesc") }}
+        </div>
       </div>
     </div>
+
     <el-button type="primary" size="large" @click="nextStep" class="next-btn">
-      完成
+      {{ $t("guide.action.finish") }}
     </el-button>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
-import step31 from "@/assets/images/guide/step3-1.png";
-import step311 from "@/assets/images/guide/step3-1-1.png";
-import step1Dot from "@/assets/images/guide/step1-dot.png";
-import step32 from "@/assets/images/guide/step3-2.png";
-import step2Dot from "@/assets/images/guide/step2-dot.png";
-import step3Dot from "@/assets/images/guide/step3-dot.png";
 import siderLeft from "./siderLeft.vue";
 import { setConfigs } from "@/services/user.service";
+import { useGuideAssets } from "../useGuideAssets";
 
 const emit = defineEmits(["complete"]);
-const step = ref(1);
+
+const { guideAssets } = useGuideAssets();
+
 const nextStep = () => {
   setConfigs({
     payload: {
       dashboard_welcome_guide_pending: 1,
     },
   });
+
   emit("complete");
 };
 </script>
@@ -72,13 +84,14 @@ const nextStep = () => {
       }
     }
     .sidebar-title {
-      height: 31px;
-      line-height: 31px;
+      line-height: 1.35;
       font-size: 22px;
       color: #01021d;
       font-weight: 600;
       margin-top: 29px;
       padding-left: 24px;
+      height: auto;
+      word-break: break-word;
       span {
         font-size: 18px;
         color: #01021d;
@@ -91,11 +104,13 @@ const nextStep = () => {
       padding-left: 24px;
       margin-top: 12px;
       .desc-item {
-        height: 20px;
-        line-height: 20px;
+        height: auto;
+        min-height: 20px;
+        line-height: 1.55;
         font-size: 14px;
         color: #4d4d60;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
+        word-break: break-word;
       }
     }
   }

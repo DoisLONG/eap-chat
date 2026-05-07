@@ -1,65 +1,98 @@
 <template>
-  <siderLeft :step="3"></siderLeft>
+  <siderLeft :step="3" />
+
   <div v-if="step === 1" class="guide-right">
     <div class="sidebar">
       <div class="step-img-content">
-        <img class="step-img" :src="step31" alt="上传学习资料" />
-        <img class="step-img1" :src="step311" alt="上传学习资料" />
-        <!-- <img class="step-img1" :src="step311" alt="上传学习资料" /> -->
+        <img
+          class="step-img"
+          :src="guideAssets.step31"
+          :alt="$t('guide.step3.altStep1')"
+        />
+        <img
+          class="step-img1"
+          :src="guideAssets.step311"
+          :alt="$t('guide.step3.altStep1Extra')"
+        />
       </div>
 
-      <div class="sidebar-title" style="margin-top: 114px">🤖AI智能解析</div>
+      <div class="sidebar-title" style="margin-top: 114px">
+        {{ $t("guide.step3.aiParseTitle") }}
+      </div>
+
       <div class="sidebar-desc">
         <div class="desc-item">
-          上传您的企业标准作业规程文档，AI解析并自动生成题库。
+          {{ $t("guide.step3.aiParseDesc") }}
         </div>
       </div>
     </div>
+
     <el-button type="primary" size="large" @click="nextStep" class="next-btn">
-      下一步
+      {{ $t("guide.action.next") }}
     </el-button>
   </div>
+
   <div v-if="step === 2" class="guide-right">
     <div class="sidebar">
       <div class="step2-img-content">
-        <img class="step-img" :src="step32" alt="上传学习资料" />
+        <img
+          class="step-img"
+          :src="guideAssets.step32"
+          :alt="$t('guide.step3.altStep2')"
+        />
       </div>
-      <img class="step1-dot" :src="step1Dot" alt="上传学习资料" />
-      <img class="step2-dot" :src="step2Dot" alt="上传学习资料" />
-      <img class="step3-dot" :src="step3Dot" alt="上传学习资料" />
+
+      <img
+        class="step1-dot"
+        :src="step1Dot"
+        :alt="$t('guide.step3.altPointer')"
+      />
+      <img
+        class="step2-dot"
+        :src="step2Dot"
+        :alt="$t('guide.step3.altPointer')"
+      />
+      <img
+        class="step3-dot"
+        :src="step3Dot"
+        :alt="$t('guide.step3.altPointer')"
+      />
 
       <div class="sidebar-title">
-        📝 生成关联试题<span>(支持人工编辑）</span>
+        {{ $t("guide.step3.questionTitle") }}
+        <span>{{ $t("guide.step3.questionTitleSub") }}</span>
       </div>
+
       <div class="sidebar-desc">
         <div class="desc-item">
-          一键生成配套考核试题，同时支持人工复核与二次编辑，灵活调整考题内容。
-          还可一键同步至知识库，帮您打通「落地 - 培训考核 -
-          知识沉淀」全流程，高效完成标准化作业的考核与复用。
+          {{ $t("guide.step3.questionDesc") }}
         </div>
       </div>
     </div>
+
     <el-button type="text" v-if="step > 1" @click="prevStep" class="prev-btn">
-      上一步
+      {{ $t("guide.action.prev") }}
     </el-button>
+
     <el-button type="primary" size="large" @click="nextStep" class="next-btn">
-      下一个
+      {{ $t("guide.action.next") }}
     </el-button>
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
-import step31 from "@/assets/images/guide/step3-1.png";
-import step311 from "@/assets/images/guide/step3-1-1.png";
 import step1Dot from "@/assets/images/guide/step1-dot.png";
-import step32 from "@/assets/images/guide/step3-2.png";
 import step2Dot from "@/assets/images/guide/step2-dot.png";
 import step3Dot from "@/assets/images/guide/step3-dot.png";
 import siderLeft from "./siderLeft.vue";
+import { useGuideAssets } from "../useGuideAssets";
 
 const emit = defineEmits(["nextStep"]);
+
 const step = ref(1);
+const { guideAssets } = useGuideAssets();
+
 const nextStep = () => {
   if (step.value < 2) {
     step.value++;
@@ -67,6 +100,7 @@ const nextStep = () => {
     emit("nextStep");
   }
 };
+
 const prevStep = () => {
   if (step.value > 1) {
     step.value--;
@@ -158,13 +192,15 @@ const prevStep = () => {
       }
     }
     .sidebar-title {
-      height: 31px;
-      line-height: 31px;
+      line-height: 1.35;
       font-size: 22px;
       color: #01021d;
       font-weight: 600;
       margin-top: 29px;
       padding-left: 24px;
+      height: auto;
+      word-break: break-word;
+
       span {
         font-size: 18px;
         color: #01021d;
@@ -177,11 +213,13 @@ const prevStep = () => {
       padding-left: 24px;
       margin-top: 12px;
       .desc-item {
-        height: 20px;
-        line-height: 20px;
+        height: auto;
+        min-height: 20px;
+        line-height: 1.55;
         font-size: 14px;
         color: #4d4d60;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
+        word-break: break-word;
       }
     }
   }
