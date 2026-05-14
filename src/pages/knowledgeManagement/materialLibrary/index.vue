@@ -133,6 +133,17 @@ const columns = reactive<ColumnProps[]>([
     label: "素材分类",
     i18nKey: "materialLibrary.category",
     minWidth: 120,
+    render: (scope) => {
+      const category = scope.row.category;
+      const list = [
+        { label: t("course.safetyTraining"), value: "安全培训" },
+        { label: t("course.skillImprovement"), value: "技能提升" },
+        { label: t("course.onboardingTraining"), value: "入职培训" },
+        { label: t("course.productTraining"), value: "产品培训" },
+      ];
+      const item = list.find((item) => item.value === category);
+      return item?.label || "-";
+    },
   },
   {
     prop: "size",
