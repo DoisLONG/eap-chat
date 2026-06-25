@@ -207,7 +207,7 @@
                 id="guideBubble"
                 class="voice-callout"
                 type="button"
-                @click="startVoiceInteraction"
+                @click="toggleVoiceInteraction"
               >
                 <i></i>
                 点击开启语音
@@ -316,8 +316,14 @@
               <button
                 id="centerHotspot"
                 class="center-hotspot"
+                :class="{ recording: hardwareRecording, loading: hardwareVoiceLoading }"
                 type="button"
-                @click="toggleVoiceInteraction"
+                @mousedown.prevent="startHardwareVoiceRecord"
+                @mouseup.prevent="stopHardwareVoiceRecord"
+                @mouseleave.prevent="stopHardwareVoiceRecord"
+                @touchstart.prevent="startHardwareVoiceRecord"
+                @touchend.prevent="stopHardwareVoiceRecord"
+                @touchcancel.prevent="cancelHardwareVoiceRecord"
               ></button>
               <div id="voiceGuide" class="voice-guide">
                 <svg
@@ -335,7 +341,7 @@
                   @click="startVoiceInteraction"
                 >
                   <i></i>
-                  点击开启语音
+                  按住中间按钮开始考试
                 </button>
               </div>
               <div
@@ -372,6 +378,12 @@ import voice003 from "@/assets/images/sequence_aligned/voice_003.png";
 import voice004 from "@/assets/images/sequence_aligned/voice_004.png";
 import voice005 from "@/assets/images/sequence_aligned/voice_005.png";
 import voice006 from "@/assets/images/sequence_aligned/voice_006.png";
+import {
+  finishVoiceExam,
+  sendVoiceExamText,
+} from "@/services/voiceExam.service";
+import { transcribeXfyunAsr } from "@/services/xfyunAsr";
+import { synthesizeXfyunTts } from "@/services/xfyunTts";
 
 const route = useRoute();
 const authStore = useAuthStore();
@@ -395,6 +407,15 @@ const voiceCaptionVisible = ref(false);
 const voiceCaptionText = ref("");
 const fullVoiceCaption =
   "欢迎使用您的专属语音助手，有什么问题尽管问我吧";
+const hardwareVoiceSessionId = `hardware-demo-${Date.now()}`;
+const hardwareRecording = ref(false);
+const hardwareVoiceLoading = ref(false);
+let hardwareMediaRecorder = null;
+let hardwareMediaStream = null;
+let hardwareAudioChunks = [];
+let hardwareDiscardRecord = false;
+let hardwareStopRequested = false;
+let hardwareCurrentAudio = null;
 const voiceFrames = [
   voice000,
   voice001,
@@ -477,6 +498,9 @@ const openHardwareDemo = () => {
 
 const exitUserDemo = () => {
   clearHardwareExpandTimer();
+  stopHardwareAudio();
+  cleanupHardwareRecorder();
+  finishVoiceExam(hardwareVoiceSessionId).catch(() => {});
   resetVoiceProduct();
   voiceActive.value = false;
   voiceGuideReady.value = false;
@@ -486,7 +510,7 @@ const exitUserDemo = () => {
 
 const startVoiceInteraction = () => {
   voiceActive.value = true;
-  typeVoiceCaption();
+  setVoiceCaption("按住中间按钮开始语音考试。");
 };
 
 const toggleVoiceInteraction = () => {
@@ -494,8 +518,18 @@ const toggleVoiceInteraction = () => {
     voiceActive.value = false;
     resetVoiceCaption();
   } else {
-    startVoiceInteraction();
+    voiceActive.value = true;
+    typeVoiceCaption();
   }
+};
+
+const setVoiceCaption = (text) => {
+  if (voiceCaptionTimer) {
+    clearInterval(voiceCaptionTimer);
+    voiceCaptionTimer = null;
+  }
+  voiceCaptionText.value = text;
+  voiceCaptionVisible.value = true;
 };
 
 const resetVoiceCaption = () => {
@@ -521,6 +555,517 @@ const typeVoiceCaption = () => {
     }
   }, 60);
 };
+
+const stopHardwareAudio = () => {
+  if (!hardwareCurrentAudio) return;
+  try {
+    hardwareCurrentAudio.pause();
+    hardwareCurrentAudio.currentTime = 0;
+  } catch {}
+  hardwareCurrentAudio = null;
+};
+
+const bindAndPlayHardwareAudio = async (audio) => {
+  stopHardwareAudio();
+  hardwareCurrentAudio = audio;
+  audio.onended = () => {
+    if (hardwareCurrentAudio === audio) hardwareCurrentAudio = null;
+  };
+  audio.onerror = () => {
+    if (hardwareCurrentAudio === audio) hardwareCurrentAudio = null;
+    setVoiceCaption("语音播放失败，请再试一次。");
+  };
+  await audio.play();
+};
+
+const playHardwareAudio = async (url) => {
+  if (!url) return false;
+  await bindAndPlayHardwareAudio(new Audio(url));
+  return true;
+};
+
+const extractExamField = (text, field) => {
+  const escapedField = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const patterns = [
+    new RegExp(`${escapedField}\\*\\*：(.+?)(?:\\\\n|\\n|$)`, "s"),
+    new RegExp(`${escapedField}：(.+?)(?:\\\\n|\\n|$)`, "s"),
+  ];
+
+  for (const pattern of patterns) {
+    const matched = text.match(pattern);
+    if (matched?.[1]) return matched[1].trim();
+  }
+  return "";
+};
+
+const normalizeExamText = (text) => String(text || "").replace(/\\n/g, "\n").trim();
+
+const cleanExamQuestion = (text) =>
+  normalizeExamText(text)
+    .replace(/【[^】]+】/g, "")
+    .replace(/______+/g, "什么")
+    .replace(/\*\*/g, "")
+    .replace(/^[-*+]\s*/gm, "")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const HARDWARE_DEMO_TOTAL_QUESTIONS = 10;
+
+const extractQuestionNumber = (rawText) => {
+  const raw = normalizeExamText(rawText);
+  const match = raw.match(/第\s*([一二三四五六七八九十百千万两0-9]+)\s*题/);
+  if (!match?.[1]) return 0;
+  const value = match[1];
+  if (/^\d+$/.test(value)) return Number(value);
+  const cnMap = {
+    一: 1,
+    二: 2,
+    两: 2,
+    三: 3,
+    四: 4,
+    五: 5,
+    六: 6,
+    七: 7,
+    八: 8,
+    九: 9,
+    十: 10,
+  };
+  if (value === "十") return 10;
+  if (value.startsWith("十")) return 10 + (cnMap[value.slice(1)] || 0);
+  if (value.endsWith("十")) return (cnMap[value.slice(0, -1)] || 0) * 10;
+  if (value.includes("十")) {
+    const [tens, ones] = value.split("十");
+    return (cnMap[tens] || 1) * 10 + (cnMap[ones] || 0);
+  }
+  return cnMap[value] || 0;
+};
+
+const extractNextQuestion = (rawText) => {
+  const raw = normalizeExamText(rawText);
+  if (!raw.includes("下一题")) return "";
+
+  const nextPatterns = [
+    /###\s*下一题[\s\S]*?-\s*\*\*题目\*\*：(.+?)(?:\n|$)/,
+    /下一题[\s\S]*?题目\*\*：(.+?)(?:\n|$)/,
+    /下一题[\s\S]*?题目：(.+?)(?:\n|$)/,
+    /下一题[：:\s]*([\s\S]+)$/,
+  ];
+
+  for (const pattern of nextPatterns) {
+    const matched = raw.match(pattern);
+    if (matched?.[1]) return cleanExamQuestion(matched[1]);
+  }
+  return "";
+};
+
+const extractWrongAnalysis = (rawText) => {
+  const raw = normalizeExamText(rawText);
+  const fields = ["解析", "答案解析", "解析说明", "原因", "说明"];
+  for (const field of fields) {
+    const value = cleanExamQuestion(extractExamField(raw, field));
+    if (value) return value;
+  }
+
+  const block = raw.match(/上一题解析[\s\S]*?(?:###\s*下一题|下一题|$)/)?.[0] || "";
+  if (!block) return "";
+
+  return cleanExamQuestion(
+    block
+      .replace(/###\s*上一题解析/g, "")
+      .replace(/上一题解析/g, "")
+      .replace(/判定结果\*\*：.*?(?:\n|$)/g, "")
+      .replace(/判定结果：.*?(?:\n|$)/g, "")
+      .replace(/得分\*\*：.*?(?:\n|$)/g, "")
+      .replace(/得分：.*?(?:\n|$)/g, "")
+      .replace(/标准答案\*\*：.*?(?:\n|$)/g, "")
+      .replace(/标准答案：.*?(?:\n|$)/g, "")
+      .replace(/###\s*下一题[\s\S]*$/g, "")
+      .replace(/下一题[\s\S]*$/g, ""),
+  );
+};
+
+const extractAnswerScore = (rawText) => {
+  const raw = normalizeExamText(rawText);
+  const scoreText = extractExamField(raw, "得分") || raw.match(/本题得分\D{0,6}(\d+(?:\.\d+)?)/)?.[1] || "";
+  const score = Number(String(scoreText).match(/\d+(?:\.\d+)?/)?.[0] || NaN);
+  return Number.isFinite(score) ? score : null;
+};
+
+const extractAnswerResult = (rawText) => {
+  const raw = normalizeExamText(rawText);
+  const explicitResult = extractExamField(raw, "判定结果") || extractExamField(raw, "判断结果") || extractExamField(raw, "作答结果") || extractExamField(raw, "回答结果") || extractExamField(raw, "是否正确") || extractExamField(raw, "结果");
+  const source = explicitResult || raw;
+  const score = extractAnswerScore(raw);
+  const wrong = /回答错误|答错|错误|不正确|未通过|不得分/.test(source) || score === 0;
+  const right = (/回答正确|答对|正确|通过|满分/.test(source) || (score !== null && score > 0)) && !wrong;
+  return { result: explicitResult, wrong, right, score };
+};
+
+const buildAnswerFeedbackText = (text, { includeNextQuestion = true, maxLen = 360 } = {}) => {
+  const raw = normalizeExamText(text);
+  const { result, wrong, right } = extractAnswerResult(raw);
+  const score = extractExamField(raw, "得分").replace(".0", "");
+  const standard = cleanExamQuestion(extractExamField(raw, "标准答案"));
+  const nextQuestion = includeNextQuestion ? extractNextQuestion(raw) : "";
+  const wrongAnalysis = extractWrongAnalysis(raw);
+  const parts = [];
+
+  if (wrong) {
+    parts.push(standard ? `上一题回答错误，标准答案是${standard}` : "上一题回答错误");
+    if (wrongAnalysis) parts.push(`解析：${wrongAnalysis}`);
+  } else if (right) {
+    parts.push("上一题回答正确");
+  } else if (result) {
+    parts.push(`上一题判定结果为${result}`);
+  }
+
+  if (score) parts.push(`本题得分${score}分`);
+  if (nextQuestion) parts.push(`下一题：${nextQuestion}`);
+
+  const clean = parts.join("。").replace(/。+$/g, "") + "。";
+  return clean.trim() === "。" ? "" : clean.length > maxLen ? `${clean.slice(0, maxLen)}。` : clean;
+};
+
+const buildFinalAnswerFeedbackText = (text, maxLen = 360) => {
+  const direct = buildAnswerFeedbackText(text, { includeNextQuestion: false, maxLen });
+  if (direct) return direct;
+
+  const raw = normalizeExamText(text);
+  const { result, wrong, right, score } = extractAnswerResult(raw);
+  const standard = cleanExamQuestion(extractExamField(raw, "标准答案"));
+  const analysis = extractWrongAnalysis(raw);
+  const parts = [];
+
+  if (wrong) {
+    parts.push(standard ? `上一题回答错误，标准答案是${standard}` : "上一题回答错误");
+    if (analysis) parts.push(`解析：${analysis}`);
+  } else if (right) {
+    parts.push("上一题回答正确");
+  } else if (result) {
+    parts.push(`上一题判定结果为${result}`);
+  }
+
+  if (score !== null) parts.push(`本题得分${score}分`);
+
+  if (!parts.length) {
+    const relatedLines = stripWrongListText(raw)
+      .split(/[。\n]/)
+      .map((item) => item.trim())
+      .filter((item) => item && /判定|判断|作答结果|回答结果|是否正确|得分|解析|答案|正确|错误|不正确/.test(item))
+      .filter((item) => !/错题|错误题|wrong|题目|您的回答|你的回答|下一题/i.test(item))
+      .slice(0, 3);
+    parts.push(...relatedLines);
+  }
+
+  const clean = parts.join("。").replace(/。+$/g, "") + "。";
+  return clean.trim() === "。" ? "" : clean.length > maxLen ? `${clean.slice(0, maxLen)}。` : clean;
+};
+
+const buildHardwareSpeechText = (text, maxLen = 360) => {
+  const raw = normalizeExamText(text);
+  if (!raw) return "";
+
+  if (raw.includes("上一题解析") || raw.includes("判定结果") || raw.includes("下一题")) {
+    const feedback = buildAnswerFeedbackText(raw, { includeNextQuestion: true, maxLen });
+    if (feedback) return feedback;
+  }
+
+  if (/^第\s*\d+\s*题/.test(raw) || raw.startsWith("第")) {
+    const clean = cleanExamQuestion(raw);
+    return clean.length > maxLen ? `${clean.slice(0, maxLen)}。` : clean;
+  }
+
+  const fallback = cleanExamQuestion(raw).replace(/###/g, "");
+  return fallback.length > maxLen ? `${fallback.slice(0, maxLen)}。` : fallback;
+};
+
+const findValuesByKey = (obj, keys, results = []) => {
+  if (!obj || typeof obj !== "object") return results;
+
+  if (Array.isArray(obj)) {
+    obj.forEach((item) => findValuesByKey(item, keys, results));
+    return results;
+  }
+
+  Object.entries(obj).forEach(([key, value]) => {
+    if (keys.some((target) => key.includes(target)) && value !== null && value !== undefined) {
+      results.push(value);
+    }
+    if (typeof value === "object") findValuesByKey(value, keys, results);
+  });
+  return results;
+};
+
+const collectFinishValues = (obj, keys, results = [], parentKey = "") => {
+  if (!obj || typeof obj !== "object") return results;
+
+  if (Array.isArray(obj)) {
+    obj.forEach((item) => collectFinishValues(item, keys, results, parentKey));
+    return results;
+  }
+
+  Object.entries(obj).forEach(([key, value]) => {
+    const fullKey = `${parentKey}.${key}`;
+    const isWrongList = /错题|错误题|wrong/i.test(fullKey);
+    if (isWrongList) return;
+
+    if (keys.some((target) => key.includes(target)) && value !== null && value !== undefined) {
+      if (typeof value === "string" || typeof value === "number") {
+        const text = String(value).trim();
+        if (text && !/错题|错误题|wrong/i.test(text)) results.push(text);
+      } else if (Array.isArray(value)) {
+        value.forEach((item) => {
+          if (typeof item === "string" || typeof item === "number") {
+            const text = String(item).trim();
+            if (text && !/错题|错误题|wrong/i.test(text)) results.push(text);
+          }
+        });
+      }
+    }
+
+    if (typeof value === "object") collectFinishValues(value, keys, results, fullKey);
+  });
+  return results;
+};
+
+const stripWrongListText = (text) =>
+  normalizeExamText(text)
+    .split(/\n|。/)
+    .map((item) => item.trim())
+    .filter((item) => item && !/错题|错误题|wrong/i.test(item))
+    .join("。");
+
+const pickScoreFromText = (text) => {
+  const raw = normalizeExamText(text);
+  const match = raw.match(/(?:总分|总得分|得分|score)\D{0,8}(\d+(?:\.\d+)?\s*(?:分)?)/i);
+  return match?.[1] || "";
+};
+
+const pickKeyPointsFromText = (text) => {
+  const clean = stripWrongListText(text);
+  const match = clean.match(/(?:关键知识点|知识点|重点)[:：]?([\s\S]+)/);
+  if (!match?.[1]) return [];
+  return match[1]
+    .split(/[；;、，,。\n]/)
+    .map((item) => item.trim())
+    .filter((item) => item && !/错题|错误题|wrong/i.test(item))
+    .slice(0, 3);
+};
+
+const buildFinishSpeechText = (finishResult) => {
+  const data = finishResult?.data ?? finishResult?.results ?? finishResult ?? {};
+  const rawText = typeof finishResult === "string"
+    ? finishResult
+    : JSON.stringify(finishResult || {}, null, 2);
+  const score = collectFinishValues(data, ["总分", "总得分", "score", "Score", "得分"])
+    .find(Boolean) || pickScoreFromText(rawText);
+  const summary = collectFinishValues(data, ["总结", "评价", "summary", "Summary", "overall", "Overall"])
+    .find(Boolean);
+  const keyPoints = collectFinishValues(data, ["关键知识点", "知识点", "重点", "key", "Key"])
+    .filter(Boolean)
+    .slice(0, 3);
+  const textKeyPoints = keyPoints.length ? keyPoints : pickKeyPointsFromText(rawText);
+
+  const parts = ["考试结束"];
+  if (score) parts.push(`本次总得分是${score}`);
+  if (summary) parts.push(`考试总结：${stripWrongListText(summary)}`);
+  if (textKeyPoints.length) parts.push(`关键知识点：${textKeyPoints.join("；")}`);
+
+  return parts.join("。").replace(/。+$/g, "") + "。";
+};
+
+const isLastQuestionResult = (text, result) => {
+  const raw = normalizeExamText(text);
+  if (!raw) return false;
+  if (raw.includes("考试结束") || raw.includes("已完成") || raw.includes("本次练习结束")) return true;
+
+  const hasAnswerFeedback = raw.includes("判定结果") || raw.includes("上一题解析") || raw.includes("标准答案") || raw.includes("您的回答") || raw.includes("你的回答");
+  if (!hasAnswerFeedback) return false;
+
+  const questionNumber = extractQuestionNumber(raw);
+  if (questionNumber >= HARDWARE_DEMO_TOTAL_QUESTIONS) return true;
+  if (Number(result?.turn || 0) > HARDWARE_DEMO_TOTAL_QUESTIONS) return true;
+
+  return !raw.includes("下一题") && !extractNextQuestion(raw);
+};
+
+const speakHardwareText = async (text) => {
+  const finalText = buildHardwareSpeechText(text);
+  if (!finalText) return;
+  const audio = await synthesizeXfyunTts(finalText);
+  await bindAndPlayHardwareAudio(audio);
+};
+
+const cleanupHardwareRecorder = () => {
+  if (hardwareMediaStream) {
+    hardwareMediaStream.getTracks().forEach((track) => track.stop());
+    hardwareMediaStream = null;
+  }
+  hardwareMediaRecorder = null;
+  hardwareAudioChunks = [];
+  hardwareRecording.value = false;
+};
+
+const appendHardwareExamResult = async (result) => {
+  const assistantText = String(result?.assistant_text || "").trim();
+
+  if (!assistantText && !result?.finished) {
+    setVoiceCaption("未获取到考试回复，请再试一次。");
+    return;
+  }
+
+  if (result?.finished) {
+    setVoiceCaption("正在播放考试总结...");
+    await speakHardwareText(buildFinishSpeechText(result?.finish_result));
+    setVoiceCaption("考试已结束。");
+    return;
+  }
+
+  const shouldFinishAfterThisAnswer = isLastQuestionResult(assistantText, result);
+
+  setVoiceCaption("正在播放考试语音...");
+  if (shouldFinishAfterThisAnswer) {
+    const feedbackText = buildFinalAnswerFeedbackText(assistantText);
+    if (feedbackText) {
+      await speakHardwareText(feedbackText);
+    }
+
+    setVoiceCaption("正在生成考试总结...");
+    const finishResult = await finishVoiceExam(hardwareVoiceSessionId);
+    const finishSpeech = buildFinishSpeechText(finishResult?.finish_result || finishResult?.assistant_text || finishResult);
+    await speakHardwareText(finishSpeech);
+    setVoiceCaption("考试已结束。");
+    return;
+  }
+
+  if (result?.audio_url) {
+    await playHardwareAudio(result.audio_url);
+  } else {
+    await speakHardwareText(assistantText);
+  }
+
+  setVoiceCaption("请按住中间按钮继续回答。");
+};
+
+const submitHardwareVoiceBlob = async (blob) => {
+  hardwareVoiceLoading.value = true;
+  setVoiceCaption("正在识别语音...");
+
+  try {
+    const userText = String(await transcribeXfyunAsr(blob)).trim();
+    if (!userText) {
+      setVoiceCaption("没有识别到有效内容，请再说一次。");
+      return;
+    }
+
+    setVoiceCaption("已收到语音，正在生成考试回复...");
+    const result = await sendVoiceExamText(hardwareVoiceSessionId, userText);
+    await appendHardwareExamResult(result);
+  } catch (err) {
+    console.error("[hardware voice exam error]", err);
+    setVoiceCaption(err?.message || "语音考试接口调用失败，请检查后端配置。");
+  } finally {
+    hardwareVoiceLoading.value = false;
+  }
+};
+
+const startHardwareVoiceRecord = async () => {
+  if (hardwareRecording.value || hardwareVoiceLoading.value) return;
+
+  startVoiceInteraction();
+  stopHardwareAudio();
+
+  if (!window.isSecureContext) {
+    setVoiceCaption("麦克风录音需要 HTTPS 或 localhost 环境。");
+    return;
+  }
+
+  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+    setVoiceCaption("当前浏览器不支持麦克风录音。");
+    return;
+  }
+
+  try {
+    hardwareMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus"
+      : MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : "";
+
+    hardwareMediaRecorder = new MediaRecorder(
+      hardwareMediaStream,
+      mimeType ? { mimeType } : undefined,
+    );
+    hardwareAudioChunks = [];
+    hardwareDiscardRecord = false;
+    hardwareStopRequested = false;
+
+    hardwareMediaRecorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) hardwareAudioChunks.push(event.data);
+    };
+
+    hardwareMediaRecorder.onstart = () => {
+      hardwareRecording.value = true;
+      setVoiceCaption("正在聆听，松开后提交...");
+      if (hardwareStopRequested) {
+        stopHardwareVoiceRecord();
+      }
+    };
+
+    hardwareMediaRecorder.onstop = () => {
+      const blob = new Blob(hardwareAudioChunks, {
+        type: mimeType || "audio/webm",
+      });
+      const shouldDiscard = hardwareDiscardRecord;
+      cleanupHardwareRecorder();
+
+      if (shouldDiscard) {
+        setVoiceCaption("已取消本次语音。");
+        return;
+      }
+
+      if (!blob.size) {
+        setVoiceCaption("没有录到声音，请再试一次。");
+        return;
+      }
+
+      submitHardwareVoiceBlob(blob);
+    };
+
+    hardwareMediaRecorder.start();
+  } catch (err) {
+    console.error("[hardware record start error]", err);
+    cleanupHardwareRecorder();
+    setVoiceCaption(err?.message || "无法启动麦克风。");
+  }
+};
+
+const stopHardwareVoiceRecord = () => {
+  if (!hardwareMediaRecorder) {
+    hardwareStopRequested = true;
+    return;
+  }
+
+  if (!hardwareRecording.value) {
+    hardwareStopRequested = true;
+    return;
+  }
+
+  try {
+    hardwareMediaRecorder.stop();
+  } catch (err) {
+    console.error("[hardware record stop error]", err);
+    cleanupHardwareRecorder();
+  }
+};
+
+const cancelHardwareVoiceRecord = () => {
+  hardwareDiscardRecord = true;
+  stopHardwareVoiceRecord();
+};
+
 
 const clearHardwareExpandTimer = () => {
   if (hardwareExpandTimer) {
@@ -612,10 +1157,12 @@ watch(
 
 const setIframeUrl = () => {
   const token = localStorage.getItem("token");
-  const origin =
-    window.location.hostname === "localhost"
-      ? "https://14.103.176.8:5174"
-      : window.location.origin;
+  const isLocalPreview = ["localhost", "127.0.0.1", "::1"].includes(
+    window.location.hostname,
+  );
+  const origin = isLocalPreview
+    ? "https://14.103.176.8:5174"
+    : window.location.origin;
   userUrl.value = `${origin}/eap/#/?token=${token}&lang=${language.value}`;
   // userUrl.value = `http://localhost:8888/eap/#/?token=${token}&lang=${language.value}`;
   // console.log("userUrl.value", userUrl.value);
@@ -635,6 +1182,9 @@ onUnmounted(() => {
     clearInterval(voiceFrameTimer);
     voiceFrameTimer = null;
   }
+  stopHardwareAudio();
+  cleanupHardwareRecorder();
+  finishVoiceExam(hardwareVoiceSessionId).catch(() => {});
   if (voiceCaptionTimer) {
     clearInterval(voiceCaptionTimer);
     voiceCaptionTimer = null;
@@ -932,6 +1482,7 @@ onUnmounted(() => {
   }
 
   .voice-card.voice-active .center-hotspot {
+    pointer-events: auto;
     box-shadow:
       0 0 0 3px rgba(29, 248, 194, 0.92),
       0 0 0 7px rgba(25, 122, 255, 0.82),
@@ -1073,6 +1624,7 @@ onUnmounted(() => {
     opacity: 0;
     pointer-events: none;
     cursor: pointer;
+    touch-action: none;
     transform: translate(-50%, -50%);
     box-shadow:
       0 0 0 3px rgba(29, 248, 194, 0.9),
@@ -1082,6 +1634,22 @@ onUnmounted(() => {
     transition:
       opacity 0.24s ease 0.36s,
       box-shadow 0.24s ease;
+  }
+
+
+
+  .center-hotspot.recording {
+    transform: translate(-50%, -50%) scale(1.12);
+    box-shadow:
+      0 0 0 4px rgba(255, 255, 255, 0.95),
+      0 0 0 9px rgba(255, 75, 75, 0.86),
+      0 0 40px rgba(255, 75, 75, 0.55),
+      inset 0 0 28px rgba(255, 255, 255, 0.22);
+  }
+
+  .center-hotspot.loading {
+    cursor: wait;
+    opacity: 0.85;
   }
 
   .voice-wave-rings {
@@ -1121,7 +1689,7 @@ onUnmounted(() => {
     font-size: 18px;
     line-height: 26px;
     font-weight: 500;
-    white-space: nowrap;
+    white-space: pre-wrap;
     opacity: 0;
     pointer-events: none;
     transform: translate(-50%, 12px);
