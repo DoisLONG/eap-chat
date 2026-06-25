@@ -181,6 +181,10 @@ export default {
     settingCenter: "设置中心",
     permissionManagement: "权限管理",
     modelManagement: "模型配置",
+    talentAssessment: "人才评估",
+    talentDashboard: "首页",
+    talentJob: "岗位管理",
+    talentResume: "简历管理",
   },
   licenseAdmin: {
     sopManagement: "SOP管理",

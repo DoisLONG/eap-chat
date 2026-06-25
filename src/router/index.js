@@ -132,6 +132,71 @@ const routes = [
           },
         ],
       },
+      {
+        path: "/talent",
+        name: "TalentAssessment",
+        redirect: "/talent/dashboard",
+        meta: {
+          icon: "UserFilled",
+          title: "人才评估",
+          i18nKey: "menu.talentAssessment",
+          isLink: "",
+          isHide: false,
+          isFull: false,
+          isAffix: false,
+          isKeepAlive: false,
+        },
+        children: [
+          {
+            path: "/talent/dashboard",
+            name: "TalentDashboard",
+            component: () => import("@/pages/talentAssessment/dashboard/index.vue"),
+            meta: {
+              icon: "Histogram",
+              title: "首页",
+              i18nKey: "menu.talentDashboard",
+              isHide: false,
+              isKeepAlive: false,
+            },
+          },
+          {
+            path: "/talent/job",
+            name: "TalentJob",
+            component: () => import("@/pages/talentAssessment/job/index.vue"),
+            meta: {
+              icon: "Briefcase",
+              title: "岗位管理",
+              i18nKey: "menu.talentJob",
+              isHide: false,
+              isKeepAlive: false,
+            },
+          },
+          {
+            path: "/talent/resume",
+            name: "TalentResume",
+            component: () => import("@/pages/talentAssessment/resume/index.vue"),
+            meta: {
+              icon: "Document",
+              title: "简历管理",
+              i18nKey: "menu.talentResume",
+              isHide: false,
+              isKeepAlive: false,
+            },
+          },
+          {
+            path: "/talent/interview/:resumeId",
+            name: "TalentInterview",
+            component: () => import("@/pages/talentAssessment/interview/index.vue"),
+            meta: {
+              icon: "ChatLineRound",
+              title: "开始面试",
+              activeMenu: "/talent/resume",
+              isHide: true,
+              isKeepAlive: false,
+            },
+          },
+        ],
+      },
 
       // {
       //   path: "testCenter",

@@ -20,6 +20,11 @@ export default defineConfig({
         rewrite: (p) => p.replace(/^\/sop-api/, ""),
         secure: false,
       },
+      "/talentapi": {
+        target: "http://14.103.176.8:9020",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/talentapi/, ""),
+      },
       "/chatapi": {
         target: "http://14.103.176.8:9010",
         // target: "http://14.103.144.187:30116", // 四会

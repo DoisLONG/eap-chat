@@ -99,6 +99,61 @@ export const useAuthStore = defineStore("sopai-auth", {
         ],
       },
       {
+        path: "/talent",
+        name: "TalentAssessment",
+        meta: {
+          icon: "UserFilled",
+          title: "人才评估",
+          i18nKey: "menu.talentAssessment",
+          isLink: "",
+          isHide: false,
+          isFull: false,
+          isAffix: false,
+          isKeepAlive: false,
+        },
+        children: [
+          {
+            path: "/talent/dashboard",
+            name: "TalentDashboard",
+            meta: {
+              title: "首页",
+              i18nKey: "menu.talentDashboard",
+              isLink: "",
+              isHide: false,
+              isFull: false,
+              isAffix: false,
+              isKeepAlive: false,
+            },
+          },
+          {
+            path: "/talent/job",
+            name: "TalentJob",
+            meta: {
+              title: "岗位管理",
+              i18nKey: "menu.talentJob",
+              isLink: "",
+              isHide: false,
+              isFull: false,
+              isAffix: false,
+              isKeepAlive: false,
+            },
+          },
+          {
+            path: "/talent/resume",
+            name: "TalentResume",
+            meta: {
+              title: "简历管理",
+              i18nKey: "menu.talentResume",
+              isLink: "",
+              isHide: false,
+              isFull: false,
+              isAffix: false,
+              isKeepAlive: false,
+            },
+          },
+        ],
+      },
+      {
         path: "/system",
         name: "system",
         meta: {
