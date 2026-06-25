@@ -13,6 +13,11 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      "/voiceapi": {
+        target: "http://127.0.0.1:8001",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/voiceapi/, ""),
+      },
       "/sop-api": {
         target: "http://14.103.176.8:6007",
         // target: "http://14.103.144.187:30114", // 四会
