@@ -116,7 +116,7 @@ export const useAuthStore = defineStore("sopai-auth", {
             path: "/talent/dashboard",
             name: "TalentDashboard",
             meta: {
-              title: "首页",
+              title: "人才库",
               i18nKey: "menu.talentDashboard",
               isLink: "",
               isHide: false,

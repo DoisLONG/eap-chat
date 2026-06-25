@@ -34,16 +34,19 @@
         <el-table-column label="候选人" min-width="260">
           <template #default="scope">
             <div class="candidate-cell">
-              <div class="candidate-avatar" :style="{ background: getAvatarColor(scope.$index) }">
+              <div
+                class="candidate-avatar"
+                :style="{ background: getAvatarColor(scope.$index) }"
+              >
                 {{ getNameFirst(scope.row.candidateName) }}
               </div>
 
               <div class="candidate-info">
                 <div class="candidate-name">
-                  {{ scope.row.candidateName || '解析中' }}
+                  {{ scope.row.candidateName || "解析中" }}
                 </div>
                 <div class="candidate-desc">
-                  {{ scope.row.skillSummary || scope.row.fileName || '--' }}
+                  {{ scope.row.skillSummary || scope.row.fileName || "--" }}
                 </div>
               </div>
             </div>
@@ -52,7 +55,9 @@
 
         <el-table-column label="适配岗位" min-width="180">
           <template #default="scope">
-            <span class="position-text">{{ scope.row.positionName || '--' }}</span>
+            <span class="position-text">
+              {{ scope.row.positionName || "--" }}
+            </span>
           </template>
         </el-table-column>
 
@@ -74,7 +79,7 @@
               class="ai-tag"
               :type="adviceMap[scope.row.aiAdviceLevel]?.type || statusTagType(scope.row)"
             >
-              {{ scope.row.aiAdviceLevel ? scope.row.aiAdviceLevel + ' ' : '' }}
+              {{ scope.row.aiAdviceLevel ? scope.row.aiAdviceLevel + " " : "" }}
               {{ scope.row.aiAdvice || statusText(scope.row) }}
             </el-tag>
           </template>
@@ -96,16 +101,27 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="190" fixed="right">
           <template #default="scope">
-            <el-button
-              type="primary"
-              link
-              class="start-btn"
-              @click="startInterview(scope.row)"
-            >
-              开始面试
-            </el-button>
+            <div class="action-buttons">
+              <el-button
+                type="primary"
+                link
+                class="start-btn"
+                @click="startInterview(scope.row)"
+              >
+                开始面试
+              </el-button>
+
+              <el-button
+                type="danger"
+                link
+                class="delete-btn"
+                @click="handleDeleteResume(scope.row)"
+              >
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -158,18 +174,19 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from "vue";
-import { useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
+import { onMounted, onUnmounted, reactive, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { Refresh, UploadFilled } from "@element-plus/icons-vue";
 import {
+  deleteTalentResume,
   getTalentResumeList,
-  getTalentResumeProcessStatus,
   saveTalentInterviewResult,
   uploadTalentResume,
 } from "@/services/talent.service";
 
 const router = useRouter();
+const route = useRoute();
 const loading = ref(false);
 const uploading = ref(false);
 const uploadVisible = ref(false);
@@ -177,10 +194,12 @@ const uploadRef = ref();
 const selectedFiles = ref([]);
 const tableData = ref([]);
 const total = ref(0);
-const pollingTimer = ref(null);
+const autoRefreshTimer = ref(null);
 
 const query = reactive({
   keyword: "",
+  manualResult: route.query.manualResult || "",
+  parseStatus: route.query.parseStatus || "",
   page: 1,
   pageSize: 10,
 });
@@ -235,8 +254,16 @@ function statusTagType(row) {
   return "info";
 }
 
-async function getList() {
-  loading.value = true;
+async function getList(options = {}) {
+  const silent = options.silent === true;
+
+  if (loading.value && silent) {
+    return;
+  }
+
+  if (!silent) {
+    loading.value = true;
+  }
 
   try {
     const params = {
@@ -248,6 +275,14 @@ async function getList() {
       params.keyword = query.keyword;
     }
 
+    if (query.manualResult) {
+      params.manualResult = query.manualResult;
+    }
+
+    if (query.parseStatus) {
+      params.parseStatus = query.parseStatus;
+    }
+
     const res = await getTalentResumeList(params);
 
     if (res.data?.is_success) {
@@ -256,19 +291,36 @@ async function getList() {
 
       tableData.value = list;
       total.value = pageData.total ?? list.length;
-
-      console.log("简历列表返回：", pageData);
-      console.log("简历表格数据：", tableData.value);
-
-      setupPolling();
     } else {
-      ElMessage.error(res.data?.msg || "简历列表加载失败");
+      if (!silent) {
+        ElMessage.error(res.data?.msg || "简历列表加载失败");
+      }
     }
   } catch (error) {
     console.error("简历列表加载失败：", error);
-    ElMessage.error("简历列表加载失败");
+
+    if (!silent) {
+      ElMessage.error("简历列表加载失败");
+    }
   } finally {
-    loading.value = false;
+    if (!silent) {
+      loading.value = false;
+    }
+  }
+}
+
+function startAutoRefresh() {
+  stopAutoRefresh();
+
+  autoRefreshTimer.value = setInterval(() => {
+    getList({ silent: true });
+  }, 10000);
+}
+
+function stopAutoRefresh() {
+  if (autoRefreshTimer.value) {
+    clearInterval(autoRefreshTimer.value);
+    autoRefreshTimer.value = null;
   }
 }
 
@@ -336,6 +388,7 @@ async function submitUpload() {
       uploadRef.value?.clearFiles();
       query.page = 1;
       getList();
+      startAutoRefresh();
     } else {
       ElMessage.error(res.data?.msg || "上传失败");
     }
@@ -361,6 +414,45 @@ async function saveResult(row, manualResult) {
   }
 }
 
+async function handleDeleteResume(row) {
+  if (!row?.resumeId) {
+    ElMessage.warning("缺少简历ID，无法删除");
+    return;
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确认删除候选人「${row.candidateName || row.fileName || "该简历"}」吗？删除后不可恢复。`,
+      "删除确认",
+      {
+        confirmButtonText: "确认删除",
+        cancelButtonText: "取消",
+        type: "warning",
+        confirmButtonClass: "el-button--danger",
+      }
+    );
+
+    const res = await deleteTalentResume(row.resumeId);
+
+    if (res.data?.is_success) {
+      ElMessage.success("删除成功");
+
+      if (tableData.value.length === 1 && query.page > 1) {
+        query.page -= 1;
+      }
+
+      getList();
+    } else {
+      ElMessage.error(res.data?.msg || "删除失败");
+    }
+  } catch (error) {
+    if (error !== "cancel") {
+      console.error("删除简历失败：", error);
+      ElMessage.error("删除失败");
+    }
+  }
+}
+
 function startInterview(row) {
   console.log("开始面试 row:", row);
 
@@ -382,38 +474,28 @@ function startInterview(row) {
   });
 }
 
-function setupPolling() {
-  const hasProcessing = tableData.value.some((item) => {
-    return [item.parseStatus, item.screenStatus, item.questionStatus].some((status) => ["pending", "processing"].includes(status));
-  });
-  if (!hasProcessing) {
-    clearInterval(pollingTimer.value);
-    pollingTimer.value = null;
-    return;
-  }
-  if (pollingTimer.value) return;
-  pollingTimer.value = setInterval(async () => {
-    const processingRows = tableData.value.filter((item) => [item.parseStatus, item.screenStatus, item.questionStatus].some((status) => ["pending", "processing"].includes(status)));
-    for (const row of processingRows) {
-      try {
-        const res = await getTalentResumeProcessStatus(row.resumeId);
-        if (res.data?.is_success) {
-          Object.assign(row, res.data.data || {});
-        }
-      } catch (error) {}
-    }
-    const stillProcessing = tableData.value.some((item) => [item.parseStatus, item.screenStatus, item.questionStatus].some((status) => ["pending", "processing"].includes(status)));
-    if (!stillProcessing) {
-      clearInterval(pollingTimer.value);
-      pollingTimer.value = null;
-      getList();
-    }
-  }, 3000);
-}
+watch(
+  () => route.query,
+  (val) => {
+    query.manualResult = val.manualResult || "";
+    query.parseStatus = val.parseStatus || "";
+    query.page = 1;
+    getList();
+  },
+  { deep: true }
+);
 
-onMounted(getList);
+onMounted(() => {
+  if (route.query.action === "upload") {
+    uploadVisible.value = true;
+  }
+
+  getList();
+  startAutoRefresh();
+});
+
 onUnmounted(() => {
-  if (pollingTimer.value) clearInterval(pollingTimer.value);
+  stopAutoRefresh();
 });
 </script>
 
@@ -423,6 +505,26 @@ onUnmounted(() => {
   background: #f5f7fb;
   min-height: calc(100vh - 64px);
   color: #303133;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.action-buttons :deep(.el-button) {
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.delete-btn {
+  color: #f56c6c;
+}
+
+.delete-btn:hover {
+  color: #ef4444;
 }
 
 .filter-card,

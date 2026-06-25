@@ -153,7 +153,7 @@ const routes = [
             component: () => import("@/pages/talentAssessment/dashboard/index.vue"),
             meta: {
               icon: "Histogram",
-              title: "首页",
+              title: "人才库",
               i18nKey: "menu.talentDashboard",
               isHide: false,
               isKeepAlive: false,

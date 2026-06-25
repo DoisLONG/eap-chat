@@ -77,8 +77,10 @@ import resourceOverview from "./components/resourceOverview.vue";
 import startGuide from "./components/guide/guide.vue";
 import { getOverview } from "@/services/dashboard.service";
 import { getConfigs } from "@/services/user.service";
+import { useRouter } from "vue-router";
 
 const isOnline = ref(true); // 是否有网络
+const router = useRouter();
 const isChecking = ref(false); // 是否正在检查网络
 // console.log("w", (window.innerWidth - 208 - 48 - 320 - 16 - 48) / 31);
 const globalStore = useGlobalStore();

@@ -182,7 +182,7 @@ export default {
     permissionManagement: "权限管理",
     modelManagement: "模型配置",
     talentAssessment: "人才评估",
-    talentDashboard: "首页",
+    talentDashboard: "人才库",
     talentJob: "岗位管理",
     talentResume: "简历管理",
   },
