@@ -1,5 +1,9 @@
 <template>
   <div class="card table-search">
+    <div class="search-head">
+      <h2>练习筛选</h2>
+      <span>按名称和组织范围查询已生成的练习</span>
+    </div>
     <el-form ref="formRef" :model="searchParam">
       <Grid
         ref="gridRef"
@@ -26,6 +30,8 @@
             <el-input
               v-model="searchParam[item.prop]"
               :placeholder="item.placeholder"
+              clearable
+              @keyup.enter="search"
             />
           </el-form-item>
           <el-form-item v-if="item.search.el === 'select'" label-width="80px">
@@ -80,7 +86,13 @@
 import { computed, ref } from "vue";
 import { removeEmptyProp } from "@/utils";
 import { BreakPoint } from "@/components/Grid/interface";
-import { Delete, Search, ArrowDown, ArrowUp } from "@element-plus/icons-vue";
+import {
+  Delete,
+  Search,
+  ArrowDown,
+  ArrowUp,
+} from "@element-plus/icons-vue";
+import { ElMessage } from "element-plus";
 import Grid from "@/components/Grid/index.vue";
 import GridItem from "@/components/Grid/components/GridItem.vue";
 import { storeToRefs } from "pinia";
@@ -112,47 +124,56 @@ const searchParam = ref({
   department_id: "",
   position_id: "",
 });
-const queryCompany = () => {
+const queryCompany = async () => {
   const params: any = {};
-  getCompanyList(params).then((res) => {
+  try {
+    const res = await getCompanyList(params);
     const data = res.data.results || [];
     companyList.value = data.map((item: any) => ({
       label: item.company_name,
       value: item.company_id,
     }));
-  });
+  } catch (error) {
+    ElMessage.error("公司筛选数据加载失败");
+  }
 };
 queryCompany();
-const queryDept = () => {
+const queryDept = async () => {
   const params: any = {};
   if (searchParam.value.company_id) {
     params.company_id = searchParam.value.company_id;
   }
-  getDeptList(params).then((res) => {
+  try {
+    const res = await getDeptList(params);
     const data = res.data.results || [];
     deptList.value = data.map((item: any) => ({
       label: item.department_name,
       value: item.department_id,
     }));
-  });
+  } catch (error) {
+    ElMessage.error("部门筛选数据加载失败");
+  }
 };
 queryDept();
 
-const queryPost = () => {
+const queryPost = async () => {
   const params: any = {};
   if (searchParam.value.company_id) {
     params.company_id = searchParam.value.company_id;
   }
-  if (searchParam.value.position_id) {
-    params.department_id = searchParam.value.position_id;
+  if (searchParam.value.department_id) {
+    params.department_id = searchParam.value.department_id;
   }
-  getPostList(params).then((res) => {
+  try {
+    const res = await getPostList(params);
     const data = res.data.results || [];
     postList.value = data.map((item: any) => ({
       label: item.position_name,
       value: Number(item.position_id) || item.position_id,
     }));
-  });
+  } catch (error) {
+    ElMessage.error("岗位筛选数据加载失败");
+  }
 };
 queryPost();
 
@@ -273,3 +294,24 @@ const showCollapse = computed(() => {
   return show;
 });
 </script>
+<style scoped>
+.search-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.search-head h2 {
+  margin: 0;
+  color: #26364a;
+  font-size: 16px;
+}
+.search-head span {
+  color: #8b98a9;
+  font-size: 12px;
+}
+.operation {
+  display: flex;
+  gap: 8px;
+}
+</style>

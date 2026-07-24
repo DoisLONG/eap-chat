@@ -18,6 +18,8 @@
 - 子组件：`src\pages\components\licenseAdmin\searchForm.vue`、`editDrawer.vue`、`src\components\exam\ReviewDialog.vue`
 - 练习 API：`D:\PL\eap-chat\src\services\sop.api.js`；组织筛选 API：`src\services\company.service.js`
 - 练习浏览器前缀：`/sop-api`，由 `SOP_API_HOST` 转发至运行态 `118.196.142.69:6007`；组织选择经 `/companyapi`、`COMPANY_API_HOST` 至 `118.196.142.69:8010`。
+- QA 保存已统一：`POST /sop-api/v1/dataprep/qa/save`，请求体为 `{ sop_info_id, file_name, records }`。每条记录必须有 `question`、`answer`、`content`；当前业务还必须传有效 `sop_info_id` 才能创建版本。
+- 练习页面已在原路由内完成第三阶段 A 改造：`LicenseAdmin.vue`、`searchForm.vue`、`editDrawer.vue`、`ReviewDialog.vue` 和 `sop.api.js`。无后端、数据库、菜单或路由改动。
 
 ## 参考与考试
 
@@ -29,5 +31,6 @@
 
 ## 下一步
 
-先确认：练习实体与分类字段、资料选择接口、题目保存契约、考试管理 API/权限/菜单来源。确认后从 `src/stores/modules/auth.ts` 和 `src/router/index.js` 做最小考试入口改动，再实施页面。
-
+1. 由用户手动验证练习列表、名称/组织筛选、SOP 上传生成、任务状态、QA 新增编辑删除保存、单条/批量删除和 SOP 编辑。
+2. 如需分类或从资料库选择文件，先确认正式分类数据源、资料接口与 SOP 的关系；不得使用 `reference-ui/category-filter.js` 的原型常量。
+3. 考试管理仍未实施。获得确认后，才从 `src/stores/modules/auth.ts`、`src/router/index.js` 和实际后端契约开始最小入口改动。

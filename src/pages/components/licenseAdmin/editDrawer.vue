@@ -185,7 +185,6 @@ const handleSubmit = () => {
         position_id: operateInfo.value.position_id,
       };
       const res = await updateSopTitle(params);
-      submitLoading.value = false;
       if (res.data.status !== 200) {
         ElMessage.error({ message: res.data.message || "操作失败！" });
         return;
@@ -194,7 +193,11 @@ const handleSubmit = () => {
       emits("refresh");
       ElMessage.success({ message: t("common.editSuccess") });
     } catch (error) {
-      console.log(error);
+      ElMessage.error({
+        message: (error as any)?.response?.data?.message || "操作失败！",
+      });
+    } finally {
+      submitLoading.value = false;
     }
   });
 };

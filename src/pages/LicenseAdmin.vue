@@ -1,5 +1,11 @@
 <template>
-  <div class="table-box">
+  <div class="table-box practice-page">
+    <div class="practice-page-head">
+      <div>
+        <h1>练习管理</h1>
+        <p>上传 SOP 生成题目，完成练习内容复核与维护。</p>
+      </div>
+    </div>
     <ProTable
       ref="proTable"
       :columns="columns"
@@ -17,7 +23,7 @@
           type="primary"
           :icon="CirclePlus"
           @click="onImport"
-          >{{ $t("licenseAdmin.importSop") }}</el-button
+          >生成练习</el-button
         >
         <el-button
           type="danger"
@@ -42,17 +48,27 @@
           </div>
         </div>
       </template>
-      <template #examLinkText="{ row }">
+      <template #taskStatus="{ row }">
         <el-link
-          v-if="row.percent >= 100"
+          v-if="isTaskReady(row)"
           type="primary"
           :loading="review.loading"
           :disabled="review.loading"
           @click="openReview(row)"
         >
-          {{ row.examLinkText }}
+          复核题目
         </el-link>
-        <el-progress v-else :percentage="row.percent" />
+        <div v-else class="task-status">
+          <el-progress
+            v-if="taskState(row) === 'PENDING'"
+            :percentage="taskPercent(row)"
+            :indeterminate="!hasTaskPercent(row)"
+            :show-text="hasTaskPercent(row)"
+          />
+          <el-tag :type="taskTagType(row)" effect="plain">
+            {{ taskLabel(row) }}
+          </el-tag>
+        </div>
       </template>
       <!-- 表格操作 -->
       <template #operation="scope">
@@ -83,17 +99,13 @@
     <ReviewDialog
       v-model="review.visible"
       :data="review.data"
-      @after-save="load"
-      @rename="handleRename"
-      @regen="handleRegen"
-      @add-doc="handleAddDoc"
       @refresh="handleUpate"
     />
 
     <!-- 导入 SOP 弹窗 -->
     <el-dialog
       v-model="importDlg.visible"
-      :title="$t('licenseAdmin.importSop')"
+      title="生成练习"
       width="60%"
       :close-on-click-modal="false"
       @close="resetImportDlg"
@@ -298,8 +310,7 @@ import {
   generateQa,
   deleteSop,
   getQaList,
-  saveQaList,
-  pollTaskStatus,
+  getTaskStatus,
 } from "@/services/sop.api";
 import {
   getCompanyList,
@@ -319,7 +330,6 @@ const { t } = useI18n();
 const userStore = useUserStore();
 const { userInfo } = storeToRefs(userStore);
 
-const userId = ref("test_user");
 const ruleFormRef = ref<FormInstance>();
 
 const proTable = ref<ProTableInstance>();
@@ -345,7 +355,6 @@ const dataCallback = (data: any) => {
       fileName,
       task_id: item.task_id,
       version: item.sop_version || "v1",
-      examLinkText: t("licenseAdmin.testTitle", { title: title }),
       ...item,
     };
   });
@@ -356,7 +365,6 @@ const dataCallback = (data: any) => {
 };
 
 const getTableList = (params: any) => {
-  console.warn("getTableList", params);
   let newParams = JSON.parse(JSON.stringify(params));
   newParams.user_id = String(userInfo.value.id);
   return getSops(newParams);
@@ -367,7 +375,7 @@ const columns = computed<ColumnProps[]>(() => {
     { type: "selection", fixed: "left", width: 70 },
     {
       prop: "keyword",
-      label: "规程名称",
+      label: "练习名称",
       i18nKey: "licenseAdmin.keyword",
       minWidth: 250,
       search: {
@@ -400,10 +408,19 @@ const columns = computed<ColumnProps[]>(() => {
       width: 100,
     },
     {
-      prop: "examLinkText",
-      label: "复核题目",
-      i18nKey: "licenseAdmin.examLinkText",
-      minWidth: 250,
+      prop: "created_at",
+      label: "创建时间",
+      minWidth: 170,
+    },
+    {
+      prop: "updated_at",
+      label: "更新时间",
+      minWidth: 170,
+    },
+    {
+      prop: "taskStatus",
+      label: "题目状态",
+      minWidth: 160,
     },
     {
       prop: "operation",
@@ -417,7 +434,7 @@ const columns = computed<ColumnProps[]>(() => {
 
 const review = reactive({
   visible: false,
-  data: { title: "", items: [] },
+  data: { id: null, title: "", fileName: "", items: [] },
   currentRow: null,
   loading: false,
 });
@@ -430,42 +447,29 @@ const editDlg = reactive({
 });
 
 async function openReview(row) {
-  console.log("openReview", row);
   review.loading = true;
   review.currentRow = row;
   review.data.title = row.title;
   review.data.id = row.id;
+  review.data.fileName = row.filename || row.fileName || "";
   review.data.items = [];
 
   try {
     const taskId = row.task_id || "";
-    if (!taskId) throw new Error(t("licenseAdmin.examLinkTip"));
-
-    const token = localStorage.getItem("token");
-    const res = await fetch("/sop-api/v1/dataprep/task_status", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ task_id: taskId }),
-    });
-
-    const json = await res.json();
-    const state = json?.results?.state || json?.state || "";
-    const normalized = state.toUpperCase();
-
-    // ✅ 如果不是 SUCCESS，提示后不再继续加载题目
-    if (normalized !== "SUCCESS") {
+    if (taskId) {
+      const { data } = await getTaskStatus(taskId);
+      const state = data?.results?.state || data?.state || "";
+      if (String(state).toUpperCase() !== "SUCCESS") {
+        ElMessage.warning(t("licenseAdmin.taskStatusTip", { normalized: state }));
+        return;
+      }
+    } else if (!isTaskReady(row)) {
       ElMessage.warning(
-        t("licenseAdmin.taskStatusTip", { normalized: normalized }),
+        "当前练习尚未生成完成，暂不能复核题目。",
       );
       return;
     }
 
-    review.visible = true; // ✅ 弹窗提前展示
-
-    // ✅ 成功才继续加载题目列表
     const { data } = await getQaList({ id: row.id });
     const items = Array.isArray(data?.results) ? data.results : [];
 
@@ -478,55 +482,38 @@ async function openReview(row) {
       content: x.content ?? "",
       type: x.type ?? "",
     }));
-    // console.log("QA 列表", review.data.items);
+    review.visible = true;
     ElMessage.success(t("licenseAdmin.loadSuccess", { num: items.length }));
   } catch (e) {
     console.error("[复核失败]", e);
-    ElMessage.warning(e.message || t("licenseAdmin.loadFail"));
+    ElMessage.warning((e as any)?.message || t("licenseAdmin.loadFail"));
   } finally {
     review.loading = false;
   }
 }
 
-async function handleSaveReview(payload) {
-  try {
-    const filename = review.data.fileName || review.currentRow?.fileName;
-    const items = Array.isArray(payload?.items)
-      ? payload.items
-      : review.data.items;
-    const body = {
-      filename,
-      results: items.map(({ question, answer, position, content, type }) => ({
-        question,
-        answer,
-        position,
-        content,
-        type,
-      })),
-      sync: !!payload?.sync,
-      user_id: String(userInfo.value.id),
-    };
-    await saveQaList(body);
-    ElMessage.success(
-      payload?.sync ? t("licenseAdmin.saveSuccess") : t("common.saveSuccess"),
-    );
-    review.visible = false;
-    await load();
-  } catch (e) {
-    console.error("[保存失败]", e);
-    ElMessage.error(t("common.saveError"));
-  }
-}
-function handleRename(newTitle) {
-  if (review.currentRow) review.currentRow.title = newTitle;
-  ElMessage.success(t("licenseAdmin.nameSuccess"));
-}
-function handleRegen() {
-  ElMessage.success(t("licenseAdmin.relaodSuccess"));
-}
-function handleAddDoc() {
-  ElMessage.success(t("licenseAdmin.addDoc"));
-}
+const taskState = (row) => String(row.task_status || "").toUpperCase();
+const isTaskReady = (row) =>
+  taskState(row) === "SUCCESS" || Number(row.percent) >= 100;
+const hasTaskPercent = (row) =>
+  row.percent !== null &&
+  row.percent !== undefined &&
+  row.percent !== "" &&
+  Number.isFinite(Number(row.percent));
+const taskPercent = (row) =>
+  Math.min(100, Math.max(0, Number(row.percent) || 0));
+const taskLabel = (row) => {
+  const state = taskState(row);
+  if (state === "PENDING") return "生成中";
+  if (state === "FAILURE") return "生成失败";
+  return state || "等待生成";
+};
+const taskTagType = (row) => {
+  const state = taskState(row);
+  if (state === "FAILURE") return "danger";
+  if (state === "PENDING") return "warning";
+  return "info";
+};
 
 async function onDelete(row) {
   try {
@@ -550,9 +537,9 @@ async function onDelete(row) {
     ElMessage.success(t("common.deleteSuccess"));
     proTable.value?.getTableList();
   } catch (e) {
-    // ❗注意：catch 现在用于处理逻辑异常或 throw 抛出的错误
-    console.error("[删除失败]", e);
-    // ElMessage.error(e.message || "删除失败");
+    if (e !== "cancel" && e !== "close") {
+      ElMessage.error((e as any)?.message || t("common.deleteError"));
+    }
   }
 }
 const batchDelete = async (id: string[], list: any[]) => {
@@ -573,7 +560,11 @@ const batchDelete = async (id: string[], list: any[]) => {
       proTable.value?.clearSelection();
       proTable.value?.getTableList();
     })
-    .catch(() => {});
+    .catch((error) => {
+      if (error !== "cancel" && error !== "close") {
+        ElMessage.error((error as any)?.message || t("common.deleteError"));
+      }
+    });
 };
 
 const rowInfo = ref<any>({});
@@ -809,7 +800,7 @@ async function startImport() {
       console.error("[导入失败]", e);
       ElMessage.error(
         t("licenseAdmin.importFail", {
-          msg: e.message || t("common.vailderror"),
+          msg: (e as any)?.message || t("common.vailderror"),
         }),
       );
     } finally {
@@ -833,6 +824,27 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+.practice-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.practice-page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px;
+}
+.practice-page-head h1 {
+  margin: 0;
+  color: #26364a;
+  font-size: 24px;
+}
+.practice-page-head p {
+  margin: 6px 0 0;
+  color: #7b8796;
+  font-size: 13px;
 }
 .thumb {
   width: 36px;
@@ -891,5 +903,14 @@ onUnmounted(() => {
 }
 .upload-file :deep(.el-form-item__content) div:nth-of-type(1) {
   width: 100%;
+}
+.task-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 118px;
+}
+.task-status :deep(.el-progress) {
+  width: 58px;
 }
 </style>

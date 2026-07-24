@@ -132,9 +132,10 @@ export const getQaList = (params) => {
   return api.post("/v1/dataprep/qa/list", params);
 };
 // 保存 QA（复核完成后）
-export async function saveQaList(sop_info_id, records) {
+export function saveQaList({ sop_info_id, file_name, records }) {
   return api.post("/v1/dataprep/qa/save", {
     sop_info_id,
+    file_name,
     records,
   });
 }
