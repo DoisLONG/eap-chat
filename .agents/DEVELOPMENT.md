@@ -52,3 +52,8 @@ D:\PL\eap-chat
 - 不启动、停止、删除、重建容器；不构建、删除、拉取镜像。
 - 不修改数据库、不执行迁移、不修改 `docker.env`。
 - 不使用 PowerShell 脚本。
+
+## SOP 分类（迁移待执行）
+
+- 练习页通过 `/sop-api/v1/dataprep/sop/categories/tree` 读取正式分类树；浏览器代理仍使用既有 `SOP_API_HOST`，未修改 `docker.env`。
+- 分类筛选只将“全部”作为前端状态；一级/二级分类 ID、名称和树结构均由 Dataprep 返回。生成练习和编辑 SOP 实际提交二级 `category_id`。

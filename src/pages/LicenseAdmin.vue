@@ -1,11 +1,5 @@
 <template>
-  <div class="table-box practice-page">
-    <div class="practice-page-head">
-      <div>
-        <h1>练习管理</h1>
-        <p>上传 SOP 生成题目，完成练习内容复核与维护。</p>
-      </div>
-    </div>
+  <div class="table-box">
     <ProTable
       ref="proTable"
       :columns="columns"
@@ -14,7 +8,7 @@
       :data-callback="dataCallback"
     >
       <template #searchForm>
-        <searchForm @search="handleSearch" />
+        <searchForm :categories="categoryTree" @search="handleSearch" />
       </template>
       <!-- 表格 header 按钮 -->
       <template #tableHeader="scope">
@@ -35,7 +29,7 @@
           {{ $t("common.batchDelete") }}
         </el-button>
       </template>
-      <template #keyword="{ row }">
+      <template #name="{ row }">
         <div class="doc-cell">
           <!-- <div class="thumb"></div> -->
           <div class="meta">
@@ -70,15 +64,31 @@
           </el-tag>
         </div>
       </template>
+      <template #category="{ row }">
+        <div v-if="row.category_id" class="category-cell">
+          <el-tag v-if="row.primary_category_name" effect="plain">
+            {{ row.primary_category_name }}
+          </el-tag>
+          <el-tag type="info" effect="plain">
+            {{ row.category_name || "未分类" }}
+          </el-tag>
+        </div>
+        <span v-else class="uncategorized">未分类</span>
+      </template>
+      <template #created_at="{ row }">
+        {{ formatDateTime(row.created_at) }}
+      </template>
+      <template #updated_at="{ row }">
+        {{ formatDateTime(row.updated_at) }}
+      </template>
       <!-- 表格操作 -->
       <template #operation="scope">
-        <!-- <el-button
+        <el-button
           type="primary"
           link
-          :icon="View"
-          @click="openDrawer('复核', scope.row)"
-          >{{ $t("licenseAdmin.examLinkText") }}</el-button
-        > -->
+          @click="openReview(scope.row)"
+          >复核题目</el-button
+        >
         <el-button
           type="primary"
           link
@@ -133,6 +143,34 @@
                 :key="oitem.value"
                 :label="oitem.label"
                 :value="oitem.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item style="width: 50%" label="所属类别" prop="primary_category_id">
+            <el-select
+              v-model="importDlg.primary_category_id"
+              placeholder="请选择所属类别"
+              @change="changeImportPrimaryCategory"
+            >
+              <el-option
+                v-for="category in categoryTree"
+                :key="category.id"
+                :label="category.name"
+                :value="category.id"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item style="width: 50%" label="细分方向" prop="category_id">
+            <el-select
+              v-model="importDlg.category_id"
+              placeholder="请选择细分方向"
+              :disabled="!importDlg.primary_category_id"
+            >
+              <el-option
+                v-for="category in importSecondaryCategories"
+                :key="category.id"
+                :label="category.name"
+                :value="category.id"
               />
             </el-select>
           </el-form-item>
@@ -289,6 +327,7 @@
     <editDrawer
       v-if="editDlg.visible"
       :rowInfo="rowInfo"
+      :categories="categoryTree"
       @refresh="handleUpate"
       @close="editDlg.visible = false"
     />
@@ -311,6 +350,7 @@ import {
   deleteSop,
   getQaList,
   getTaskStatus,
+  getSopCategoryTree,
 } from "@/services/sop.api";
 import {
   getCompanyList,
@@ -334,6 +374,7 @@ const ruleFormRef = ref<FormInstance>();
 
 const proTable = ref<ProTableInstance>();
 const initParam = reactive({});
+const categoryTree = ref<any[]>([]);
 
 const strategyList = computed(() => [
   { label: t("licenseAdmin.allMode"), value: "all" },
@@ -359,9 +400,25 @@ const dataCallback = (data: any) => {
     };
   });
   return {
-    list: list,
+    list,
     total: data?.results?.total || 0,
   };
+};
+
+const formatDateTime = (value: unknown) => {
+  if (!value) return "-";
+  return String(value).replace("T", " ").replace(/\.\d+(Z)?$/, "");
+};
+
+const loadCategoryTree = async () => {
+  try {
+    const { data } = await getSopCategoryTree();
+    if (data?.status !== 200) throw new Error(data?.message || "分类加载失败");
+    categoryTree.value = Array.isArray(data?.results) ? data.results : [];
+  } catch (error) {
+    categoryTree.value = [];
+    ElMessage.error((error as any)?.message || "分类加载失败");
+  }
 };
 
 const getTableList = (params: any) => {
@@ -374,32 +431,14 @@ const columns = computed<ColumnProps[]>(() => {
   return [
     { type: "selection", fixed: "left", width: 70 },
     {
-      prop: "keyword",
-      label: "练习名称",
-      i18nKey: "licenseAdmin.keyword",
+      prop: "name",
+      label: "名称",
       minWidth: 250,
-      search: {
-        el: "input",
-      },
     },
     {
-      prop: "company_name",
-      label: "公司",
-      i18nKey: "licenseAdmin.company",
-      width: 120,
-    },
-    {
-      prop: "department_name",
-      label: "部门",
-      i18nKey: "licenseAdmin.deptment",
-      width: 120,
-    },
-    {
-      prop: "position_name",
-      label: "岗位",
-
-      i18nKey: "licenseAdmin.position",
-      width: 120,
+      prop: "category",
+      label: "所属类别",
+      minWidth: 180,
     },
     {
       prop: "version",
@@ -418,16 +457,11 @@ const columns = computed<ColumnProps[]>(() => {
       minWidth: 170,
     },
     {
-      prop: "taskStatus",
-      label: "题目状态",
-      minWidth: 160,
-    },
-    {
       prop: "operation",
       label: "操作",
       i18nKey: "common.operate",
       fixed: "right",
-      width: 200,
+      width: 240,
     },
   ];
 });
@@ -585,6 +619,8 @@ const importDlg = reactive({
   position_id: "",
   company_id: "",
   department_id: "",
+  primary_category_id: "",
+  category_id: "",
   running: false,
   strategy: "all",
   start_time: "",
@@ -605,6 +641,8 @@ const rules = reactive({
   position_id: [
     { required: true, message: t("licenseAdmin.positionPlaceholder") },
   ],
+  primary_category_id: [{ required: true, message: "请选择所属类别" }],
+  category_id: [{ required: true, message: "请选择细分方向" }],
   start_time: [
     { required: true, message: t("common.publishTimePlaceholder") },
     {
@@ -651,6 +689,15 @@ const uploadTypeList = computed(() => {
     { label: t("licenseAdmin.risk"), value: "risk" },
   ];
 });
+const importSecondaryCategories = computed(() => {
+  const primary = categoryTree.value.find(
+    (category) => category.id === importDlg.primary_category_id,
+  );
+  return primary?.children || [];
+});
+const changeImportPrimaryCategory = () => {
+  importDlg.category_id = "";
+};
 // 公司部门岗位
 const companyList = ref<{ label: string; value: string }[]>([]);
 const deptList = ref<{ label: string; value: string }[]>([]);
@@ -715,6 +762,8 @@ function resetImportDlg() {
   importDlg.company_id = "";
   importDlg.department_id = "";
   importDlg.position_id = "";
+  importDlg.primary_category_id = "";
+  importDlg.category_id = "";
   importDlg.start_time = "";
   importDlg.end_time = "";
   ruleFormRef.value?.resetFields();
@@ -784,6 +833,7 @@ async function startImport() {
         importDlg.strategy,
         importDlg.start_time,
         importDlg.end_time,
+        importDlg.category_id,
       );
 
       console.log("generateQa", res);
@@ -811,6 +861,7 @@ async function startImport() {
 // 5s轮询接口
 const listTimer = ref();
 onMounted(() => {
+  loadCategoryTree();
   listTimer.value = setInterval(() => {
     proTable.value?.getTableList();
   }, 5000);
@@ -824,27 +875,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-.practice-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.practice-page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 2px;
-}
-.practice-page-head h1 {
-  margin: 0;
-  color: #26364a;
-  font-size: 24px;
-}
-.practice-page-head p {
-  margin: 6px 0 0;
-  color: #7b8796;
-  font-size: 13px;
 }
 .thumb {
   width: 36px;
@@ -903,6 +933,14 @@ onUnmounted(() => {
 }
 .upload-file :deep(.el-form-item__content) div:nth-of-type(1) {
   width: 100%;
+}
+.category-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.uncategorized {
+  color: #98a2b3;
 }
 .task-status {
   display: flex;

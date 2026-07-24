@@ -16,10 +16,11 @@
 - 左侧菜单渲染：`D:\PL\eap-chat\src\layouts\LayoutVertical\index.vue`、`src\layouts\components\Menu\SubMenu.vue`
 - 练习管理页面：`D:\PL\eap-chat\src\pages\LicenseAdmin.vue`
 - 子组件：`src\pages\components\licenseAdmin\searchForm.vue`、`editDrawer.vue`、`src\components\exam\ReviewDialog.vue`
-- 练习 API：`D:\PL\eap-chat\src\services\sop.api.js`；组织筛选 API：`src\services\company.service.js`
+- 练习 API：`D:\PL\eap-chat\src\services\sop.api.js`；`company.service.js` 仍供生成练习弹窗的组织选择使用，已不用于列表筛选。
 - 练习浏览器前缀：`/sop-api`，由 `SOP_API_HOST` 转发至运行态 `118.196.142.69:6007`；组织选择经 `/companyapi`、`COMPANY_API_HOST` 至 `118.196.142.69:8010`。
 - QA 保存已统一：`POST /sop-api/v1/dataprep/qa/save`，请求体为 `{ sop_info_id, file_name, records }`。每条记录必须有 `question`、`answer`、`content`；当前业务还必须传有效 `sop_info_id` 才能创建版本。
 - 练习页面已在原路由内完成第三阶段 A 改造：`LicenseAdmin.vue`、`searchForm.vue`、`editDrawer.vue`、`ReviewDialog.vue` 和 `sop.api.js`。无后端、数据库、菜单或路由改动。
+- 当前筛选区没有独立顶部标题，含一级/二级分类按钮和名称搜索。分别使用 `activePrimaryCategory`、`activeSecondaryCategory`；一级“全部”隐藏二级区域。列表优先匹配 `primary_category`、`secondary_category`、`sop_type`、`sop_type_name`、`category`、`category_name`，并对单类型字段采用二级到一级的前端兼容映射；无分类字段的记录仅显示在“全部”。
 
 ## 参考与考试
 
@@ -31,6 +32,12 @@
 
 ## 下一步
 
-1. 由用户手动验证练习列表、名称/组织筛选、SOP 上传生成、任务状态、QA 新增编辑删除保存、单条/批量删除和 SOP 编辑。
+1. 由用户手动验证练习列表、名称与分类按钮筛选、SOP 上传生成、任务状态、QA 新增编辑删除保存、单条/批量删除和 SOP 编辑。
 2. 如需分类或从资料库选择文件，先确认正式分类数据源、资料接口与 SOP 的关系；不得使用 `reference-ui/category-filter.js` 的原型常量。
 3. 考试管理仍未实施。获得确认后，才从 `src/stores/modules/auth.ts`、`src/router/index.js` 和实际后端契约开始最小入口改动。
+
+## SOP 分类（等待用户执行后端迁移）
+
+- 正式接口：`POST /sop-api/v1/dataprep/sop/categories/tree`；练习列表 `POST /sop-api/v1/dataprep/sops` 新增 `name`、`primary_category_id`、`category_id`。
+- `LicenseAdmin.vue`、`searchForm.vue`、`editDrawer.vue` 与 `sop.api.js` 已接入分类树和二级分类保存。列表只展示名称、所属类别、版本、创建/更新时间和操作；无分类 SOP 显示“未分类”。
+- 后端迁移未执行前，分类树和含 `category_id` 的列表 SQL 不可用于本地库；用户需先执行 `sql/migrations/20260724_add_sop_category.sql`。

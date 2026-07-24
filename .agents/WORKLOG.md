@@ -60,3 +60,22 @@
 - 未修改 `D:\PL\eap\beat-backend` 的正式代码或文档；后端保存契约可由前端修正匹配。
 - 未修改数据库、迁移、Docker、`docker.env`、菜单、路由或考试相关页面/接口。
 - 未将参考原型的分类常量、localStorage 数据或资料库接口写入正式练习页面。
+
+## 练习管理顶部与筛选区调整
+
+- 修改 `src/pages/LicenseAdmin.vue`：删除顶部“练习管理”标题和说明区，以及对应样式；其余表格、生成、复核、编辑、删除、分页和接口逻辑保持不变。
+- 修改 `src/pages/components/licenseAdmin/searchForm.vue`：删除公司、部门、岗位、展开/收起和带删除图标的重置控件；替换为“全部 / 产品 / 运营 / 技术”分类按钮、名称搜索、搜索和重置。
+- 分类切换会重新查询列表；当前 SOP 列表接口不支持分类参数，前端只对返回项中的 `sop_type`、`sop_type_name`、`category` 作精确匹配，无法匹配的记录仅在“全部”显示。
+- 未修改后端、数据库、接口、Docker 或考试管理；未执行构建和测试。
+
+## 练习管理二级分类筛选
+
+- 修改 `src/pages/components/licenseAdmin/searchForm.vue`：恢复产品、运营、技术各自的二级分类区域；一级“全部”时隐藏，一级切换时自动选择对应“全部××”，重置时清空并隐藏。
+- 修改 `src/pages/LicenseAdmin.vue`：分别维护 `activePrimaryCategory` 和 `activeSecondaryCategory`，优先用列表返回的真实分类字段匹配；对单类型字段使用 AI Portal、AI Hub、BEAT、BAMS、公司章程、K8s 到一级分类的前端兼容映射。
+- 未修改后端接口、数据库或考试管理；未执行构建和测试。
+
+## SOP 真实分类接入
+
+- `searchForm.vue` 改为由分类树动态渲染一级、二级按钮；“全部”及“全部{一级名称}”仅为前端筛选项。一次一级或二级点击只触发一次列表请求。
+- `LicenseAdmin.vue` 请求分类树，列表将名称、类别、版本和格式化时间作为可见列；公司、部门、岗位和题目状态列已隐藏，复核仍保留在操作列。
+- 生成练习与编辑抽屉均要求先选一级、再选二级分类，并仅提交 `category_id`；`sop.api.js` 增加分类树调用及上传分类参数。未运行构建或测试。

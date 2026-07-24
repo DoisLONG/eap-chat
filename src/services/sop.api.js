@@ -50,6 +50,7 @@ export async function generateQa(
   strategy,
   start_time,
   end_time,
+  category_id,
 ) {
   const form = new FormData();
   files.forEach((file) => form.append("files", file));
@@ -57,6 +58,7 @@ export async function generateQa(
   form.append("position_id", position_id);
   form.append("strategy", strategy);
   form.append("start_time", start_time);
+  form.append("category_id", category_id);
   if (end_time) {
     form.append("end_time", end_time);
   }
@@ -138,6 +140,10 @@ export function saveQaList({ sop_info_id, file_name, records }) {
     file_name,
     records,
   });
+}
+
+export function getSopCategoryTree() {
+  return api.post("/v1/dataprep/sop/categories/tree");
 }
 
 // 删除某个 SOP 文件

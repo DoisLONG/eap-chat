@@ -20,6 +20,34 @@
           clearable
         ></el-input>
       </el-form-item>
+      <el-form-item label="所属类别" prop="primary_category_id">
+        <el-select
+          v-model="operateInfo.primary_category_id"
+          placeholder="请选择所属类别"
+          @change="changePrimaryCategory"
+        >
+          <el-option
+            v-for="category in categories"
+            :key="category.id"
+            :label="category.name"
+            :value="category.id"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="细分方向" prop="category_id">
+        <el-select
+          v-model="operateInfo.category_id"
+          placeholder="请选择细分方向"
+          :disabled="!operateInfo.primary_category_id"
+        >
+          <el-option
+            v-for="category in secondaryCategories"
+            :key="category.id"
+            :label="category.name"
+            :value="category.id"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item :label="$t('licenseAdmin.company')" prop="company_id">
         <el-select
           v-model="operateInfo!.company_id"
@@ -75,7 +103,7 @@
 </template>
 
 <script setup lang="ts" name="UserDrawer">
-import { ref, reactive, toRefs } from "vue";
+import { computed, ref, reactive, toRefs } from "vue";
 import { ElMessage, FormInstance } from "element-plus";
 import {
   getCompanyList,
@@ -98,17 +126,33 @@ const rules = reactive({
   position_id: [
     { required: true, message: t("licenseAdmin.positionPlaceholder") },
   ],
+  primary_category_id: [{ required: true, message: "请选择所属类别" }],
+  category_id: [{ required: true, message: "请选择细分方向" }],
 });
 const submitLoading = ref(false);
 
 const props = defineProps<{
   rowInfo: any;
+  categories: Array<{ id: number; name: string; children?: Array<{ id: number; name: string }> }>;
 }>();
 
 const { rowInfo } = toRefs(props);
 
-const operateInfo = ref<any>({ ...rowInfo.value });
+const operateInfo = ref<any>({
+  ...rowInfo.value,
+  primary_category_id: rowInfo.value?.primary_category_id || "",
+  category_id: rowInfo.value?.category_id || "",
+});
 const drawerVisible = ref(true);
+const secondaryCategories = computed(() => {
+  const primary = props.categories.find(
+    (category) => category.id === operateInfo.value.primary_category_id,
+  );
+  return primary?.children || [];
+});
+const changePrimaryCategory = () => {
+  operateInfo.value.category_id = "";
+};
 
 // 公司部门岗位
 const companyList = ref<{ label: string; value: string }[]>([]);
@@ -183,6 +227,7 @@ const handleSubmit = () => {
         company_id: operateInfo.value.company_id,
         department_id: operateInfo.value.department_id,
         position_id: operateInfo.value.position_id,
+        category_id: operateInfo.value.category_id,
       };
       const res = await updateSopTitle(params);
       if (res.data.status !== 200) {

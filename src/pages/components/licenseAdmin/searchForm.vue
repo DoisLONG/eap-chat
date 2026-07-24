@@ -1,317 +1,202 @@
 <template>
   <div class="card table-search">
-    <div class="search-head">
-      <h2>练习筛选</h2>
-      <span>按名称和组织范围查询已生成的练习</span>
-    </div>
-    <el-form ref="formRef" :model="searchParam">
-      <Grid
-        ref="gridRef"
-        :collapsed="collapsed"
-        :gap="[20, 0]"
-        :cols="searchCol"
+    <h2 class="search-title">练习筛选</h2>
+
+    <div class="category-tabs" aria-label="一级分类">
+      <button
+        v-for="category in primaryCategories"
+        :key="category.id ?? 'all'"
+        type="button"
+        class="category-button"
+        :class="{ active: category.id === null ? !activePrimaryCategory : activePrimaryCategory?.id === category.id }"
+        :aria-pressed="category.id === null ? !activePrimaryCategory : activePrimaryCategory?.id === category.id"
+        @click="selectPrimaryCategory(category)"
       >
-        <GridItem
-          v-for="(item, index) in columns"
-          :key="item.prop"
-          v-bind="getResponsive()"
-          :index="index"
-        >
-          <el-form-item
-            v-if="item.search.el === 'input'"
-            :label-width="language === 'zh' ? '80px' : '160px'"
-          >
-            <template #label>
-              <el-space :size="4">
-                <span>{{ item.label }}</span>
-              </el-space>
-              <span>&nbsp;:</span>
-            </template>
-            <el-input
-              v-model="searchParam[item.prop]"
-              :placeholder="item.placeholder"
-              clearable
-              @keyup.enter="search"
-            />
-          </el-form-item>
-          <el-form-item v-if="item.search.el === 'select'" label-width="80px">
-            <template #label>
-              <el-space :size="4">
-                <span>{{ item.label }}</span>
-              </el-space>
-              <span>&nbsp;:</span>
-            </template>
-            <el-select
-              v-model="searchParam[item.prop]"
-              :placeholder="item.placeholder"
-              @change="item.change && item.change()"
-            >
-              <el-option
-                v-for="oitem in item.enum || []"
-                :key="oitem.value"
-                :label="oitem.label"
-                :value="oitem.value"
-              />
-            </el-select>
-          </el-form-item>
-        </GridItem>
-        <GridItem suffix>
-          <div class="operation">
-            <el-button type="primary" :icon="Search" @click="search">
-              {{ $t("common.search") }}
-            </el-button>
-            <el-button :icon="Delete" @click="reset">
-              {{ $t("common.reset") }}
-            </el-button>
-            <el-button
-              v-if="showCollapse"
-              type="primary"
-              link
-              class="search-isOpen"
-              @click="collapsed = !collapsed"
-            >
-              {{ collapsed ? $t("common.expand") : $t("common.collapse") }}
-              <el-icon class="el-icon--right">
-                <component :is="collapsed ? ArrowDown : ArrowUp"></component>
-              </el-icon>
-            </el-button>
-          </div>
-        </GridItem>
-      </Grid>
-    </el-form>
+        {{ category.name }}
+      </button>
+    </div>
+
+    <div v-if="activePrimaryCategory" class="secondary-tabs">
+      <button
+        v-for="category in currentSecondaryCategories"
+        :key="category.id ?? 'all-secondary'"
+        type="button"
+        class="secondary-button"
+        :class="{ active: category.id === null ? !activeSecondaryCategory : activeSecondaryCategory?.id === category.id }"
+        :aria-pressed="category.id === null ? !activeSecondaryCategory : activeSecondaryCategory?.id === category.id"
+        @click="selectSecondaryCategory(category)"
+      >
+        {{ category.name }}
+      </button>
+    </div>
+
+    <div class="search-row">
+      <el-form class="name-form" :model="searchParam" @submit.prevent="search">
+        <el-form-item label="名称：">
+          <el-input
+            v-model="searchParam.name"
+            placeholder="请输入名称"
+            clearable
+            @keyup.enter="search"
+          />
+        </el-form-item>
+      </el-form>
+      <div class="operation">
+        <el-button type="primary" :icon="Search" @click="search">
+          搜索
+        </el-button>
+        <el-button @click="reset">重置</el-button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts" name="SearchForm">
 import { computed, ref } from "vue";
+import { Search } from "@element-plus/icons-vue";
 import { removeEmptyProp } from "@/utils";
-import { BreakPoint } from "@/components/Grid/interface";
-import {
-  Delete,
-  Search,
-  ArrowDown,
-  ArrowUp,
-} from "@element-plus/icons-vue";
-import { ElMessage } from "element-plus";
-import Grid from "@/components/Grid/index.vue";
-import GridItem from "@/components/Grid/components/GridItem.vue";
-import { storeToRefs } from "pinia";
-import {
-  getCompanyList,
-  getPostList,
-  getDeptList,
-} from "@/services/company.service";
-import { useI18n } from "vue-i18n";
-import { useUserStore } from "@/stores/modules/user";
-import { useGlobalStore } from "@/stores/modules/global";
 
-const globalStore = useGlobalStore();
-const language = computed(() => globalStore.language);
-
-const userStore = useUserStore();
-const { userInfo } = storeToRefs(userStore);
-
-const { t } = useI18n();
-
-const searchCol = { xs: 1, sm: 2, md: 2, lg: 3, xl: 4 };
-
-const companyList = ref<{ label: string; value: string }[]>([]);
-const deptList = ref<{ label: string; value: string }[]>([]);
-const postList = ref<{ label: string; value: string }[]>([]);
-const searchParam = ref({
-  keyword: "",
-  company_id: "",
-  department_id: "",
-  position_id: "",
-});
-const queryCompany = async () => {
-  const params: any = {};
-  try {
-    const res = await getCompanyList(params);
-    const data = res.data.results || [];
-    companyList.value = data.map((item: any) => ({
-      label: item.company_name,
-      value: item.company_id,
-    }));
-  } catch (error) {
-    ElMessage.error("公司筛选数据加载失败");
-  }
-};
-queryCompany();
-const queryDept = async () => {
-  const params: any = {};
-  if (searchParam.value.company_id) {
-    params.company_id = searchParam.value.company_id;
-  }
-  try {
-    const res = await getDeptList(params);
-    const data = res.data.results || [];
-    deptList.value = data.map((item: any) => ({
-      label: item.department_name,
-      value: item.department_id,
-    }));
-  } catch (error) {
-    ElMessage.error("部门筛选数据加载失败");
-  }
-};
-queryDept();
-
-const queryPost = async () => {
-  const params: any = {};
-  if (searchParam.value.company_id) {
-    params.company_id = searchParam.value.company_id;
-  }
-  if (searchParam.value.department_id) {
-    params.department_id = searchParam.value.department_id;
-  }
-  try {
-    const res = await getPostList(params);
-    const data = res.data.results || [];
-    postList.value = data.map((item: any) => ({
-      label: item.position_name,
-      value: Number(item.position_id) || item.position_id,
-    }));
-  } catch (error) {
-    ElMessage.error("岗位筛选数据加载失败");
-  }
-};
-queryPost();
-
-const columns = computed(() => {
-  let searchOption = [
-    {
-      prop: "keyword",
-      label: t("licenseAdmin.keyword"),
-      placeholder: t("licenseAdmin.keywordPlaceholder"),
-      search: {
-        el: "input",
-      },
-    },
-  ];
-  if (userInfo.value?.name === "superadmin") {
-    searchOption = [
-      {
-        prop: "keyword",
-        label: t("licenseAdmin.keyword"),
-        placeholder: t("licenseAdmin.keywordPlaceholder"),
-        search: {
-          el: "input",
-        },
-      },
-      {
-        prop: "company_id",
-        label: t("licenseAdmin.company"),
-        placeholder: t("licenseAdmin.companyPlaceholder"),
-        enum: companyList.value,
-        change: () => {
-          queryDept();
-          postList.value = [];
-          searchParam.value.department_id = "";
-          searchParam.value.position_id = "";
-        },
-        search: {
-          el: "select",
-        },
-      },
-      {
-        prop: "department_id",
-        label: t("licenseAdmin.deptment"),
-        placeholder: t("licenseAdmin.deptmentPlaceholder"),
-        enum: deptList.value,
-        change: () => {
-          queryPost();
-          searchParam.value.position_id = "";
-        },
-        search: {
-          el: "select",
-        },
-      },
-      {
-        prop: "position_id",
-        label: t("licenseAdmin.position"),
-        placeholder: t("licenseAdmin.positionPlaceholder"),
-        enum: postList.value,
-        search: {
-          el: "select",
-        },
-      },
-    ];
-  }
-  return searchOption;
-});
-
-// 获取响应式设置
-const getResponsive = () => {
-  return {
-    span: undefined,
-    offset: 0,
-    xs: undefined,
-    sm: undefined,
-    md: undefined,
-    lg: undefined,
-    xl: undefined,
-  };
-};
-
-// 是否默认折叠搜索项
-const collapsed = ref(true);
+const props = defineProps<{
+  categories: Array<{ id: number; name: string; children?: Array<{ id: number; name: string }> }>;
+}>();
+const activePrimaryCategory = ref<{
+  id: number;
+  name: string;
+  children?: Array<{ id: number; name: string }>;
+} | null>(null);
+const activeSecondaryCategory = ref<{ id: number; name: string } | null>(null);
+const searchParam = ref({ name: "" });
 const emits = defineEmits(["search"]);
+const primaryCategories = computed(() => [
+  { id: null, name: "全部" },
+  ...props.categories,
+]);
+const currentSecondaryCategories = computed(
+  () =>
+    activePrimaryCategory.value
+      ? [
+          { id: null, name: `全部${activePrimaryCategory.value.name}` },
+          ...(activePrimaryCategory.value.children || []),
+        ]
+      : [],
+);
+
 const search = () => {
-  emits("search", removeEmptyProp(searchParam.value));
+  const params: Record<string, string | number> = {
+    ...removeEmptyProp(searchParam.value),
+  };
+  if (activePrimaryCategory.value?.id != null) {
+    params.primary_category_id = activePrimaryCategory.value.id;
+  }
+  if (activeSecondaryCategory.value?.id != null) {
+    params.category_id = activeSecondaryCategory.value.id;
+  }
+  emits("search", params);
+};
+
+const selectPrimaryCategory = (category: { id: number | null; name: string; children?: Array<{ id: number; name: string }> }) => {
+  activePrimaryCategory.value = category.id === null ? null : category;
+  activeSecondaryCategory.value = null;
+  search();
+};
+
+const selectSecondaryCategory = (category: { id: number | null; name: string }) => {
+  activeSecondaryCategory.value = category.id === null ? null : category;
+  search();
 };
 
 const reset = () => {
-  console.log("reset");
-  searchParam.value = {
-    keyword: "",
-    company_id: "",
-    department_id: "",
-    position_id: "",
-  };
-  emits("search", {});
+  activePrimaryCategory.value = null;
+  activeSecondaryCategory.value = null;
+  searchParam.value.name = "";
+  search();
 };
-
-// 获取响应式断点
-const gridRef = ref();
-const breakPoint = computed<BreakPoint>(() => gridRef.value?.breakPoint);
-
-// 判断是否显示 展开/合并 按钮
-const showCollapse = computed(() => {
-  let show = false;
-  columns.value.reduce((prev, current) => {
-    prev +=
-      (current.search![breakPoint.value]?.span ?? current.search?.span ?? 1) +
-      (current.search![breakPoint.value]?.offset ??
-        current.search?.offset ??
-        0);
-    if (typeof searchCol !== "number") {
-      if (prev >= searchCol[breakPoint.value]) show = true;
-    } else {
-      if (prev >= searchCol) show = true;
-    }
-    return prev;
-  }, 0);
-  return show;
-});
 </script>
+
 <style scoped>
-.search-head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.search-head h2 {
-  margin: 0;
+.search-title {
+  margin: 0 0 12px;
   color: #26364a;
   font-size: 16px;
 }
-.search-head span {
-  color: #8b98a9;
+.category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.category-button {
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 6px;
+  background: #f1f4f8;
+  color: #475467;
+  cursor: pointer;
+}
+.category-button.active {
+  background: #1677ff;
+  color: #fff;
+}
+.secondary-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f6f8fc;
+}
+.secondary-button {
+  height: 30px;
+  padding: 0 14px;
+  border: 1px solid #e0e7f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #475467;
+  cursor: pointer;
   font-size: 12px;
 }
+.secondary-button.active {
+  border-color: #91bfff;
+  background: #eaf3ff;
+  color: #1677ff;
+}
+.search-row,
+.name-form,
 .operation {
   display: flex;
+  align-items: center;
+}
+.search-row {
+  gap: 16px;
+}
+.name-form {
+  flex: 1;
+  margin: 0;
+}
+.name-form :deep(.el-form-item) {
+  width: min(100%, 480px);
+  margin: 0;
+}
+.name-form :deep(.el-form-item__label) {
+  color: #344054;
+}
+.operation {
+  flex: none;
   gap: 8px;
+  margin-left: auto;
+}
+@media (max-width: 640px) {
+  .search-row {
+    flex-wrap: wrap;
+  }
+  .name-form,
+  .name-form :deep(.el-form-item) {
+    width: 100%;
+  }
+  .operation {
+    margin-left: 0;
+  }
 }
 </style>
