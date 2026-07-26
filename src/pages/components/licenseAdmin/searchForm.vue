@@ -114,10 +114,15 @@ const reset = () => {
 </script>
 
 <style scoped>
+.table-search {
+  margin-bottom: 9px;
+  padding: 14px;
+}
 .search-title {
   margin: 0 0 12px;
   color: #26364a;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
 }
 .category-tabs {
   display: flex;
@@ -126,13 +131,17 @@ const reset = () => {
   margin-bottom: 14px;
 }
 .category-button {
-  height: 32px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 6px;
+  height: 36px;
+  padding: 0 17px;
+  border: 1px solid transparent;
+  border-radius: 8px;
   background: #f1f4f8;
   color: #475467;
   cursor: pointer;
+}
+.category-button:hover {
+  background: #eaf3ff;
+  color: #1677ff;
 }
 .category-button.active {
   background: #1677ff;
@@ -148,7 +157,7 @@ const reset = () => {
   background: #f6f8fc;
 }
 .secondary-button {
-  height: 30px;
+  height: 32px;
   padding: 0 14px;
   border: 1px solid #e0e7f0;
   border-radius: 999px;
@@ -169,15 +178,19 @@ const reset = () => {
   align-items: center;
 }
 .search-row {
-  gap: 16px;
+  gap: 20px;
+  margin-top: 16px;
 }
 .name-form {
   flex: 1;
   margin: 0;
 }
 .name-form :deep(.el-form-item) {
-  width: min(100%, 480px);
+  width: 310px;
   margin: 0;
+}
+.name-form :deep(.el-input) {
+  width: 250px;
 }
 .name-form :deep(.el-form-item__label) {
   color: #344054;
@@ -193,6 +206,9 @@ const reset = () => {
   }
   .name-form,
   .name-form :deep(.el-form-item) {
+    width: 100%;
+  }
+  .name-form :deep(.el-input) {
     width: 100%;
   }
   .operation {

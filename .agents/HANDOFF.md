@@ -41,3 +41,15 @@
 - 正式接口：`POST /sop-api/v1/dataprep/sop/categories/tree`；练习列表 `POST /sop-api/v1/dataprep/sops` 新增 `name`、`primary_category_id`、`category_id`。
 - `LicenseAdmin.vue`、`searchForm.vue`、`editDrawer.vue` 与 `sop.api.js` 已接入分类树和二级分类保存。列表只展示名称、所属类别、版本、创建/更新时间和操作；无分类 SOP 显示“未分类”。
 - 后端迁移未执行前，分类树和含 `category_id` 的列表 SQL 不可用于本地库；用户需先执行 `sql/migrations/20260724_add_sop_category.sql`。
+
+## 练习管理视觉实现
+
+- 参考文件已改为 `D:\PL\HTML\管理端-练习.html`、`D:\PL\HTML\category-filter.js`。当前 Vue 页面不嵌入原型 HTML，分类和列表仍使用正式接口。
+- 筛选区使用动态分类树、36px 一级按钮与 32px 二级胶囊按钮；名称搜索单独成行。表格仅展示目标列，名称为标题/文件名双行，类别为一级/二级标签，未分类为灰色标签。
+- 操作列保留复核题目、编辑、删除；批量删除、分页、上传生成和 QA 流程未改变。列表请求错误时显示空列表而非遗留旧数据。
+
+## 练习编辑弹窗
+
+- `src\pages\components\licenseAdmin\editDrawer.vue` 现为 Element Plus 居中 `el-dialog`（标题“编辑练习”、`72vw`、最大 `1200px`、内容区滚动），不再使用右侧抽屉。
+- 弹窗复用父页传入的分类树；先选一级、再选二级，实际保存只调用既有 SOP 更新接口并提交二级 `category_id`。保存成功后向 `LicenseAdmin.vue` 触发既有 `refresh`，当前筛选/分页状态不变。
+- 上传类型、版本、当前文件和练习描述为只读展示：当前 SOP 更新接口未提供这些字段的持久化能力。编辑弹窗不加载 QA；题目复核仍只通过 `ReviewDialog.vue` 完成。

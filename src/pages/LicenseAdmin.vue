@@ -66,14 +66,20 @@
       </template>
       <template #category="{ row }">
         <div v-if="row.category_id" class="category-cell">
-          <el-tag v-if="row.primary_category_name" effect="plain">
+          <el-tag
+            v-if="row.primary_category_name"
+            effect="plain"
+            class="category-tag category-primary-tag"
+          >
             {{ row.primary_category_name }}
           </el-tag>
-          <el-tag type="info" effect="plain">
+          <el-tag type="info" effect="plain" class="category-tag category-secondary-tag">
             {{ row.category_name || "未分类" }}
           </el-tag>
         </div>
-        <span v-else class="uncategorized">未分类</span>
+        <el-tag v-else type="info" effect="plain" class="category-tag category-uncategorized">
+          未分类
+        </el-tag>
       </template>
       <template #created_at="{ row }">
         {{ formatDateTime(row.created_at) }}
@@ -83,26 +89,25 @@
       </template>
       <!-- 表格操作 -->
       <template #operation="scope">
-        <el-button
-          type="primary"
-          link
-          @click="openReview(scope.row)"
-          >复核题目</el-button
-        >
-        <el-button
-          type="primary"
-          link
-          :icon="EditPen"
-          @click="onEdit(scope.row)"
-          >{{ $t("common.edit") }}</el-button
-        >
-        <el-button
-          type="danger"
-          link
-          :icon="Delete"
-          @click="onDelete(scope.row)"
-          >{{ $t("common.delete") }}</el-button
-        >
+        <div class="table-actions">
+          <el-button type="primary" link @click="openReview(scope.row)">
+            复核题目
+          </el-button>
+          <el-button
+            type="primary"
+            link
+            :icon="EditPen"
+            @click="onEdit(scope.row)"
+            >{{ $t("common.edit") }}</el-button
+          >
+          <el-button
+            type="danger"
+            link
+            :icon="Delete"
+            @click="onDelete(scope.row)"
+            >{{ $t("common.delete") }}</el-button
+          >
+        </div>
       </template>
     </ProTable>
     <!-- 复核弹窗 -->
@@ -146,7 +151,7 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item style="width: 50%" label="所属类别" prop="primary_category_id">
+          <el-form-item style="width: 100%" label="所属类别" prop="primary_category_id">
             <el-select
               v-model="importDlg.primary_category_id"
               placeholder="请选择所属类别"
@@ -160,7 +165,7 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item style="width: 50%" label="细分方向" prop="category_id">
+          <el-form-item style="width: 100%" label="细分方向" prop="category_id">
             <el-select
               v-model="importDlg.category_id"
               placeholder="请选择细分方向"
@@ -392,11 +397,11 @@ const dataCallback = (data: any) => {
     const fileName = item.filename || "";
     const title = item.title || fileName.replace(/\.[^.]+$/, "");
     return {
+      ...item,
       title,
       fileName,
       task_id: item.task_id,
-      version: item.sop_version || "v1",
-      ...item,
+      version: item.sop_version || "-",
     };
   });
   return {
@@ -421,10 +426,15 @@ const loadCategoryTree = async () => {
   }
 };
 
-const getTableList = (params: any) => {
+const getTableList = async (params: any) => {
   let newParams = JSON.parse(JSON.stringify(params));
   newParams.user_id = String(userInfo.value.id);
-  return getSops(newParams);
+  try {
+    return await getSops(newParams);
+  } catch (error) {
+    ElMessage.error((error as any)?.message || "练习列表加载失败");
+    return { data: { results: { records: [], total: 0 } } };
+  }
 };
 // 表格配置项
 const columns = computed<ColumnProps[]>(() => {
@@ -939,8 +949,38 @@ onUnmounted(() => {
   flex-wrap: wrap;
   gap: 6px;
 }
-.uncategorized {
-  color: #98a2b3;
+.category-tag {
+  min-width: 52px;
+  height: 23px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 12px;
+}
+.category-primary-tag {
+  color: #1677ff;
+  background: #e6f4ff;
+}
+.category-secondary-tag {
+  color: #5f6b7a;
+  background: #f4f6f9;
+}
+.category-uncategorized {
+  color: #7b8492;
+  background: #f4f6f9;
+}
+.table-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  white-space: nowrap;
+}
+.table-actions :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+.table-box :deep(.el-table__cell) {
+  vertical-align: middle;
 }
 .task-status {
   display: flex;
