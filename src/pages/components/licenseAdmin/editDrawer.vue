@@ -117,16 +117,22 @@ const emits = defineEmits(["close", "refresh"]);
 const dialogVisible = ref(true);
 const submitLoading = ref(false);
 const ruleFormRef = ref<FormInstance>();
-const fileTypeOptions = [
-  { label: "SOP 文件", value: "sop" },
-  { label: "操作规程", value: "operation" },
-  { label: "应急演练", value: "emergency_drill" },
-  { label: "风险识别卡", value: "risk" },
-];
+const fileTypeOptions = ["PDF", "DOC", "DOCX", "XLS", "XLSX"].map((value) => ({ label: value, value }));
+const getFileType = (filename: string, fileType: string) => {
+  const extension = filename.split(".").pop()?.toUpperCase();
+  return fileTypeOptions.some((option) => option.value === extension)
+    ? extension
+    : fileTypeOptions.some((option) => option.value === fileType?.toUpperCase())
+      ? fileType.toUpperCase()
+      : "";
+};
 const operateInfo = reactive({
   title: props.rowInfo?.title || props.rowInfo?.filename || "",
   filename: props.rowInfo?.filename || props.rowInfo?.fileName || "",
-  file_type: props.rowInfo?.file_type || "",
+  file_type: getFileType(
+    props.rowInfo?.filename || props.rowInfo?.fileName || "",
+    props.rowInfo?.file_type || "",
+  ),
   sop_version: props.rowInfo?.sop_version || props.rowInfo?.version || "-",
   remark: props.rowInfo?.remark || props.rowInfo?.description || "",
   position_id: props.rowInfo?.position_id,
@@ -149,7 +155,7 @@ const selectedPrimaryCategory = computed(() =>
   ),
 );
 const fileTypeLabel = computed(
-  () => fileTypeOptions.find((option) => option.value === operateInfo.file_type)?.label || operateInfo.file_type || "未知类型",
+  () => operateInfo.file_type || "未知类型",
 );
 const categorySummary = computed(() => {
   const secondary = secondaryCategories.value.find(
@@ -220,6 +226,10 @@ const handleSubmit = () => {
 }
 .edit-form :deep(.el-form-item) {
   margin-bottom: 22px;
+  min-width: 0;
+}
+.edit-form :deep(.el-form-item__label) {
+  white-space: nowrap;
 }
 .edit-form :deep(.el-select),
 .edit-form :deep(.el-input) {

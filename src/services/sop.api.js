@@ -46,22 +46,19 @@ api.interceptors.response.use(
 export async function generateQa(
   files,
   file_type,
-  position_id,
   strategy,
-  start_time,
-  end_time,
   category_id,
+  position_id,
 ) {
   const form = new FormData();
   files.forEach((file) => form.append("files", file));
   form.append("file_type", file_type);
-  form.append("position_id", position_id);
-  form.append("strategy", strategy);
-  form.append("start_time", start_time);
-  form.append("category_id", category_id);
-  if (end_time) {
-    form.append("end_time", end_time);
+  const normalizedPositionId = String(position_id ?? "").trim().toLowerCase();
+  if (!["", "none", "null", "0"].includes(normalizedPositionId)) {
+    form.append("position_id", position_id);
   }
+  form.append("strategy", strategy);
+  form.append("category_id", category_id);
 
   return api.post("/v1/dataprep/generate_qa", form);
 }

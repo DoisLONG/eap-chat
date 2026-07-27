@@ -117,41 +117,43 @@
       @refresh="handleUpate"
     />
 
-    <!-- 导入 SOP 弹窗 -->
+    <!-- 生成练习弹窗 -->
     <el-dialog
       v-model="importDlg.visible"
+      class="practice-import-dialog"
       title="生成练习"
-      width="60%"
+      width="720px"
+      align-center
       :close-on-click-modal="false"
       @close="resetImportDlg"
     >
       <div class="import-body">
         <el-form
           ref="ruleFormRef"
-          label-width="110px"
+          class="import-form"
+          label-width="92px"
+          label-suffix="："
           :rules="rules"
           :model="importDlg"
         >
           <el-form-item
-            style="width: 50%"
-            :label="$t('licenseAdmin.uploadType')"
-            :label-width="language === 'th' ? '160px' : '110px'"
+            label="上传类型"
             prop="file_type"
           >
             <el-select
-              v-model="importDlg!.file_type"
-              :placeholder="$t('licenseAdmin.uploadTypePlaceholder')"
+              v-model="importDlg.file_type"
+              placeholder="请选择上传类型"
               @change="changeFileType"
             >
               <el-option
-                v-for="oitem in uploadTypeList"
+                v-for="oitem in fileTypeOptions"
                 :key="oitem.value"
                 :label="oitem.label"
                 :value="oitem.value"
               />
             </el-select>
           </el-form-item>
-          <el-form-item style="width: 100%" label="所属类别" prop="primary_category_id">
+          <el-form-item label="所属类别" prop="primary_category_id">
             <el-select
               v-model="importDlg.primary_category_id"
               placeholder="请选择所属类别"
@@ -165,7 +167,7 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item style="width: 100%" label="细分方向" prop="category_id">
+          <el-form-item label="细分方向" prop="category_id">
             <el-select
               v-model="importDlg.category_id"
               placeholder="请选择细分方向"
@@ -180,9 +182,7 @@
             </el-select>
           </el-form-item>
           <el-form-item
-            style="width: 50%"
             :label="$t('licenseAdmin.analysisMode')"
-            :label-width="language === 'zh' ? '110px' : '160px'"
             prop="strategy"
           >
             <el-select
@@ -199,7 +199,6 @@
             </el-select>
           </el-form-item>
           <el-form-item
-            style="width: 100%"
             :label="$t('licenseAdmin.selectFile')"
             class="upload-file"
           >
@@ -213,98 +212,15 @@
               :accept="importFileType"
             >
               <div class="el-upload__text">
-                <span
-                  v-html="
-                    $t('licenseAdmin.importTip', {
-                      importFileType: importFileType,
-                    })
-                  "
-                ></span>
+                拖拽或点击选择文件
+                <div class="el-upload__tip">仅支持 {{ importFileType || "选择上传类型后显示" }}</div>
               </div>
+              <template #file="{ file }">
+                <el-tooltip :content="file.name" placement="top">
+                  <span class="upload-file-name">{{ file.name }}</span>
+                </el-tooltip>
+              </template>
             </el-upload>
-          </el-form-item>
-          <el-form-item
-            style="width: 50%"
-            :label="$t('licenseAdmin.company')"
-            prop="company_id"
-          >
-            <el-select
-              v-model="importDlg!.company_id"
-              :placeholder="$t('licenseAdmin.companyPlaceholder')"
-              @change="changeCompany"
-            >
-              <el-option
-                v-for="oitem in companyList"
-                :key="oitem.value"
-                :label="oitem.label"
-                :value="oitem.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item
-            style="width: 50%"
-            :label="$t('licenseAdmin.deptment')"
-            prop="department_id"
-            :label-width="language === 'en' ? '160px' : '110px'"
-          >
-            <el-select
-              v-model="importDlg!.department_id"
-              :placeholder="$t('licenseAdmin.deptmentPlaceholder')"
-              @change="changeDept"
-            >
-              <el-option
-                v-for="oitem in deptList"
-                :key="oitem.value"
-                :label="oitem.label"
-                :value="oitem.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item
-            style="width: 50%"
-            :label="$t('licenseAdmin.position')"
-            prop="position_id"
-          >
-            <el-select
-              v-model="importDlg!.position_id"
-              :placeholder="$t('licenseAdmin.positionPlaceholder')"
-            >
-              <el-option
-                v-for="oitem in postList"
-                :key="oitem.value"
-                :label="oitem.label"
-                :value="oitem.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item
-            style="width: 50%"
-            :label="$t('common.publishTime')"
-            prop="start_time"
-            :label-width="language === 'en' ? '160px' : '110px'"
-          >
-            <el-date-picker
-              style="width: 100%"
-              v-model="importDlg!.start_time"
-              type="date"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              :placeholder="$t('common.publishTimePlaceholder')"
-            />
-          </el-form-item>
-          <el-form-item
-            style="width: 50%"
-            :label="$t('common.endTime')"
-            prop="end_time"
-          >
-            <el-date-picker
-              style="width: 100%"
-              v-model="importDlg!.end_time"
-              type="date"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              :placeholder="$t('common.endTimePlaceholder')"
-            />
           </el-form-item>
         </el-form>
       </div>
@@ -320,11 +236,7 @@
           :loading="importDlg.running"
           :disabled="!importDlg.files.length"
         >
-          {{
-            importDlg.running
-              ? $t("licenseAdmin.importing")
-              : $t("licenseAdmin.beginImport")
-          }}
+          生成
         </el-button>
       </template>
     </el-dialog>
@@ -357,18 +269,9 @@ import {
   getTaskStatus,
   getSopCategoryTree,
 } from "@/services/sop.api";
-import {
-  getCompanyList,
-  getPostList,
-  getDeptList,
-} from "@/services/company.service";
 import { useUserStore } from "@/stores/modules/user";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
-import { useGlobalStore } from "@/stores/modules/global";
-
-const globalStore = useGlobalStore();
-const language = computed(() => globalStore.language);
 
 const { t } = useI18n();
 
@@ -626,15 +529,10 @@ const importDlg = reactive({
   visible: false,
   files: [],
   file_type: "",
-  position_id: "",
-  company_id: "",
-  department_id: "",
   primary_category_id: "",
   category_id: "",
   running: false,
   strategy: "all",
-  start_time: "",
-  end_time: "",
 });
 
 const rules = reactive({
@@ -642,178 +540,60 @@ const rules = reactive({
   strategy: [
     { required: true, message: t("licenseAdmin.strategyPlaceholder") },
   ],
-  company_id: [
-    { required: true, message: t("licenseAdmin.companyPlaceholder") },
-  ],
-  department_id: [
-    { required: true, message: t("licenseAdmin.deptmentPlaceholder") },
-  ],
-  position_id: [
-    { required: true, message: t("licenseAdmin.positionPlaceholder") },
-  ],
   primary_category_id: [{ required: true, message: "请选择所属类别" }],
   category_id: [{ required: true, message: "请选择细分方向" }],
-  start_time: [
-    { required: true, message: t("common.publishTimePlaceholder") },
-    {
-      validator: (rule, value, callback) => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const startDate = new Date(value);
-        if (startDate < today) {
-          callback(new Error(t("common.publishTimeError")));
-        } else {
-          callback();
-        }
-      },
-      trigger: "blur",
-    },
-  ],
-  end_time: [
-    { required: true, message: t("common.endTimePlaceholder") },
-    {
-      validator: (rule, value, callback) => {
-        if (importDlg.start_time) {
-          const startDate = new Date(importDlg.start_time);
-          const endDate = new Date(value);
-          if (endDate < startDate) {
-            callback(new Error(t("common.endTimeError")));
-          } else {
-            callback();
-          }
-        } else {
-          callback();
-        }
-      },
-      trigger: "blur",
-    },
-  ],
 });
 
-// sop文件（excel、pdf），操作规程（word、pdf）、应急演练（word、pdf），风险识别卡（excel）
-const uploadTypeList = computed(() => {
-  return [
-    { label: t("licenseAdmin.sopFile"), value: "sop" },
-    { label: t("licenseAdmin.operation"), value: "operation" },
-    { label: t("licenseAdmin.emergency"), value: "emergency_drill" },
-    { label: t("licenseAdmin.risk"), value: "risk" },
-  ];
-});
+const fileTypeOptions = [
+  { label: "PDF", value: "PDF", parserType: "sop" },
+  { label: "DOC", value: "DOC", parserType: "operation" },
+  { label: "DOCX", value: "DOCX", parserType: "operation" },
+  { label: "XLS", value: "XLS", parserType: "sop" },
+  { label: "XLSX", value: "XLSX", parserType: "sop" },
+];
 const importSecondaryCategories = computed(() => {
   const primary = categoryTree.value.find(
-    (category) => category.id === importDlg.primary_category_id,
+    (category) => String(category.id) === String(importDlg.primary_category_id),
   );
   return primary?.children || [];
 });
 const changeImportPrimaryCategory = () => {
   importDlg.category_id = "";
 };
-// 公司部门岗位
-const companyList = ref<{ label: string; value: string }[]>([]);
-const deptList = ref<{ label: string; value: string }[]>([]);
-const postList = ref<{ label: string; value: string }[]>([]);
-const queryCompany = () => {
-  const params: any = {};
-  getCompanyList(params).then((res) => {
-    const data = res.data.results || [];
-    companyList.value = data.map((item: any) => ({
-      label: item.company_name,
-      value: item.company_id,
-    }));
-  });
-};
-queryCompany();
-const queryDept = () => {
-  const params: any = {};
-  if (importDlg?.company_id) {
-    params.company_id = importDlg.company_id;
-  }
-  getDeptList(params).then((res) => {
-    const data = res.data.results || [];
-    deptList.value = data.map((item: any) => ({
-      label: item.department_name,
-      value: item.department_id,
-    }));
-  });
-};
-queryDept();
-
-const queryPost = () => {
-  const params: any = {};
-  if (importDlg?.company_id) {
-    params.company_id = importDlg.company_id;
-  }
-  if (importDlg?.department_id) {
-    params.department_id = importDlg.department_id;
-  }
-  getPostList(params).then((res) => {
-    const data = res.data.results || [];
-    postList.value = data.map((item: any) => ({
-      label: item.position_name,
-      value: Number(item.position_id) || item.position_id,
-    }));
-  });
-};
-queryPost();
-
-const changeCompany = () => {
-  queryDept();
-  postList.value = [];
-  importDlg.department_id = "";
-  importDlg.position_id = "";
-};
-const changeDept = () => {
-  queryPost();
-  importDlg.position_id = "";
-};
 function resetImportDlg() {
   importDlg.files = [];
   importDlg.file_type = "";
-  importDlg.company_id = "";
-  importDlg.department_id = "";
-  importDlg.position_id = "";
   importDlg.primary_category_id = "";
   importDlg.category_id = "";
-  importDlg.start_time = "";
-  importDlg.end_time = "";
+  importDlg.strategy = "all";
   ruleFormRef.value?.resetFields();
 }
 
-const ALLOW_RE = ref<RegExp>(/\.(xlsx|xls)$/i);
-const importFileType = ref(".xlsx,.xls");
-const importTip = ref("");
-const changeFileType = (val) => {
-  console.log("changeFileType", val);
+const importFileType = computed(() =>
+  importDlg.file_type ? `.${importDlg.file_type.toLowerCase()}` : "",
+);
+const changeFileType = () => {
   importDlg.files = [];
-  if (val === "sop") {
-    importFileType.value = ".xlsx,.xls,.pdf";
-    ALLOW_RE.value = /\.(xlsx|xls|pdf)$/i;
-    importTip.value = t("licenseAdmin.importFileType1");
-  } else if (val === "operation" || val === "emergency_drill") {
-    importFileType.value = ".doc,.docx,.pdf";
-    ALLOW_RE.value = /\.(doc|docx|pdf)$/i;
-    importTip.value = t("licenseAdmin.importFileType2", {
-      type:
-        val === "operation"
-          ? t("licenseAdmin.operation")
-          : t("licenseAdmin.emergency"),
-    });
-  } else {
-    importFileType.value = ".xlsx,.xls";
-    ALLOW_RE.value = /\.(xlsx|xls)$/i;
-    importTip.value = t("licenseAdmin.importFileType3");
-  }
 };
 function onUploadChange(file, fileList) {
-  // sop文件（excel、pdf），操作规程（word、pdf）、应急演练（word、pdf），风险识别卡（excel）
-  const valid = fileList.filter((f) => ALLOW_RE.value.test(f.name));
+  const type = file.name.split(".").pop()?.toUpperCase() || "";
+  if (!fileTypeOptions.some((option) => option.value === type)) {
+    ElMessage.error("仅支持 PDF、DOC、DOCX、XLS、XLSX 文件");
+    importDlg.files = fileList.filter((item) => item.uid !== file.uid);
+    return;
+  }
+  if (!importDlg.file_type) importDlg.file_type = type;
+  const valid = fileList.filter(
+    (item) => item.name.split(".").pop()?.toUpperCase() === importDlg.file_type,
+  );
   if (valid.length !== fileList.length) {
-    ElMessage.error(importTip.value);
+    ElMessage.error(`上传类型为 ${importDlg.file_type}，请选择对应后缀的文件`);
   }
   importDlg.files = valid;
 }
 
 function onImport() {
+  resetImportDlg();
   importDlg.visible = true;
 }
 function onUploadRemove(file, fileList) {
@@ -825,9 +605,6 @@ async function startImport() {
     return ElMessage.warning(t("licenseAdmin.selectFirst"));
   // const realFiles = importDlg.files.map((f) => f.raw).filter(Boolean);
   // if (!realFiles.length) return ElMessage.warning(t("licenseAdmin.fileError"));
-  if (importDlg.files.some((f) => !ALLOW_RE.value.test(f.name))) {
-    return ElMessage.error(importTip.value);
-  }
   const realFiles = importDlg.files.map((f) => f.raw).filter(Boolean);
   if (!realFiles.length) return ElMessage.warning(t("licenseAdmin.fileError"));
 
@@ -838,11 +615,8 @@ async function startImport() {
       console.log("importDlg", importDlg);
       const res = await generateQa(
         realFiles,
-        importDlg.file_type,
-        importDlg.position_id,
+        fileTypeOptions.find((option) => option.value === importDlg.file_type)?.parserType,
         importDlg.strategy,
-        importDlg.start_time,
-        importDlg.end_time,
         importDlg.category_id,
       );
 
@@ -914,9 +688,13 @@ onUnmounted(() => {
 .import-body {
   padding: 4px 4px 0;
 }
-.import-body :deep(.el-form) {
-  display: flex;
-  flex-wrap: wrap;
+.import-form :deep(.el-form-item__label) {
+  white-space: nowrap;
+}
+.import-form :deep(.el-select),
+.import-form :deep(.el-upload),
+.import-form :deep(.el-upload-dragger) {
+  width: 100%;
 }
 
 /* 编辑弹窗 */
@@ -943,6 +721,15 @@ onUnmounted(() => {
 }
 .upload-file :deep(.el-form-item__content) div:nth-of-type(1) {
   width: 100%;
+}
+.upload-file-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:deep(.practice-import-dialog) {
+  max-width: calc(100vw - 32px);
 }
 .category-cell {
   display: flex;

@@ -93,3 +93,17 @@
 - `editDrawer.vue` 由右侧抽屉改为居中、可滚动的 Element Plus 弹窗，按两列表单展示一级/二级分类、上传类型、版本、当前文件和练习描述；取消、关闭和保存后都会销毁局部状态。
 - 分类树继续复用父页数据，保存时只提交二级 `category_id`；保存成功后触发既有 `refresh`，由父页保持当前筛选和分页重新加载列表。
 - 未改动 `LicenseAdmin.vue`、`ReviewDialog.vue`、`sop.api.js`、后端、数据库或接口路径；未执行构建和测试。
+
+## 练习生成弹窗与真实文件类型调整
+
+- 完整阅读本项目协作文档、`D:\PL\HTML\管理端-练习.html`、`category-filter.js`，并追踪 `LicenseAdmin.vue`、`editDrawer.vue`、`sop.api.js` 与后端 `generate_qa` / loader 注册表。
+- `editDrawer.vue`：标签维持两列网格并将 Element Plus 标签设为 `92px`、`white-space: nowrap`；上传类型由 `filename` 后缀优先回显为 `PDF`、`DOC`、`DOCX`、`XLS`、`XLSX`，保持只读，不再显示 SOP 业务类型。
+- `LicenseAdmin.vue`：生成练习弹窗改为上传类型、所属类别、细分方向、解析模式、选择文件的紧凑单列表单；删除公司、部门、岗位、发布时间、结束时间及其校验、状态、联动请求。选择格式后 `accept` 精确联动，先选文件可自动识别类型；底部按原型使用右对齐的“取消 / 生成”。
+- `sop.api.js`：保留 `files`、`file_type`、`position_id`、`strategy`、`category_id` 请求字段；删除已移除的 `start_time`、`end_time`。后端仍要求岗位，弹窗只读取当前登录用户 `position_id`，缺失时不提交。
+- 未修改后端、数据库、Docker、全局主题、其他页面或组织 API；未运行构建和测试。
+
+## 生成练习取消组织依赖
+
+- `src/pages/LicenseAdmin.vue`：删除生成弹窗岗位临时状态、登录态岗位复制、岗位缺失拦截及调用参数；保留真实文件、分类、解析模式校验和生成加载态。
+- `src/services/sop.api.js`：岗位参数改为可选兼容参数；仅合法非空值提交，`undefined`、`null`、空字符串、`None`、`null` 和 `0` 均不写入 multipart，解析模式字段保留。
+- 未修改用户端混合练习、菜单、路由、数据库结构、迁移、Docker 或租户字段；未运行构建、测试或服务。
