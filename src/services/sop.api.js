@@ -127,6 +127,10 @@ export async function getSops(parmas) {
   return api.post("/v1/dataprep/sops", upParams);
 }
 
+// SOP 两级分类树（考试管理与练习管理共用）。
+export const getSopCategoryTree = () =>
+  api.post("/v1/dataprep/sop/categories/tree");
+
 // 拉取某个文件的 QA 列表（如果需要接入复核弹窗）
 export const getQaList = (params) => {
   return api.post("/v1/dataprep/qa/list", params);

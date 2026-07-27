@@ -130,6 +130,21 @@ const routes = [
               isKeepAlive: false,
             },
           },
+          {
+            path: "/trainingCenter/examManagement",
+            name: "ExamManagement",
+            component: () => import("@/pages/examManagement/index.vue"),
+            meta: {
+              icon: "Tickets",
+              title: "考试管理",
+              i18nKey: "menu.examManagement",
+              isLink: "",
+              isHide: false,
+              isFull: false,
+              isAffix: false,
+              isKeepAlive: false,
+            },
+          },
         ],
       },
 

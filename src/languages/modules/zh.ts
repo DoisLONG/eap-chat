@@ -178,9 +178,13 @@ export default {
     trainingCenter: "培训中心",
     studyManagement: "学习管理",
     practiceManagement: "练习管理",
+    examManagement: "考试管理",
     settingCenter: "设置中心",
     permissionManagement: "权限管理",
     modelManagement: "模型配置",
+  },
+  exam: {
+    title: "考试管理", subtitle: "按分类和练习题库配置考试、抽取题目并完成发布。", create: "新建考试", edit: "编辑考试", createType: "新建{type}考试", search: "搜索", reset: "重置", name: "考试名称", nameRequired: "请输入考试名称", version: "考试版本", versionAndCreated: "版本和创建时间", description: "考试说明", type: "考试类型", status: "状态", category: "分类", primaryCategory: "一级分类", secondaryCategory: "二级分类", sourcePractice: "题目来源练习", sourceFile: "来源文件", practice: "练习名称", questionCount: "题目数量", searchPractice: "搜索练习名称或文件名", published: "已发布", inProgress: "进行中", ended: "已结束", draft: "草稿", questionComposition: "题型组成", questionType: "题型名称", availableCount: "题库可用数量", drawCount: "抽取数量", scorePerQuestion: "每题分值", drawMode: "抽题方式", grading: "阅卷方式", random: "随机抽取", randomOnly: "固定题目保存接口尚未接入，当前仅支持随机抽取。", autoGrade: "系统自动评分", manualGrade: "人工阅卷", basicInfo: "基础信息", questionConfig: "抽题配置", preview: "考试预览", publishSettings: "发布设置", next: "下一步", previous: "上一步", save: "保存", sourceRequired: "请选择至少一个练习", sameCategoryRequired: "普通考试的练习必须属于同一一级分类", mixedNeedCategories: "混合考试至少选择两个不同一级分类下的练习", noQuestions: "所选练习暂无可用题目", invalidQuestionConfig: "请检查抽题数量、分值、及格分数和考试时长", duration: "考试时长", minutes: "分钟", passScore: "及格分数", totalQuestions: "总题数", totalScore: "试卷总分", points: "分", rules: "考试规则", randomPaper: "每位考生随机组卷", randomOptions: "选项顺序随机", showAnswer: "交卷后显示答案", allowRetake: "允许补考", rulesPending: "考试规则字段待后端持久化接口支持。", noPreviewQuestions: "请返回抽题配置并选择题目", answerPlaceholder: "答题区域", publishStatus: "发布状态", publishNow: "立即发布", schedule: "定时发布", startTime: "开始时间", endTime: "结束时间", audience: "参考人员范围", byOrg: "按部门与岗位分配", manualUsers: "手动选择人员", allUsers: "全员参加", audiencePending: "发布对象接口尚未接入，保存时不会伪造发布成功。", audienceRequired: "请选择参考人员范围", timeRequired: "定时发布必须填写开始和结束时间", invalidTime: "结束时间必须晚于开始时间，且立即发布不能使用已结束时间", apiUnavailable: "后端考试接口尚未接入。", saveFailed: "保存失败", confirmClose: "当前配置尚未保存，确定关闭吗？", loadPracticeFailed: "练习或分类加载失败", categoryUnavailable: "分类接口暂无可用数据，无法校验考试分类规则。", types: { product: "产品", technical: "技术", operation: "运营", mixed: "混合", choice: "选择题", singleChoice: "单选题", multipleChoice: "多选题", judgement: "判断题", qa: "问答题", fillBlank: "填空题", other: "其他题型" }, statuses: { draft: "草稿", published: "已发布", ended: "已结束", in_progress: "进行中" },
   },
   licenseAdmin: {
     sopManagement: "SOP管理",
