@@ -1,5 +1,13 @@
 # 菜单、路由与 API 映射
 
+## 恢复后的实际映射（2026-07-28）
+
+| 功能 | 前端页面 | 前端 API | 请求路径 | 后端路由 | 状态 |
+|---|---|---|---|---|---|
+| 练习分类 | `LicenseAdmin.vue` | `getSopCategoryTree` | `POST /sop-api/v1/dataprep/sop/categories/tree` | Dataprep 分类树路由 | 已确认，唯一导出 |
+| 考试管理 | `examManagement/index.vue` | `exam.api.js` | 无（明确 unavailable） | 无 CRUD/发布路由 | 前端恢复；后端缺失 |
+| 用户答题 | `ChatExam.vue` | `chat.service.js` | `/chatapi/v1/exams/{start,answer,finish}` | Smart Practice | 非管理接口 |
+
 绝对路径均位于 `D:\PL\eap-chat`。确认状态中的“前端+代理已确认”不代表后端业务契约已经联调。
 
 | 功能 | 菜单配置文件 | 菜单权限码 | 浏览器路由 | 路由配置文件 | 页面组件 | 子组件 | API封装文件 | 请求方法 | 浏览器请求路径 | Nginx转发规则 | 环境变量 | 后端地址/端口 | 确认状态 |

@@ -143,10 +143,6 @@ export function saveQaList({ sop_info_id, file_name, records }) {
   });
 }
 
-export function getSopCategoryTree() {
-  return api.post("/v1/dataprep/sop/categories/tree");
-}
-
 // 删除某个 SOP 文件
 export async function deleteSop(sop_record_id) {
   const res = await api.post("/v1/dataprep/delete_sop", {
