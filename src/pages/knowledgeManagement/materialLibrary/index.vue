@@ -243,13 +243,14 @@ const handleFilterSearch = () => {
 };
 
 const changeFilterCategory = (category: string) => {
-  if (filterForm.category === category) return;
   filterForm.category = category;
   filterForm.subCategory = "";
+  handleFilterSearch();
 };
 
 const changeFilterSubCategory = (subCategory: string) => {
   filterForm.subCategory = subCategory;
+  handleFilterSearch();
 };
 
 const resetFilters = () => {
