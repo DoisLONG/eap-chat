@@ -36,9 +36,10 @@
 入口为 `src/pages/knowledgeManagement/materialLibrary/index.vue`：
 
 - 中文侧栏、路由标题、面包屑和页签统一显示“资料管理”，路由路径仍保持 `/knowledge/materialLibrary`；
+- 中文界面统一使用“上传资料”“资料名称”“资料类型”“资料描述”等资料文案，底层 `material`、`title` 等接口字段保持不变；
 - 页面通过 `ProTable` 的 `searchForm` 插槽提供卡片式筛选区，支持资料名称和“全部 / 产品 / 运营 / 技术”一级分类；产品、运营、技术各自显示对应的二级分类胶囊按钮；
 - 一级分类复用列表接口已有的 `category` 参数；当前未发现二级分类请求字段，因此二级分类只维护页面状态，不新增接口参数；重置会清空名称、恢复一级“全部”并隐藏二级分类；
-- 列表、分页、筛选和批量删除在 `index.vue`；
+- 列表、分页、筛选和批量删除在 `index.vue`；当前资料列表不展示岗位和关联课程列；
 - 新增/编辑/上传在 `components/operateDrawer.vue`；
 - 课程关联在 `components/CourseSelectDialog.vue`；
 - Office 文件预览使用 `components/officeCheck.vue` 和全局 `OfficeViewer`。
