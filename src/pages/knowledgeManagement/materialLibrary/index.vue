@@ -148,7 +148,7 @@ import { computed, reactive, ref } from "vue";
 import ProTable from "@/components/ProTable/index.vue";
 import OfficeCheck from "./components/officeCheck.vue";
 import OperateDrawer from "./components/operateDrawer.vue";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage, ElMessageBox, ElTag } from "element-plus";
 import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
 import {
   Upload,
@@ -272,6 +272,12 @@ const getTableList = (params: any) => {
   return getMaterialList(newParams);
 };
 
+const categoryTagClassMap: Record<string, string> = {
+  产品: "is-product",
+  运营: "is-operations",
+  技术: "is-technology",
+};
+
 // 表格配置项
 const columns = reactive<ColumnProps[]>([
   { type: "selection", fixed: "left", width: 70 },
@@ -294,19 +300,24 @@ const columns = reactive<ColumnProps[]>([
     minWidth: 120,
     render: (scope) => {
       const category = scope.row.category;
+      if (!category) return "-";
+
       const currentItem = materialCategoryOptions.value.find(
         (item) => item.value === category,
       );
-      if (currentItem) return currentItem.label;
+      const label = currentItem?.label || String(category);
+      const tagClass = categoryTagClassMap[category] || "is-default";
 
-      const legacyOptions = [
-        { label: t("course.safetyTraining"), value: "安全培训" },
-        { label: t("course.skillImprovement"), value: "技能提升" },
-        { label: t("course.onboardingTraining"), value: "入职培训" },
-        { label: t("course.productTraining"), value: "产品培训" },
-      ];
-      const item = legacyOptions.find((item) => item.value === category);
-      return item?.label || "-";
+      return (
+        <ElTag
+          class={["material-category-tag", tagClass]}
+          effect="plain"
+          disableTransitions
+          title={label}
+        >
+          {label}
+        </ElTag>
+      );
     },
   },
   {
@@ -444,6 +455,42 @@ const refreshTable = () => {
   font-weight: 600;
   line-height: 24px;
   color: var(--el-text-color-primary);
+}
+
+:deep(.material-category-tag) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 28px;
+  padding: 0 8px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 28px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: none;
+  border-radius: 999px;
+
+  &.is-product {
+    color: #1677ff;
+    background-color: #e6f4ff;
+  }
+
+  &.is-operations {
+    color: #fa8c16;
+    background-color: #fff7e6;
+  }
+
+  &.is-technology {
+    color: #52c41a;
+    background-color: #f6ffed;
+  }
+
+  &.is-default {
+    color: var(--el-text-color-secondary);
+    background-color: var(--el-fill-color-light);
+  }
 }
 
 .filter-category-row,
