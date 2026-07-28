@@ -127,6 +127,7 @@
       v-if="operateDrawerVisible"
       :rowInfo="rowInfo"
       :type="drawerType"
+      :category-options="materialCategoryOptions"
       @refresh="refreshTable"
       @close="operateDrawerVisible = false"
       ref="drawerRef"
@@ -176,34 +177,54 @@ const filterForm = reactive({
   category: "",
   subCategory: "",
 });
-const filterCategoryOptions = computed(() => [
-  { label: t("materialLibrary.filterAll"), value: "" },
-  { label: t("materialLibrary.filterProduct"), value: "产品" },
-  { label: t("materialLibrary.filterOperations"), value: "运营" },
-  { label: t("materialLibrary.filterTechnology"), value: "技术" },
-]);
-const filterSubCategoryOptions = computed(() => {
-  const options = {
-    产品: [
-      { label: t("materialLibrary.filterAllProducts"), value: "" },
+const materialCategoryOptions = computed(() => [
+  {
+    label: t("materialLibrary.filterProduct"),
+    value: "产品",
+    allLabel: t("materialLibrary.filterAllProducts"),
+    children: [
       { label: t("materialLibrary.filterAiPortal"), value: "AI Portal" },
       { label: t("materialLibrary.filterAiHub"), value: "AI Hub" },
       { label: t("materialLibrary.filterBeat"), value: "BEAT" },
       { label: t("materialLibrary.filterBams"), value: "BAMS" },
     ],
-    运营: [
-      { label: t("materialLibrary.filterAllOperations"), value: "" },
+  },
+  {
+    label: t("materialLibrary.filterOperations"),
+    value: "运营",
+    allLabel: t("materialLibrary.filterAllOperations"),
+    children: [
       {
         label: t("materialLibrary.filterCompanyArticles"),
         value: "公司章程",
       },
     ],
-    技术: [
-      { label: t("materialLibrary.filterAllTechnology"), value: "" },
+  },
+  {
+    label: t("materialLibrary.filterTechnology"),
+    value: "技术",
+    allLabel: t("materialLibrary.filterAllTechnology"),
+    children: [
       { label: t("materialLibrary.filterK8s"), value: "K8s" },
     ],
-  };
-  return options[filterForm.category] || [];
+  },
+]);
+const filterCategoryOptions = computed(() => [
+  { label: t("materialLibrary.filterAll"), value: "" },
+  ...materialCategoryOptions.value.map(({ label, value }) => ({
+    label,
+    value,
+  })),
+]);
+const filterSubCategoryOptions = computed(() => {
+  const category = materialCategoryOptions.value.find(
+    (item) => item.value === filterForm.category,
+  );
+  if (!category) return [];
+  return [
+    { label: category.allLabel, value: "" },
+    ...category.children,
+  ];
 });
 
 const getFilterParams = () => {
@@ -211,6 +232,9 @@ const getFilterParams = () => {
   const title = filterForm.title.trim();
   if (title) params.title = title;
   if (filterForm.category) params.category = filterForm.category;
+  if (filterForm.subCategory) {
+    params.sub_category = filterForm.subCategory;
+  }
   return params;
 };
 
@@ -270,13 +294,18 @@ const columns = reactive<ColumnProps[]>([
     minWidth: 120,
     render: (scope) => {
       const category = scope.row.category;
-      const list = [
+      const currentItem = materialCategoryOptions.value.find(
+        (item) => item.value === category,
+      );
+      if (currentItem) return currentItem.label;
+
+      const legacyOptions = [
         { label: t("course.safetyTraining"), value: "安全培训" },
         { label: t("course.skillImprovement"), value: "技能提升" },
         { label: t("course.onboardingTraining"), value: "入职培训" },
         { label: t("course.productTraining"), value: "产品培训" },
       ];
-      const item = list.find((item) => item.value === category);
+      const item = legacyOptions.find((item) => item.value === category);
       return item?.label || "-";
     },
   },
