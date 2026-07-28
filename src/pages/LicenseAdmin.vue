@@ -8,7 +8,7 @@
       :data-callback="dataCallback"
     >
       <template #searchForm>
-        <searchForm @search="handleSearch" />
+        <searchForm :categories="categoryTree" @search="handleSearch" />
       </template>
       <!-- 表格 header 按钮 -->
       <template #tableHeader="scope">
@@ -17,7 +17,7 @@
           type="primary"
           :icon="CirclePlus"
           @click="onImport"
-          >{{ $t("licenseAdmin.importSop") }}</el-button
+          >生成练习</el-button
         >
         <el-button
           type="danger"
@@ -29,7 +29,7 @@
           {{ $t("common.batchDelete") }}
         </el-button>
       </template>
-      <template #keyword="{ row }">
+      <template #name="{ row }">
         <div class="doc-cell">
           <!-- <div class="thumb"></div> -->
           <div class="meta">
@@ -42,92 +42,147 @@
           </div>
         </div>
       </template>
-      <template #examLinkText="{ row }">
+      <template #taskStatus="{ row }">
         <el-link
-          v-if="row.percent >= 100"
+          v-if="isTaskReady(row)"
           type="primary"
           :loading="review.loading"
           :disabled="review.loading"
           @click="openReview(row)"
         >
-          {{ row.examLinkText }}
+          复核题目
         </el-link>
-        <el-progress v-else :percentage="row.percent" />
+        <div v-else class="task-status">
+          <el-progress
+            v-if="taskState(row) === 'PENDING'"
+            :percentage="taskPercent(row)"
+            :indeterminate="!hasTaskPercent(row)"
+            :show-text="hasTaskPercent(row)"
+          />
+          <el-tag :type="taskTagType(row)" effect="plain">
+            {{ taskLabel(row) }}
+          </el-tag>
+        </div>
+      </template>
+      <template #category="{ row }">
+        <div v-if="row.category_id" class="category-cell">
+          <el-tag
+            v-if="row.primary_category_name"
+            effect="plain"
+            class="category-tag category-primary-tag"
+          >
+            {{ row.primary_category_name }}
+          </el-tag>
+          <el-tag type="info" effect="plain" class="category-tag category-secondary-tag">
+            {{ row.category_name || "未分类" }}
+          </el-tag>
+        </div>
+        <el-tag v-else type="info" effect="plain" class="category-tag category-uncategorized">
+          未分类
+        </el-tag>
+      </template>
+      <template #created_at="{ row }">
+        {{ formatDateTime(row.created_at) }}
+      </template>
+      <template #updated_at="{ row }">
+        {{ formatDateTime(row.updated_at) }}
       </template>
       <!-- 表格操作 -->
       <template #operation="scope">
-        <!-- <el-button
-          type="primary"
-          link
-          :icon="View"
-          @click="openDrawer('复核', scope.row)"
-          >{{ $t("licenseAdmin.examLinkText") }}</el-button
-        > -->
-        <el-button
-          type="primary"
-          link
-          :icon="EditPen"
-          @click="onEdit(scope.row)"
-          >{{ $t("common.edit") }}</el-button
-        >
-        <el-button
-          type="danger"
-          link
-          :icon="Delete"
-          @click="onDelete(scope.row)"
-          >{{ $t("common.delete") }}</el-button
-        >
+        <div class="table-actions">
+          <el-button type="primary" link @click="openReview(scope.row)">
+            复核题目
+          </el-button>
+          <el-button
+            type="primary"
+            link
+            :icon="EditPen"
+            @click="onEdit(scope.row)"
+            >{{ $t("common.edit") }}</el-button
+          >
+          <el-button
+            type="danger"
+            link
+            :icon="Delete"
+            @click="onDelete(scope.row)"
+            >{{ $t("common.delete") }}</el-button
+          >
+        </div>
       </template>
     </ProTable>
     <!-- 复核弹窗 -->
     <ReviewDialog
       v-model="review.visible"
       :data="review.data"
-      @after-save="load"
-      @rename="handleRename"
-      @regen="handleRegen"
-      @add-doc="handleAddDoc"
       @refresh="handleUpate"
     />
 
-    <!-- 导入 SOP 弹窗 -->
+    <!-- 生成练习弹窗 -->
     <el-dialog
       v-model="importDlg.visible"
-      :title="$t('licenseAdmin.importSop')"
-      width="60%"
+      class="practice-import-dialog"
+      title="生成练习"
+      width="720px"
+      align-center
       :close-on-click-modal="false"
       @close="resetImportDlg"
     >
       <div class="import-body">
         <el-form
           ref="ruleFormRef"
-          label-width="110px"
+          class="import-form"
+          label-width="92px"
+          label-suffix="："
           :rules="rules"
           :model="importDlg"
         >
           <el-form-item
-            style="width: 50%"
-            :label="$t('licenseAdmin.uploadType')"
-            :label-width="language === 'th' ? '160px' : '110px'"
+            label="上传类型"
             prop="file_type"
           >
             <el-select
-              v-model="importDlg!.file_type"
-              :placeholder="$t('licenseAdmin.uploadTypePlaceholder')"
+              v-model="importDlg.file_type"
+              placeholder="请选择上传类型"
               @change="changeFileType"
             >
               <el-option
-                v-for="oitem in uploadTypeList"
+                v-for="oitem in fileTypeOptions"
                 :key="oitem.value"
                 :label="oitem.label"
                 :value="oitem.value"
               />
             </el-select>
           </el-form-item>
+          <el-form-item label="所属类别" prop="primary_category_id">
+            <el-select
+              v-model="importDlg.primary_category_id"
+              placeholder="请选择所属类别"
+              @change="changeImportPrimaryCategory"
+            >
+              <el-option
+                v-for="category in categoryTree"
+                :key="category.id"
+                :label="category.name"
+                :value="category.id"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="细分方向" prop="category_id">
+            <el-select
+              v-model="importDlg.category_id"
+              placeholder="请选择细分方向"
+              :disabled="!importDlg.primary_category_id"
+            >
+              <el-option
+                v-for="category in importSecondaryCategories"
+                :key="category.id"
+                :label="category.name"
+                :value="category.id"
+              />
+            </el-select>
+          </el-form-item>
           <el-form-item
-            style="width: 50%"
             :label="$t('licenseAdmin.analysisMode')"
-            :label-width="language === 'zh' ? '110px' : '160px'"
             prop="strategy"
           >
             <el-select
@@ -144,7 +199,6 @@
             </el-select>
           </el-form-item>
           <el-form-item
-            style="width: 100%"
             :label="$t('licenseAdmin.selectFile')"
             class="upload-file"
           >
@@ -158,98 +212,15 @@
               :accept="importFileType"
             >
               <div class="el-upload__text">
-                <span
-                  v-html="
-                    $t('licenseAdmin.importTip', {
-                      importFileType: importFileType,
-                    })
-                  "
-                ></span>
+                拖拽或点击选择文件
+                <div class="el-upload__tip">仅支持 {{ importFileType || "选择上传类型后显示" }}</div>
               </div>
+              <template #file="{ file }">
+                <el-tooltip :content="file.name" placement="top">
+                  <span class="upload-file-name">{{ file.name }}</span>
+                </el-tooltip>
+              </template>
             </el-upload>
-          </el-form-item>
-          <el-form-item
-            style="width: 50%"
-            :label="$t('licenseAdmin.company')"
-            prop="company_id"
-          >
-            <el-select
-              v-model="importDlg!.company_id"
-              :placeholder="$t('licenseAdmin.companyPlaceholder')"
-              @change="changeCompany"
-            >
-              <el-option
-                v-for="oitem in companyList"
-                :key="oitem.value"
-                :label="oitem.label"
-                :value="oitem.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item
-            style="width: 50%"
-            :label="$t('licenseAdmin.deptment')"
-            prop="department_id"
-            :label-width="language === 'en' ? '160px' : '110px'"
-          >
-            <el-select
-              v-model="importDlg!.department_id"
-              :placeholder="$t('licenseAdmin.deptmentPlaceholder')"
-              @change="changeDept"
-            >
-              <el-option
-                v-for="oitem in deptList"
-                :key="oitem.value"
-                :label="oitem.label"
-                :value="oitem.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item
-            style="width: 50%"
-            :label="$t('licenseAdmin.position')"
-            prop="position_id"
-          >
-            <el-select
-              v-model="importDlg!.position_id"
-              :placeholder="$t('licenseAdmin.positionPlaceholder')"
-            >
-              <el-option
-                v-for="oitem in postList"
-                :key="oitem.value"
-                :label="oitem.label"
-                :value="oitem.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item
-            style="width: 50%"
-            :label="$t('common.publishTime')"
-            prop="start_time"
-            :label-width="language === 'en' ? '160px' : '110px'"
-          >
-            <el-date-picker
-              style="width: 100%"
-              v-model="importDlg!.start_time"
-              type="date"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              :placeholder="$t('common.publishTimePlaceholder')"
-            />
-          </el-form-item>
-          <el-form-item
-            style="width: 50%"
-            :label="$t('common.endTime')"
-            prop="end_time"
-          >
-            <el-date-picker
-              style="width: 100%"
-              v-model="importDlg!.end_time"
-              type="date"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              :placeholder="$t('common.endTimePlaceholder')"
-            />
           </el-form-item>
         </el-form>
       </div>
@@ -265,11 +236,7 @@
           :loading="importDlg.running"
           :disabled="!importDlg.files.length"
         >
-          {{
-            importDlg.running
-              ? $t("licenseAdmin.importing")
-              : $t("licenseAdmin.beginImport")
-          }}
+          生成
         </el-button>
       </template>
     </el-dialog>
@@ -277,6 +244,7 @@
     <editDrawer
       v-if="editDlg.visible"
       :rowInfo="rowInfo"
+      :categories="categoryTree"
       @refresh="handleUpate"
       @close="editDlg.visible = false"
     />
@@ -298,32 +266,23 @@ import {
   generateQa,
   deleteSop,
   getQaList,
-  saveQaList,
-  pollTaskStatus,
+  getTaskStatus,
+  getSopCategoryTree,
 } from "@/services/sop.api";
-import {
-  getCompanyList,
-  getPostList,
-  getDeptList,
-} from "@/services/company.service";
 import { useUserStore } from "@/stores/modules/user";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
-import { useGlobalStore } from "@/stores/modules/global";
-
-const globalStore = useGlobalStore();
-const language = computed(() => globalStore.language);
 
 const { t } = useI18n();
 
 const userStore = useUserStore();
 const { userInfo } = storeToRefs(userStore);
 
-const userId = ref("test_user");
 const ruleFormRef = ref<FormInstance>();
 
 const proTable = ref<ProTableInstance>();
 const initParam = reactive({});
+const categoryTree = ref<any[]>([]);
 
 const strategyList = computed(() => [
   { label: t("licenseAdmin.allMode"), value: "all" },
@@ -341,57 +300,58 @@ const dataCallback = (data: any) => {
     const fileName = item.filename || "";
     const title = item.title || fileName.replace(/\.[^.]+$/, "");
     return {
+      ...item,
       title,
       fileName,
       task_id: item.task_id,
-      version: item.sop_version || "v1",
-      examLinkText: t("licenseAdmin.testTitle", { title: title }),
-      ...item,
+      version: item.sop_version || "-",
     };
   });
   return {
-    list: list,
+    list,
     total: data?.results?.total || 0,
   };
 };
 
-const getTableList = (params: any) => {
-  console.warn("getTableList", params);
+const formatDateTime = (value: unknown) => {
+  if (!value) return "-";
+  return String(value).replace("T", " ").replace(/\.\d+(Z)?$/, "");
+};
+
+const loadCategoryTree = async () => {
+  try {
+    const { data } = await getSopCategoryTree();
+    if (data?.status !== 200) throw new Error(data?.message || "分类加载失败");
+    categoryTree.value = Array.isArray(data?.results) ? data.results : [];
+  } catch (error) {
+    categoryTree.value = [];
+    ElMessage.error((error as any)?.message || "分类加载失败");
+  }
+};
+
+const getTableList = async (params: any) => {
   let newParams = JSON.parse(JSON.stringify(params));
   newParams.user_id = String(userInfo.value.id);
-  return getSops(newParams);
+  try {
+    return await getSops(newParams);
+  } catch (error) {
+    ElMessage.error((error as any)?.message || "练习列表加载失败");
+    return { data: { results: { records: [], total: 0 } } };
+  }
 };
 // 表格配置项
 const columns = computed<ColumnProps[]>(() => {
   return [
     { type: "selection", fixed: "left", width: 70 },
     {
-      prop: "keyword",
-      label: "规程名称",
-      i18nKey: "licenseAdmin.keyword",
+      prop: "name",
+      label: "名称",
       minWidth: 250,
-      search: {
-        el: "input",
-      },
     },
     {
-      prop: "company_name",
-      label: "公司",
-      i18nKey: "licenseAdmin.company",
-      width: 120,
-    },
-    {
-      prop: "department_name",
-      label: "部门",
-      i18nKey: "licenseAdmin.deptment",
-      width: 120,
-    },
-    {
-      prop: "position_name",
-      label: "岗位",
-
-      i18nKey: "licenseAdmin.position",
-      width: 120,
+      prop: "category",
+      label: "所属类别",
+      minWidth: 180,
     },
     {
       prop: "version",
@@ -400,24 +360,28 @@ const columns = computed<ColumnProps[]>(() => {
       width: 100,
     },
     {
-      prop: "examLinkText",
-      label: "复核题目",
-      i18nKey: "licenseAdmin.examLinkText",
-      minWidth: 250,
+      prop: "created_at",
+      label: "创建时间",
+      minWidth: 170,
+    },
+    {
+      prop: "updated_at",
+      label: "更新时间",
+      minWidth: 170,
     },
     {
       prop: "operation",
       label: "操作",
       i18nKey: "common.operate",
       fixed: "right",
-      width: 200,
+      width: 240,
     },
   ];
 });
 
 const review = reactive({
   visible: false,
-  data: { title: "", items: [] },
+  data: { id: null, title: "", fileName: "", items: [] },
   currentRow: null,
   loading: false,
 });
@@ -430,42 +394,29 @@ const editDlg = reactive({
 });
 
 async function openReview(row) {
-  console.log("openReview", row);
   review.loading = true;
   review.currentRow = row;
   review.data.title = row.title;
   review.data.id = row.id;
+  review.data.fileName = row.filename || row.fileName || "";
   review.data.items = [];
 
   try {
     const taskId = row.task_id || "";
-    if (!taskId) throw new Error(t("licenseAdmin.examLinkTip"));
-
-    const token = localStorage.getItem("token");
-    const res = await fetch("/sop-api/v1/dataprep/task_status", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ task_id: taskId }),
-    });
-
-    const json = await res.json();
-    const state = json?.results?.state || json?.state || "";
-    const normalized = state.toUpperCase();
-
-    // ✅ 如果不是 SUCCESS，提示后不再继续加载题目
-    if (normalized !== "SUCCESS") {
+    if (taskId) {
+      const { data } = await getTaskStatus(taskId);
+      const state = data?.results?.state || data?.state || "";
+      if (String(state).toUpperCase() !== "SUCCESS") {
+        ElMessage.warning(t("licenseAdmin.taskStatusTip", { normalized: state }));
+        return;
+      }
+    } else if (!isTaskReady(row)) {
       ElMessage.warning(
-        t("licenseAdmin.taskStatusTip", { normalized: normalized }),
+        "当前练习尚未生成完成，暂不能复核题目。",
       );
       return;
     }
 
-    review.visible = true; // ✅ 弹窗提前展示
-
-    // ✅ 成功才继续加载题目列表
     const { data } = await getQaList({ id: row.id });
     const items = Array.isArray(data?.results) ? data.results : [];
 
@@ -478,55 +429,38 @@ async function openReview(row) {
       content: x.content ?? "",
       type: x.type ?? "",
     }));
-    // console.log("QA 列表", review.data.items);
+    review.visible = true;
     ElMessage.success(t("licenseAdmin.loadSuccess", { num: items.length }));
   } catch (e) {
     console.error("[复核失败]", e);
-    ElMessage.warning(e.message || t("licenseAdmin.loadFail"));
+    ElMessage.warning((e as any)?.message || t("licenseAdmin.loadFail"));
   } finally {
     review.loading = false;
   }
 }
 
-async function handleSaveReview(payload) {
-  try {
-    const filename = review.data.fileName || review.currentRow?.fileName;
-    const items = Array.isArray(payload?.items)
-      ? payload.items
-      : review.data.items;
-    const body = {
-      filename,
-      results: items.map(({ question, answer, position, content, type }) => ({
-        question,
-        answer,
-        position,
-        content,
-        type,
-      })),
-      sync: !!payload?.sync,
-      user_id: String(userInfo.value.id),
-    };
-    await saveQaList(body);
-    ElMessage.success(
-      payload?.sync ? t("licenseAdmin.saveSuccess") : t("common.saveSuccess"),
-    );
-    review.visible = false;
-    await load();
-  } catch (e) {
-    console.error("[保存失败]", e);
-    ElMessage.error(t("common.saveError"));
-  }
-}
-function handleRename(newTitle) {
-  if (review.currentRow) review.currentRow.title = newTitle;
-  ElMessage.success(t("licenseAdmin.nameSuccess"));
-}
-function handleRegen() {
-  ElMessage.success(t("licenseAdmin.relaodSuccess"));
-}
-function handleAddDoc() {
-  ElMessage.success(t("licenseAdmin.addDoc"));
-}
+const taskState = (row) => String(row.task_status || "").toUpperCase();
+const isTaskReady = (row) =>
+  taskState(row) === "SUCCESS" || Number(row.percent) >= 100;
+const hasTaskPercent = (row) =>
+  row.percent !== null &&
+  row.percent !== undefined &&
+  row.percent !== "" &&
+  Number.isFinite(Number(row.percent));
+const taskPercent = (row) =>
+  Math.min(100, Math.max(0, Number(row.percent) || 0));
+const taskLabel = (row) => {
+  const state = taskState(row);
+  if (state === "PENDING") return "生成中";
+  if (state === "FAILURE") return "生成失败";
+  return state || "等待生成";
+};
+const taskTagType = (row) => {
+  const state = taskState(row);
+  if (state === "FAILURE") return "danger";
+  if (state === "PENDING") return "warning";
+  return "info";
+};
 
 async function onDelete(row) {
   try {
@@ -550,9 +484,9 @@ async function onDelete(row) {
     ElMessage.success(t("common.deleteSuccess"));
     proTable.value?.getTableList();
   } catch (e) {
-    // ❗注意：catch 现在用于处理逻辑异常或 throw 抛出的错误
-    console.error("[删除失败]", e);
-    // ElMessage.error(e.message || "删除失败");
+    if (e !== "cancel" && e !== "close") {
+      ElMessage.error((e as any)?.message || t("common.deleteError"));
+    }
   }
 }
 const batchDelete = async (id: string[], list: any[]) => {
@@ -573,7 +507,11 @@ const batchDelete = async (id: string[], list: any[]) => {
       proTable.value?.clearSelection();
       proTable.value?.getTableList();
     })
-    .catch(() => {});
+    .catch((error) => {
+      if (error !== "cancel" && error !== "close") {
+        ElMessage.error((error as any)?.message || t("common.deleteError"));
+      }
+    });
 };
 
 const rowInfo = ref<any>({});
@@ -591,13 +529,10 @@ const importDlg = reactive({
   visible: false,
   files: [],
   file_type: "",
-  position_id: "",
-  company_id: "",
-  department_id: "",
+  primary_category_id: "",
+  category_id: "",
   running: false,
   strategy: "all",
-  start_time: "",
-  end_time: "",
 });
 
 const rules = reactive({
@@ -605,165 +540,60 @@ const rules = reactive({
   strategy: [
     { required: true, message: t("licenseAdmin.strategyPlaceholder") },
   ],
-  company_id: [
-    { required: true, message: t("licenseAdmin.companyPlaceholder") },
-  ],
-  department_id: [
-    { required: true, message: t("licenseAdmin.deptmentPlaceholder") },
-  ],
-  position_id: [
-    { required: true, message: t("licenseAdmin.positionPlaceholder") },
-  ],
-  start_time: [
-    { required: true, message: t("common.publishTimePlaceholder") },
-    {
-      validator: (rule, value, callback) => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const startDate = new Date(value);
-        if (startDate < today) {
-          callback(new Error(t("common.publishTimeError")));
-        } else {
-          callback();
-        }
-      },
-      trigger: "blur",
-    },
-  ],
-  end_time: [
-    { required: true, message: t("common.endTimePlaceholder") },
-    {
-      validator: (rule, value, callback) => {
-        if (importDlg.start_time) {
-          const startDate = new Date(importDlg.start_time);
-          const endDate = new Date(value);
-          if (endDate < startDate) {
-            callback(new Error(t("common.endTimeError")));
-          } else {
-            callback();
-          }
-        } else {
-          callback();
-        }
-      },
-      trigger: "blur",
-    },
-  ],
+  primary_category_id: [{ required: true, message: "请选择所属类别" }],
+  category_id: [{ required: true, message: "请选择细分方向" }],
 });
 
-// sop文件（excel、pdf），操作规程（word、pdf）、应急演练（word、pdf），风险识别卡（excel）
-const uploadTypeList = computed(() => {
-  return [
-    { label: t("licenseAdmin.sopFile"), value: "sop" },
-    { label: t("licenseAdmin.operation"), value: "operation" },
-    { label: t("licenseAdmin.emergency"), value: "emergency_drill" },
-    { label: t("licenseAdmin.risk"), value: "risk" },
-  ];
+const fileTypeOptions = [
+  { label: "PDF", value: "PDF", parserType: "sop" },
+  { label: "DOC", value: "DOC", parserType: "operation" },
+  { label: "DOCX", value: "DOCX", parserType: "operation" },
+  { label: "XLS", value: "XLS", parserType: "sop" },
+  { label: "XLSX", value: "XLSX", parserType: "sop" },
+];
+const importSecondaryCategories = computed(() => {
+  const primary = categoryTree.value.find(
+    (category) => String(category.id) === String(importDlg.primary_category_id),
+  );
+  return primary?.children || [];
 });
-// 公司部门岗位
-const companyList = ref<{ label: string; value: string }[]>([]);
-const deptList = ref<{ label: string; value: string }[]>([]);
-const postList = ref<{ label: string; value: string }[]>([]);
-const queryCompany = () => {
-  const params: any = {};
-  getCompanyList(params).then((res) => {
-    const data = res.data.results || [];
-    companyList.value = data.map((item: any) => ({
-      label: item.company_name,
-      value: item.company_id,
-    }));
-  });
-};
-queryCompany();
-const queryDept = () => {
-  const params: any = {};
-  if (importDlg?.company_id) {
-    params.company_id = importDlg.company_id;
-  }
-  getDeptList(params).then((res) => {
-    const data = res.data.results || [];
-    deptList.value = data.map((item: any) => ({
-      label: item.department_name,
-      value: item.department_id,
-    }));
-  });
-};
-queryDept();
-
-const queryPost = () => {
-  const params: any = {};
-  if (importDlg?.company_id) {
-    params.company_id = importDlg.company_id;
-  }
-  if (importDlg?.department_id) {
-    params.department_id = importDlg.department_id;
-  }
-  getPostList(params).then((res) => {
-    const data = res.data.results || [];
-    postList.value = data.map((item: any) => ({
-      label: item.position_name,
-      value: Number(item.position_id) || item.position_id,
-    }));
-  });
-};
-queryPost();
-
-const changeCompany = () => {
-  queryDept();
-  postList.value = [];
-  importDlg.department_id = "";
-  importDlg.position_id = "";
-};
-const changeDept = () => {
-  queryPost();
-  importDlg.position_id = "";
+const changeImportPrimaryCategory = () => {
+  importDlg.category_id = "";
 };
 function resetImportDlg() {
   importDlg.files = [];
   importDlg.file_type = "";
-  importDlg.company_id = "";
-  importDlg.department_id = "";
-  importDlg.position_id = "";
-  importDlg.start_time = "";
-  importDlg.end_time = "";
+  importDlg.primary_category_id = "";
+  importDlg.category_id = "";
+  importDlg.strategy = "all";
   ruleFormRef.value?.resetFields();
 }
 
-const ALLOW_RE = ref<RegExp>(/\.(xlsx|xls)$/i);
-const importFileType = ref(".xlsx,.xls");
-const importTip = ref("");
-const changeFileType = (val) => {
-  console.log("changeFileType", val);
+const importFileType = computed(() =>
+  importDlg.file_type ? `.${importDlg.file_type.toLowerCase()}` : "",
+);
+const changeFileType = () => {
   importDlg.files = [];
-  if (val === "sop") {
-    importFileType.value = ".xlsx,.xls,.pdf";
-    ALLOW_RE.value = /\.(xlsx|xls|pdf)$/i;
-    importTip.value = t("licenseAdmin.importFileType1");
-  } else if (val === "operation" || val === "emergency_drill") {
-    importFileType.value = ".doc,.docx,.pdf";
-    ALLOW_RE.value = /\.(doc|docx|pdf)$/i;
-    importTip.value = t("licenseAdmin.importFileType2", {
-      type:
-        val === "operation"
-          ? t("licenseAdmin.operation")
-          : t("licenseAdmin.emergency"),
-    });
-  } else {
-    importFileType.value = ".xlsx,.xls";
-    ALLOW_RE.value = /\.(xlsx|xls)$/i;
-    importTip.value = t("licenseAdmin.importFileType3");
-  }
 };
 function onUploadChange(file, fileList) {
-  // sop文件（excel、pdf），操作规程（word、pdf）、应急演练（word、pdf），风险识别卡（excel）
-  const valid = fileList.filter((f) => ALLOW_RE.value.test(f.name));
+  const type = file.name.split(".").pop()?.toUpperCase() || "";
+  if (!fileTypeOptions.some((option) => option.value === type)) {
+    ElMessage.error("仅支持 PDF、DOC、DOCX、XLS、XLSX 文件");
+    importDlg.files = fileList.filter((item) => item.uid !== file.uid);
+    return;
+  }
+  if (!importDlg.file_type) importDlg.file_type = type;
+  const valid = fileList.filter(
+    (item) => item.name.split(".").pop()?.toUpperCase() === importDlg.file_type,
+  );
   if (valid.length !== fileList.length) {
-    ElMessage.error(importTip.value);
+    ElMessage.error(`上传类型为 ${importDlg.file_type}，请选择对应后缀的文件`);
   }
   importDlg.files = valid;
 }
 
 function onImport() {
+  resetImportDlg();
   importDlg.visible = true;
 }
 function onUploadRemove(file, fileList) {
@@ -775,9 +605,6 @@ async function startImport() {
     return ElMessage.warning(t("licenseAdmin.selectFirst"));
   // const realFiles = importDlg.files.map((f) => f.raw).filter(Boolean);
   // if (!realFiles.length) return ElMessage.warning(t("licenseAdmin.fileError"));
-  if (importDlg.files.some((f) => !ALLOW_RE.value.test(f.name))) {
-    return ElMessage.error(importTip.value);
-  }
   const realFiles = importDlg.files.map((f) => f.raw).filter(Boolean);
   if (!realFiles.length) return ElMessage.warning(t("licenseAdmin.fileError"));
 
@@ -788,11 +615,9 @@ async function startImport() {
       console.log("importDlg", importDlg);
       const res = await generateQa(
         realFiles,
-        importDlg.file_type,
-        importDlg.position_id,
+        fileTypeOptions.find((option) => option.value === importDlg.file_type)?.parserType,
         importDlg.strategy,
-        importDlg.start_time,
-        importDlg.end_time,
+        importDlg.category_id,
       );
 
       console.log("generateQa", res);
@@ -809,7 +634,7 @@ async function startImport() {
       console.error("[导入失败]", e);
       ElMessage.error(
         t("licenseAdmin.importFail", {
-          msg: e.message || t("common.vailderror"),
+          msg: (e as any)?.message || t("common.vailderror"),
         }),
       );
     } finally {
@@ -820,6 +645,7 @@ async function startImport() {
 // 5s轮询接口
 const listTimer = ref();
 onMounted(() => {
+  loadCategoryTree();
   listTimer.value = setInterval(() => {
     proTable.value?.getTableList();
   }, 5000);
@@ -862,9 +688,13 @@ onUnmounted(() => {
 .import-body {
   padding: 4px 4px 0;
 }
-.import-body :deep(.el-form) {
-  display: flex;
-  flex-wrap: wrap;
+.import-form :deep(.el-form-item__label) {
+  white-space: nowrap;
+}
+.import-form :deep(.el-select),
+.import-form :deep(.el-upload),
+.import-form :deep(.el-upload-dragger) {
+  width: 100%;
 }
 
 /* 编辑弹窗 */
@@ -891,5 +721,61 @@ onUnmounted(() => {
 }
 .upload-file :deep(.el-form-item__content) div:nth-of-type(1) {
   width: 100%;
+}
+.upload-file-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:deep(.practice-import-dialog) {
+  max-width: calc(100vw - 32px);
+}
+.category-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.category-tag {
+  min-width: 52px;
+  height: 23px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 12px;
+}
+.category-primary-tag {
+  color: #1677ff;
+  background: #e6f4ff;
+}
+.category-secondary-tag {
+  color: #5f6b7a;
+  background: #f4f6f9;
+}
+.category-uncategorized {
+  color: #7b8492;
+  background: #f4f6f9;
+}
+.table-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  white-space: nowrap;
+}
+.table-actions :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+.table-box :deep(.el-table__cell) {
+  vertical-align: middle;
+}
+.task-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 118px;
+}
+.task-status :deep(.el-progress) {
+  width: 58px;
 }
 </style>

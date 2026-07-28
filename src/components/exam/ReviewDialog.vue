@@ -64,6 +64,13 @@
 
           <div class="qa-body">
             <div class="qa-field">
+              <label>题型：</label>
+              <el-select v-model="r.type">
+                <el-option :label="$t('填空题')" value="填空题" />
+                <el-option :label="$t('问答题')" value="问答题" />
+              </el-select>
+            </div>
+            <div class="qa-field">
               <label>{{ $t("licenseAdmin.timu") }}：</label>
               <el-input
                 v-model="r.question"
@@ -96,6 +103,10 @@
           </div>
         </el-card>
 
+        <el-empty
+          v-if="!local.items.length"
+          description="暂无题目，请新增题目"
+        />
         <div class="add-line">
           <el-button @click="addOne" plain
             >+ {{ $t("licenseAdmin.addNew") }}</el-button
@@ -116,10 +127,9 @@
 </template>
 
 <script setup>
-import { reactive, watch } from "vue";
+import { reactive, watchEffect } from "vue";
 import { ElMessage } from "element-plus";
 import { saveQaList } from "@/services/sop.api";
-import { watchEffect } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
@@ -130,7 +140,7 @@ const props = defineProps({
 });
 
 // console.log("props.data", props.data);
-const emit = defineEmits(["update:modelValue", "save", "refresh"]);
+const emit = defineEmits(["update:modelValue", "refresh"]);
 
 const local = reactive({
   title: "",
@@ -151,9 +161,7 @@ watchEffect(() => {
         position: x.position || t("licenseAdmin.unknownDuan"),
         stage: x.stage || "",
         section: x.section || "",
-        type: x.type
-          ? t(x.type) || t("licenseAdmin.wenda")
-          : t("licenseAdmin.wenda"),
+        type: x.type || "问答题",
         question: x.question || "",
         answer: String(x.answer ?? "").trim(),
         content: x.content || "",
@@ -195,10 +203,10 @@ function addOne() {
     id: Date.now(),
     row: 1,
     position: t("licenseAdmin.xinjieduanTit"),
-    position_id: local.items[0].position_id,
+    position_id: local.items[0]?.position_id ?? 0,
     stage: t("licenseAdmin.newDuanTit"),
     section: t("licenseAdmin.newModuleTit"),
-    type: t("licenseAdmin.wenda"),
+    type: "问答题",
     question: "",
     answer: "",
     content: "",
@@ -213,58 +221,56 @@ async function onSave(sync = false) {
   if (local.saving) return; // 🔒 重入锁：已经在保存就直接返回
   local.saving = true; // 🔒 先上锁，避免双击或双触发
 
-  const cleanTitle = local.title.trim();
-  const fileName = props.data?.fileName || `${local.title.trim()}.xlsx`;
-  // const fileName = cleanTitle.endsWith('.xlsx') ? cleanTitle : `${cleanTitle}.xlsx`
+  const sopInfoId = props.data?.id;
+  const fileName = props.data?.fileName;
+  if (!sopInfoId || !fileName) {
+    ElMessage.error("缺少练习编号或源文件名，无法保存题目");
+    local.saving = false;
+    return;
+  }
 
   const missingIndex = local.items.findIndex(
-    (item) => !item.question?.trim() || !item.answer?.trim()
+    (item) =>
+      !item.question?.trim() || !item.answer?.trim() || !item.content?.trim(),
   );
 
   if (missingIndex !== -1) {
-    ElMessage.error(t("licenseAdmin.titTip", { i: missingIndex + 1 }));
+    ElMessage.error(`请完整填写第 ${missingIndex + 1} 题的题目、答案和解析`);
     local.saving = false;
     return;
   }
   const payload = {
-    // file_name: fileName,
-    sop_info_id: props.data?.id,
+    sop_info_id: sopInfoId,
+    file_name: fileName,
     records: local.items.map((item) => {
-      const params = {
-        // id: item.id,
-        ...item,
+      return {
         row: item.row,
         position: item.position,
+        position_id: item.position_id ?? 0,
         question: item.question?.trim() || "",
-        answer: String(item.answer ?? "").trim(), // 后端要求是 string
-        content: item.content ?? "",
-        type: item.type
-          ? t(item.type) || t("licenseAdmin.wenda")
-          : t("licenseAdmin.wenda"),
+        answer: String(item.answer ?? "").trim(),
+        content: item.content.trim(),
+        type: item.type || "问答题",
+        difficulty_factor: item.difficulty_factor ?? 0,
       };
-      delete params.id;
-      return params;
     }),
   };
 
-  local.saving = true;
-  // console.log("payload", payload);
   try {
-    await saveQaList(payload.sop_info_id, payload.records);
+    await saveQaList(payload);
     if (sync) {
       ElMessage.success(t("licenseAdmin.saveSuccess"));
     } else {
       ElMessage.success(t("common.saveSuccess"));
     }
-    // emit('save', { title: cleanTitle, items: payload.records, sync })
-    // if (!sync) emit('update:modelValue', false)
-    emit("after-save", { title: cleanTitle, sync });
     emit("update:modelValue", false);
     emit("refresh");
   } catch (e) {
     console.error("[保存失败]", e);
     ElMessage.error(
-      `${t("common.saveError")}：${e?.response?.data?.detail || e.message}`
+      `${t("common.saveError")}：${
+        e?.response?.data?.message || e?.response?.data?.detail || e.message
+      }`,
     );
   } finally {
     local.saving = false;

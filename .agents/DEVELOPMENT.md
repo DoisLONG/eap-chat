@@ -52,3 +52,25 @@ D:\PL\eap-chat
 - 不启动、停止、删除、重建容器；不构建、删除、拉取镜像。
 - 不修改数据库、不执行迁移、不修改 `docker.env`。
 - 不使用 PowerShell 脚本。
+
+## SOP 分类（迁移待执行）
+
+- 练习页通过 `/sop-api/v1/dataprep/sop/categories/tree` 读取正式分类树；浏览器代理仍使用既有 `SOP_API_HOST`，未修改 `docker.env`。
+- 分类筛选只将“全部”作为前端状态；一级/二级分类 ID、名称和树结构均由 Dataprep 返回。生成练习和编辑 SOP 实际提交二级 `category_id`。
+
+## 练习管理界面
+
+- 页面视觉以 `D:\PL\HTML\管理端-练习.html` 和 `category-filter.js` 为参考：筛选卡片、紧凑的 36px 一级按钮、32px 胶囊二级按钮、独立名称搜索行和表格工具栏均保留 Vue/Element Plus 实现。
+- 原型的静态记录、localStorage 和 mock 题目未使用；列表、分类、编辑和生成仍走现有 `sop.api.js` 接口。
+
+## 练习编辑弹窗
+
+- `src/pages/components/licenseAdmin/editDrawer.vue` 保留原文件入口，内部已由右侧抽屉改为 Element Plus 居中 `el-dialog`；分类树继续由父页加载后传入，不重复请求接口。
+- 编辑保存仍只调用既有 `POST /v1/dataprep/sops/record/update`，提交 `record_id`、原 `title`、原 `position_id` 与二级 `category_id`。当前后端不支持文件类型、版本、文件替换或描述更新，因此这些字段在弹窗中仅作只读展示，避免伪造保存。
+- QA 复核继续由 `src/components/exam/ReviewDialog.vue` 独立处理；编辑弹窗不请求或渲染 QA 数据。
+
+## 练习生成与文件类型（本次更新）
+
+- 生成练习弹窗只保留上传类型、所属类别、细分方向、解析模式和选择文件；公司、部门、岗位、发布时间、结束时间的可见项、校验、局部状态与组织查询均已移除。
+- 界面上传类型只显示后端加载器实际支持的后缀：`PDF`、`DOC`、`DOCX`、`XLS`、`XLSX`；文件选择后会自动识别后缀，选择类型后文件选择器仅接受对应后缀。
+- `/v1/dataprep/generate_qa` 的请求字段名未变；前端不再提交已移除的 `start_time`、`end_time`，也不再从登录态读取或提交 `position_id`。岗位为后端可选归属：合法值才随兼容调用提交，缺省时生成不受阻断。

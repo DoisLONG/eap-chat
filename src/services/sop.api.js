@@ -46,20 +46,19 @@ api.interceptors.response.use(
 export async function generateQa(
   files,
   file_type,
-  position_id,
   strategy,
-  start_time,
-  end_time,
+  category_id,
+  position_id,
 ) {
   const form = new FormData();
   files.forEach((file) => form.append("files", file));
   form.append("file_type", file_type);
-  form.append("position_id", position_id);
-  form.append("strategy", strategy);
-  form.append("start_time", start_time);
-  if (end_time) {
-    form.append("end_time", end_time);
+  const normalizedPositionId = String(position_id ?? "").trim().toLowerCase();
+  if (!["", "none", "null", "0"].includes(normalizedPositionId)) {
+    form.append("position_id", position_id);
   }
+  form.append("strategy", strategy);
+  form.append("category_id", category_id);
 
   return api.post("/v1/dataprep/generate_qa", form);
 }
@@ -136,11 +135,16 @@ export const getQaList = (params) => {
   return api.post("/v1/dataprep/qa/list", params);
 };
 // 保存 QA（复核完成后）
-export async function saveQaList(sop_info_id, records) {
+export function saveQaList({ sop_info_id, file_name, records }) {
   return api.post("/v1/dataprep/qa/save", {
     sop_info_id,
+    file_name,
     records,
   });
+}
+
+export function getSopCategoryTree() {
+  return api.post("/v1/dataprep/sop/categories/tree");
 }
 
 // 删除某个 SOP 文件
