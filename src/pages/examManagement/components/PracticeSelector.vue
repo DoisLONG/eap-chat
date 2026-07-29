@@ -9,8 +9,8 @@
         <el-option v-for="item in secondaryCategories" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
     </div>
-    <el-table v-loading="loading" :data="filteredPractices" max-height="300" @selection-change="onSelectionChange">
-      <el-table-column type="selection" width="50" :reserve-selection="true" />
+    <el-table ref="tableRef" v-loading="loading" :data="filteredPractices" row-key="id" max-height="300" @selection-change="onSelectionChange">
+      <el-table-column type="selection" width="50" :reserve-selection="true" :selectable="() => !disabled" />
       <el-table-column prop="title" :label="t('exam.practice')" min-width="180" />
       <el-table-column prop="sop_version" :label="t('exam.version')" width="110" />
       <el-table-column :label="t('exam.category')" min-width="150">
@@ -24,14 +24,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { getSopCategoryTree, getSops } from "@/services/exam.api";
 
-const props = defineProps({ modelValue: { type: Array, default: () => [] } });
+const props = defineProps({ modelValue: { type: Array, default: () => [] }, disabled: Boolean });
 const emit = defineEmits(["update:modelValue"]);
 const { t } = useI18n();
-const practices = ref([]), categories = ref([]), loading = ref(false), error = ref("");
+const tableRef = ref(), practices = ref([]), categories = ref([]), loading = ref(false), error = ref("");
 const keyword = ref(""), primaryCategoryId = ref(""), categoryId = ref("");
 const secondaryCategories = computed(() => categories.value.find(item => item.id === primaryCategoryId.value)?.children || []);
 const filteredPractices = computed(() => practices.value.filter(item => {
@@ -41,7 +41,9 @@ const filteredPractices = computed(() => practices.value.filter(item => {
     && (!categoryId.value || item.category_id === categoryId.value);
 }));
 
-function onSelectionChange(rows) { emit("update:modelValue", rows); }
+function practiceId(item) { return Number(item.id ?? item.practice_id ?? item.sop_id ?? item.source_ref_id); }
+function restoreSelection() { nextTick(() => { const ids = new Set(props.modelValue.map(practiceId)); tableRef.value?.clearSelection(); practices.value.filter(item => ids.has(practiceId(item))).forEach(item => tableRef.value?.toggleRowSelection(item, true)); }); }
+function onSelectionChange(rows) { if (!props.disabled) emit("update:modelValue", rows); }
 async function load() {
   loading.value = true; error.value = "";
   try {
@@ -52,6 +54,7 @@ async function load() {
     if (practiceResult.status !== "fulfilled" || practiceResult.value.data?.status !== 200) throw new Error(t("exam.loadPracticeFailed"));
     practices.value = practiceResult.value.data.results?.records || [];
     if (!categories.value.length) error.value = t("exam.categoryUnavailable");
+    restoreSelection();
   } catch (e) { error.value = e.message || t("exam.loadPracticeFailed"); }
   finally { loading.value = false; }
 }

@@ -13,6 +13,11 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      "/exam-api": {
+        target: process.env.EXAM_API_URL || "http://127.0.0.1:7020",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/exam-api/, ""),
+      },
       "/sop-api": {
         target: "http://14.103.176.8:6007",
         // target: "http://14.103.144.187:30114", // 四会

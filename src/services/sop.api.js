@@ -6,13 +6,13 @@ import { $t } from "@/languages/index.js";
 
 const router = useRouter();
 
-const api = axios.create({
+export const sopApi = axios.create({
   baseURL: "/sop-api",
   timeout: 60000,
 });
 
 // 请求拦截器，添加token
-api.interceptors.request.use(
+sopApi.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -26,7 +26,7 @@ api.interceptors.request.use(
 );
 
 // 响应拦截器 - 处理token过期等情况
-api.interceptors.response.use(
+sopApi.interceptors.response.use(
   (response) => {
     return response;
   },
@@ -42,6 +42,8 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+const api = sopApi;
 // 生成 QA（支持多文件上传）
 export async function generateQa(
   files,
