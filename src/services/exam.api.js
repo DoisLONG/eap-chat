@@ -22,3 +22,4 @@ export const saveExamRules = (id, data) => request({ url: `/api/v1/exams/${id}/r
 export const saveExamTargets = (id, data) => request({ url: `/api/v1/exams/${id}/targets`, method: "put", data });
 export const publishExam = (id) => request({ url: `/api/v1/exams/${id}/publish`, method: "post" });
 export const deleteExam = (id) => request({ url: `/api/v1/exams/${id}`, method: "delete" });
+export const batchDeleteExams = (ids) => request({ url: "/api/v1/exams", method: "delete", data: { ids } });

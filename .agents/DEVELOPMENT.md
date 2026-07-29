@@ -74,3 +74,10 @@ D:\PL\eap-chat
 - 生成练习弹窗只保留上传类型、所属类别、细分方向、解析模式和选择文件；公司、部门、岗位、发布时间、结束时间的可见项、校验、局部状态与组织查询均已移除。
 - 界面上传类型只显示后端加载器实际支持的后缀：`PDF`、`DOC`、`DOCX`、`XLS`、`XLSX`；文件选择后会自动识别后缀，选择类型后文件选择器仅接受对应后缀。
 - `/v1/dataprep/generate_qa` 的请求字段名未变；前端不再提交已移除的 `start_time`、`end_time`，也不再从登录态读取或提交 `position_id`。岗位为后端可选归属：合法值才随兼容调用提交，缺省时生成不受阻断。
+
+## 考试管理 Docker 重建（2026-07-29）
+
+- 当前本机运行态：`eap-chat:local` 为容器 `eap-chat`（宿主 `8081` → 容器 `80`）；`eap-exam:local` 为容器 `eap-exam`（宿主 `7020` → 容器 `7020`）；两者均在 `eap-training-local` 网络，且没有源码挂载。
+- 修改源码后只执行 `docker restart` 不会换用新镜像；必须重新构建镜像并按原有环境变量重建容器。不要从 `docker inspect` 复制或提交包含密码、JWT 密钥或账户服务地址的完整环境变量。
+- 前端重建命令：`docker build -t eap-chat:local D:\PL\eap-chat`。在考试容器先就绪后，按既有安全环境文件重建：`docker run -d --name eap-chat --network eap-training-local -p 8081:80 --env-file D:\PL\eap-chat\docker.env eap-chat:local`。重建前需要先停止并删除同名旧容器；这会短暂中断本地页面。
+- 访问地址为 `http://localhost:8081/trainingCenter/examManagement`；`docker.env` 中的 `EXAM_API_HOST` 必须保持指向 Docker Desktop 可访问的 `host.docker.internal:7020`，不要写死数据库或账户服务地址。

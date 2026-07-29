@@ -140,6 +140,7 @@ export default {
     cancel: "Cancel",
     edit: "Edit",
     delete: "Delete",
+    all: "All",
     operate: "Operation",
     search: "Search",
     reset: "Reset",

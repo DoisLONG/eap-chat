@@ -129,6 +129,7 @@ export default {
     cancel: "取消",
     edit: "编辑",
     delete: "删除",
+    all: "全部",
     operate: "操作",
     search: "搜索",
     reset: "重置",

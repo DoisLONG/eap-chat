@@ -137,6 +137,7 @@ export default {
     cancel: "ยกเลิก",
     edit: "แก้ไข",
     delete: "ลบ",
+    all: "ทั้งหมด",
     operate: "ดำเนินการ",
     search: "ค้นหา",
     reset: "รีเซ็ต",
