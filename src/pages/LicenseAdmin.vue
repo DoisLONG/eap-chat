@@ -352,6 +352,8 @@ const columns = computed<ColumnProps[]>(() => {
       prop: "category",
       label: "所属类别",
       minWidth: 180,
+      align: "center",
+      headerAlign: "center",
     },
     {
       prop: "version",
@@ -734,6 +736,8 @@ onUnmounted(() => {
 .category-cell {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
 }
 .category-tag {
