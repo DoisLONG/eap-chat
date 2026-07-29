@@ -13,6 +13,16 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      "/questionbankapi": {
+        target: "http://127.0.0.1:9020",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/questionbankapi/, ""),
+      },
+      "/evaluationapi": {
+        target: "http://127.0.0.1:9021",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/evaluationapi/, ""),
+      },
       "/sop-api": {
         target: "http://14.103.176.8:6007",
         // target: "http://14.103.144.187:30114", // 四会

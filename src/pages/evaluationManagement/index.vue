@@ -36,20 +36,18 @@
             </div>
             <div class="analysis-card">
               <span>分析报告</span>
-              <button v-if="currentRecord.status === 'completed'" type="button" class="report-link" @click="openReportPreview"><i>PDF</i>点击查看</button>
+              <b>{{ currentRecord.summary || "暂无分析报告" }}</b>
             </div>
           </div>
+          <template v-if="currentRecord.dimensions.length">
+            <h3>评价维度</h3>
+            <div v-for="dimension in currentRecord.dimensions" :key="dimension.code || dimension.name" class="question"><b>{{ dimension.name }}：{{ dimension.score ?? "--" }} / {{ dimension.maxScore ?? "--" }}</b><p>{{ dimension.analysis || "暂无维度分析" }}</p><p>改进建议：{{ dimension.suggestion || "暂无" }}</p></div>
+          </template>
           <h3>逐题答题详情</h3>
           <template v-if="currentRecord.answers.length"><div v-for="(answer, index) in currentRecord.answers" :key="`${answer.text}-${index}`" class="question"><b>{{ index + 1 }}. {{ answer.text }}</b><p>{{ typeText(answer.type) }} · 员工答案：{{ answer.employeeAnswer || "未作答" }}</p><p>参考答案：{{ answer.answer }}</p><p :class="answer.score === answer.points ? 'ok' : 'bad'">本题 {{ answer.score }} / {{ answer.points }} 分 · {{ answer.analysis }}</p></div></template>
           <div v-else class="question">暂无答题详情。</div>
         </div>
         <div class="dialog-foot"><button class="btn" @click="detailDialogVisible = false">关闭</button></div>
-      </div>
-    </div>
-    <div class="modal report-preview-modal" :class="{ show: reportPreviewVisible }" @click.self="reportPreviewVisible = false">
-      <div class="dialog report-preview-dialog">
-        <div class="dialog-head">答题完成分析报告<button class="close" @click="reportPreviewVisible = false">×</button></div>
-        <div class="pdf-preview-body"><iframe :src="mockReportUrl" class="pdf-preview" title="答题完成分析报告" /></div>
       </div>
     </div>
     <div class="modal" :class="{ show: deleteDialogVisible }" @click.self="deleteDialogVisible = false"><div class="dialog delete-dialog"><div class="dialog-head">删除确认<button class="close" @click="deleteDialogVisible = false">×</button></div><div class="dialog-body"><p>确认删除已选择的 {{ selectedIds.size }} 条成绩记录吗？</p></div><div class="dialog-foot"><button class="btn" @click="deleteDialogVisible = false">取消</button><button class="btn primary" @click="confirmDelete">确认删除</button></div></div></div>
@@ -58,21 +56,160 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
-import { deleteEvaluationItems, getEvaluationDetail, getEvaluationExams, getEvaluationList } from "@/services/evaluation.service";
+import { ElMessage } from "element-plus";
+import {
+  deleteEvaluationItems,
+  getEvaluationCategories,
+  getEvaluationDetail,
+  getEvaluationExams,
+  getEvaluationList,
+} from "@/services/evaluation.service";
 
 const pageSize = 8;
-const records = ref([]); const total = ref(0); const page = ref(1); const selectedIds = ref(new Set()); const currentRecord = ref(null); const detailDialogVisible = ref(false); const reportPreviewVisible = ref(false); const deleteDialogVisible = ref(false);
-const mockReportUrl = `${import.meta.env.BASE_URL}mock-reports/evaluation-analysis-report.pdf`;
+const records = ref([]);
+const total = ref(0);
+const page = ref(1);
+const selectedIds = ref(new Set());
+const currentRecord = ref(null);
+const detailDialogVisible = ref(false);
+const deleteDialogVisible = ref(false);
+const categoryOptions = ref([]);
+const availableExams = ref([]);
 const filters = reactive({ employeeName: "", primaryCategory: "", secondaryCategory: "", examId: "", status: "" });
 let employeeSearchTimer;
-const primaryCategories = [{ value: "", label: "全部" }, { value: "product", label: "产品" }, { value: "operation", label: "运营" }, { value: "technology", label: "技术" }];
-const categoryMap = { product: { label: "产品", children: [{ value: "", label: "全部产品" }, { value: "aiPortal", label: "AI Portal" }, { value: "aiHub", label: "AI Hub" }, { value: "beat", label: "BEAT" }, { value: "bams", label: "BAMS" }] }, operation: { label: "运营", children: [{ value: "", label: "全部运营" }, { value: "companyCharter", label: "公司章程" }] }, technology: { label: "技术", children: [{ value: "", label: "全部技术" }, { value: "k8s", label: "K8s" }] } };
-const secondaryCategories = computed(() => categoryMap[filters.primaryCategory]?.children || []); const availableExams = computed(() => getEvaluationExams(filters)); const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize))); const allSelected = computed(() => records.value.length > 0 && records.value.every((item) => selectedIds.value.has(item.id))); const partiallySelected = computed(() => !allSelected.value && records.value.some((item) => selectedIds.value.has(item.id)));
-const typeText = (type) => (type === "choice" ? "选择题" : "问答题"); const statusText = (status) => (status === "completed" ? "已完成" : "未完成");
-const categoryText = (record) => { const primary = categoryMap[record.primaryCategory]; const secondary = primary?.children.find((item) => item.value === record.secondaryCategory); return secondary ? `${primary.label} / ${secondary.label}` : primary?.label || "--"; };
-const loadRecords = async () => { let result = await getEvaluationList({ filters, page: page.value, pageSize }); if (!result.items.length && result.total && page.value > 1) { page.value -= 1; result = await getEvaluationList({ filters, page: page.value, pageSize }); } records.value = result.items; total.value = result.total; selectedIds.value = new Set(); };
-const search = () => { page.value = 1; loadRecords(); }; const scheduleEmployeeSearch = () => { clearTimeout(employeeSearchTimer); employeeSearchTimer = setTimeout(search, 300); }; const selectPrimary = (value) => { filters.primaryCategory = value; filters.secondaryCategory = ""; filters.examId = ""; search(); }; const selectSecondary = (value) => { filters.secondaryCategory = value; filters.examId = ""; search(); }; const resetFilters = () => { Object.assign(filters, { employeeName: "", primaryCategory: "", secondaryCategory: "", examId: "", status: "" }); search(); }; const changePage = (value) => { if (value >= 1 && value <= pageCount.value) { page.value = value; loadRecords(); } }; const toggleAll = (event) => { const next = new Set(selectedIds.value); records.value.forEach((item) => event.target.checked ? next.add(item.id) : next.delete(item.id)); selectedIds.value = next; }; const toggleOne = (id, checked) => { const next = new Set(selectedIds.value); checked ? next.add(id) : next.delete(id); selectedIds.value = next; }; const openDetail = async (id) => { currentRecord.value = await getEvaluationDetail(id); detailDialogVisible.value = Boolean(currentRecord.value); }; const openReportPreview = () => { reportPreviewVisible.value = true; }; const confirmDelete = async () => { if (!selectedIds.value.size) return; await deleteEvaluationItems([...selectedIds.value]); deleteDialogVisible.value = false; await loadRecords(); };
-onMounted(loadRecords); onBeforeUnmount(() => clearTimeout(employeeSearchTimer));
+
+const primaryCategories = computed(() => [{ value: "", label: "全部" }, ...categoryOptions.value]);
+const secondaryCategories = computed(
+  () => categoryOptions.value.find((item) => item.value === filters.primaryCategory)?.children || [],
+);
+const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
+const allSelected = computed(() => records.value.length > 0 && records.value.every((item) => selectedIds.value.has(item.id)));
+const partiallySelected = computed(() => !allSelected.value && records.value.some((item) => selectedIds.value.has(item.id)));
+
+const typeText = (type) => (type === "choice" ? "选择题" : "问答题");
+const statusText = (status) => (status === "completed" ? "已完成" : "未完成");
+const categoryText = (record) => [record.primaryCategoryName, record.secondaryCategoryName].filter(Boolean).join(" / ") || "--";
+
+async function loadExams() {
+  availableExams.value = await getEvaluationExams({
+    primaryCategory: filters.primaryCategory,
+    secondaryCategory: filters.secondaryCategory,
+  });
+}
+
+async function loadRecords() {
+  try {
+    let result = await getEvaluationList({ filters, page: page.value, pageSize });
+    if (!result.items.length && result.total && page.value > 1) {
+      page.value -= 1;
+      result = await getEvaluationList({ filters, page: page.value, pageSize });
+    }
+    records.value = result.items;
+    total.value = result.total;
+    selectedIds.value = new Set();
+  } catch (error) {
+    records.value = [];
+    total.value = 0;
+    selectedIds.value = new Set();
+    ElMessage.error(error.response?.data?.detail || error.message || "评价数据读取失败");
+  }
+}
+
+async function search() {
+  page.value = 1;
+  await loadRecords();
+}
+
+function scheduleEmployeeSearch() {
+  clearTimeout(employeeSearchTimer);
+  employeeSearchTimer = setTimeout(() => void search(), 300);
+}
+
+async function selectPrimary(value) {
+  filters.primaryCategory = value;
+  filters.secondaryCategory = "";
+  filters.examId = "";
+  try {
+    await loadExams();
+    await search();
+  } catch (error) {
+    ElMessage.error(error.response?.data?.detail || error.message || "考试筛选项读取失败");
+  }
+}
+
+async function selectSecondary(value) {
+  filters.secondaryCategory = value;
+  filters.examId = "";
+  try {
+    await loadExams();
+    await search();
+  } catch (error) {
+    ElMessage.error(error.response?.data?.detail || error.message || "考试筛选项读取失败");
+  }
+}
+
+async function resetFilters() {
+  Object.assign(filters, { employeeName: "", primaryCategory: "", secondaryCategory: "", examId: "", status: "" });
+  try {
+    await loadExams();
+    await search();
+  } catch (error) {
+    ElMessage.error(error.response?.data?.detail || error.message || "评价筛选重置失败");
+  }
+}
+
+function changePage(value) {
+  if (value >= 1 && value <= pageCount.value) {
+    page.value = value;
+    void loadRecords();
+  }
+}
+
+function toggleAll(event) {
+  const next = new Set(selectedIds.value);
+  records.value.forEach((item) => (event.target.checked ? next.add(item.id) : next.delete(item.id)));
+  selectedIds.value = next;
+}
+
+function toggleOne(id, checked) {
+  const next = new Set(selectedIds.value);
+  checked ? next.add(id) : next.delete(id);
+  selectedIds.value = next;
+}
+
+async function openDetail(id) {
+  try {
+    currentRecord.value = await getEvaluationDetail(id);
+    detailDialogVisible.value = Boolean(currentRecord.value);
+  } catch (error) {
+    ElMessage.error(error.response?.data?.detail || error.message || "评价详情读取失败");
+  }
+}
+
+async function confirmDelete() {
+  if (!selectedIds.value.size) return;
+  try {
+    await deleteEvaluationItems([...selectedIds.value]);
+    deleteDialogVisible.value = false;
+    await loadRecords();
+    ElMessage.success("评价记录已删除");
+  } catch (error) {
+    ElMessage.error(error.response?.data?.detail || error.message || "评价记录删除失败");
+  }
+}
+
+async function initialize() {
+  try {
+    categoryOptions.value = await getEvaluationCategories();
+    await loadExams();
+  } catch (error) {
+    ElMessage.error(error.response?.data?.detail || error.message || "评价筛选项读取失败");
+  }
+  await loadRecords();
+}
+
+onMounted(() => void initialize());
+onBeforeUnmount(() => clearTimeout(employeeSearchTimer));
 </script>
 
 <style scoped>
