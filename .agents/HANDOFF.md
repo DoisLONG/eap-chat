@@ -1,5 +1,13 @@
 # 会话交接
 
+## 考试弹窗高度适配（2026-07-31）
+
+- `src/pages/examManagement/components/ExamFormDrawer.vue` 的弹窗最大尺寸为 `1060px × 720px`，视口不足时按 24/48px 安全边距缩小。
+- 弹窗通过 `margin: auto` 配合 `align-center` 保持水平、垂直居中；桌面端四种考试类型为四列单行布局。
+- 标题、步骤条和 footer 固定，仅中间表单区滚动；切换步骤或重新打开会回到内容顶部，因此“下一步”无需滚动浏览器页面即可操作。
+- 弹窗被 Element Plus Teleport，外壳及 header/body/footer 必须使用 `:global(.exam-form-dialog...)`；不要改回会依赖作用域祖先的独立 `:deep(...)`。
+- 按项目规则未运行构建、测试或服务；需用户在已启动的 `npm run dev` 页面以浏览器 100% 缩放手动验收四个步骤和窄屏状态。
+
 ## 学练考评恢复（2026-07-28）
 
 - 练习管理来源：`zyh`/`d110508`；考试管理来源：`5a013fe`。
