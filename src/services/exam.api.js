@@ -15,11 +15,13 @@ async function request(config) {
 
 export const getExamList = (params) => request({ url: "/api/v1/exams", method: "get", params });
 export const getExamDetail = (id) => request({ url: `/api/v1/exams/${id}`, method: "get" });
+export const getExamQuestions = (id, params) => request({ url: `/api/v1/exams/${id}/questions`, method: "get", params });
 export const createExam = (data) => request({ url: "/api/v1/exams", method: "post", data });
 export const updateExam = (id, data) => request({ url: `/api/v1/exams/${id}`, method: "put", data });
 export const saveExamSources = (id, data) => request({ url: `/api/v1/exams/${id}/sources`, method: "put", data });
 export const saveExamRules = (id, data) => request({ url: `/api/v1/exams/${id}/rules`, method: "put", data });
 export const saveExamTargets = (id, data) => request({ url: `/api/v1/exams/${id}/targets`, method: "put", data });
 export const publishExam = (id) => request({ url: `/api/v1/exams/${id}/publish`, method: "post" });
+export const withdrawExam = (id) => request({ url: `/api/v1/exams/${id}/withdraw`, method: "post" });
 export const deleteExam = (id) => request({ url: `/api/v1/exams/${id}`, method: "delete" });
 export const batchDeleteExams = (ids) => request({ url: "/api/v1/exams", method: "delete", data: { ids } });

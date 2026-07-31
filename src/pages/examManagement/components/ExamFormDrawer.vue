@@ -1,11 +1,11 @@
 <template>
-  <el-dialog v-model="visible" :title="form.id ? t('exam.edit') : t('exam.create')" class="exam-form-dialog" align-center :close-on-click-modal="false" :before-close="close">
+  <el-dialog v-model="visible" :title="mode === 'edit' ? t('exam.edit') : t('exam.create')" class="exam-form-dialog" align-center :close-on-click-modal="false" :before-close="close">
     <nav class="stepper">
         <span class="step-line" /><span class="step-progress" :style="{ width: `${((step - 1) / 3) * 75}%` }" />
         <button v-for="(item, index) in stepItems" :key="item.title" type="button" class="step-button" :class="{ active: step === index + 1, done: completedStep > index + 1 }" :disabled="index + 1 > completedStep" @click="goToStep(index + 1)"><span class="step-circle"><el-icon v-if="completedStep > index + 1"><CircleCheck /></el-icon><template v-else>{{ index + 1 }}</template></span><span>{{ t(item.title) }}</span></button>
     </nav>
     <div ref="scrollContent" class="dialog-scroll">
-      <el-form ref="formRef" :model="form" :disabled="isReadonly" label-position="top" class="exam-form">
+      <el-form v-loading="detailLoading" ref="formRef" :model="form" :disabled="isReadonly || detailLoading" label-position="top" class="exam-form">
         <template v-if="step === 1">
           <section class="section-card">
             <div class="section-heading"><div><h3>{{ t('exam.basicInfo') }}</h3><p>{{ t('examForm.basicTip') }}</p></div></div>
@@ -54,7 +54,7 @@ const props = defineProps({ modelValue: Boolean, exam: { type: Object, default: 
 const emit = defineEmits(["update:modelValue", "saved"]);
 const { t } = useI18n();
 const visible = computed({ get: () => props.modelValue, set: value => emit("update:modelValue", value) });
-const formRef = ref(), scrollContent = ref(), step = ref(1), completedStep = ref(1), saving = ref(false), status = ref("draft");
+const formRef = ref(), scrollContent = ref(), step = ref(1), completedStep = ref(1), saving = ref(false), detailLoading = ref(false), status = ref("draft");
 const categories = ref([]), previewQuestions = ref([]), sourceQuestions = ref([]);
 const questionCache = new Map();
 const saved = reactive({ base: "", sources: "", rules: "", targets: "" });
@@ -62,9 +62,10 @@ const stepItems = [{ title: "exam.basicInfo" }, { title: "exam.questionConfig" }
 const examTypes = [{ value: "product", icon: Collection }, { value: "technical", icon: Setting }, { value: "operation", icon: Operation }, { value: "mixed", icon: Connection }];
 const typeLabels = { fill_blank: "fillBlank", short_answer: "qa", single_choice: "singleChoice", multiple_choice: "multipleChoice", true_false: "judgement" };
 const form = reactive(emptyForm());
+const mode = computed(() => form.id ? "edit" : "create");
 const totalQuestions = computed(() => form.questionConfigs.reduce((sum, item) => sum + Number(item.count || 0), 0));
 const totalScore = computed(() => form.questionConfigs.reduce((sum, item) => sum + Number(item.count || 0) * Number(item.score || 0), 0));
-const isReadonly = computed(() => status.value !== "draft");
+const isReadonly = computed(() => status.value === "published");
 const candidateQuestions = computed(() => {
   const selectedTypes = new Set(form.questionConfigs.filter(item => Number(item.count) > 0).map(item => item.type));
   return sourceQuestions.value.filter(item => selectedTypes.has(item.type || item.question_type)).slice(0, 5);
@@ -77,7 +78,8 @@ const actionLabel = computed(() => {
 
 function emptyForm() { return { id: null, type: "product", name: "", version: "", description: "", sources: [], questionConfigs: [], duration: 60, passScore: 60, rules: { randomPaper: true, randomOptions: true, showAnswer: false, allowRetake: false, maxAttempts: 2 }, publish: { status: "draft", startAt: "", endAt: "", audience: "all" } }; }
 function reset(value = null) { Object.assign(form, emptyForm(), value || {}); form.sources = value?.sources || []; form.questionConfigs = value?.questionConfigs || []; step.value = 1; completedStep.value = 1; previewQuestions.value = []; sourceQuestions.value = []; questionCache.clear(); Object.assign(saved, { base: "", sources: "", rules: "", targets: "" }); status.value = "draft"; }
-watch(() => props.modelValue, value => { if (!value) return; reset(props.exam); resetScroll(); if (props.exam?.id) loadDetail(props.exam.id); else loadCategories(); }, { immediate: true });
+let detailRequest = 0;
+watch(() => [props.modelValue, props.exam?.id], ([value]) => { if (!value) { detailRequest++; detailLoading.value = false; return; } reset(props.exam); resetScroll(); if (props.exam?.id) loadDetail(props.exam.id); else loadCategories(); }, { immediate: true });
 watch(step, resetScroll);
 
 function resetScroll() { nextTick(() => scrollContent.value?.scrollTo({ top: 0 })); }
@@ -139,10 +141,10 @@ async function loadSourceQuestions() {
 function hydrate(detail) {
   const sourceRows = (detail.sources || []).map(source => ({ ...source, id: Number(source.source_ref_id) }));
   Object.assign(form, { id: detail.id, type: detail.exam_type === "mixed" ? "mixed" : categoryType(detail.category_id), name: detail.name || "", version: detail.version || "", description: detail.description || "", sources: sourceRows, questionConfigs: (detail.question_configs || []).map(item => ({ type: item.question_type, label: t(`exam.types.${normalizedType(item.question_type)}`), available: null, count: Number(item.question_count), score: Number(item.score_per_question), auto: item.grading_mode === "auto", grading_mode: item.grading_mode, difficulty_min: item.difficulty_min == null ? null : Number(item.difficulty_min), difficulty_max: item.difficulty_max == null ? null : Number(item.difficulty_max) })), duration: detail.duration, passScore: Number(detail.pass_score || 0), rules: { ...emptyForm().rules, ...(detail.rules || {}) }, publish: { status: detail.status === "published" ? "publish" : "draft", startAt: detail.start_at || "", endAt: detail.end_at || "", audience: detail.targets?.[0]?.target_type || "all" } });
-  status.value = detail.status; previewQuestions.value = detail.preview_questions || []; if (status.value !== "draft") { step.value = 3; completedStep.value = 4; }
+  status.value = detail.status; previewQuestions.value = detail.preview_questions || []; if (status.value === "published") { step.value = 3; completedStep.value = 4; }
 }
 async function loadCategories() { try { const response = await getSopCategoryTree(); categories.value = response.data?.results || []; } catch { categories.value = []; } }
-async function loadDetail(id) { try { await loadCategories(); hydrate(await getExamDetail(id)); } catch (error) { ElMessage.error(error.message || t("examForm.detailLoadFailed")); visible.value = false; } }
+async function loadDetail(id) { const current = ++detailRequest; detailLoading.value = true; try { const [, detail] = await Promise.all([loadCategories(), getExamDetail(id)]); if (current === detailRequest) hydrate(detail); } catch (error) { if (current === detailRequest) { ElMessage.error(error.message || t("examForm.detailLoadFailed")); visible.value = false; } } finally { if (current === detailRequest) detailLoading.value = false; } }
 async function next() {
   saving.value = true;
   try {

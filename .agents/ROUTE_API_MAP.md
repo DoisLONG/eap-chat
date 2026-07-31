@@ -44,3 +44,11 @@
 | 页面 | Element Plus、ProTable、抽屉/弹窗模式可复用 | 新建 `src/pages/examManagement/index.vue`，按实际复杂度再加局部组件 | 后端字段、状态及发布流程 |
 | 分类筛选 | 无正式统一来源 | 先确认分类数据契约；双页面稳定后才抽公共组件 | 一级/二级分类接口与数据归属 |
 | 考试 API | 仅用户答题会话与统计 | 新建 `src/services/exam.service.js` 仅在后端契约确认后 | 列表、试卷、题目来源、发布、记录 API |
+
+## 考试管理已确认映射（2026-07-31）
+
+| 功能 | 前端请求 | 后端路由 | 说明 |
+|---|---|---|---|
+| 考试列表/筛选 | `GET /exam-api/api/v1/exams` | `GET /api/v1/exams` | 名称、状态、一级/二级分类、`exam_type` 和分页 |
+| 详情/编辑回填 | `GET /exam-api/api/v1/exams/{id}` | `GET /api/v1/exams/{id}` | 返回基础信息、来源、规则、范围和发布设置，不返回整卷题目 |
+| 真实题目预览 | `GET /exam-api/api/v1/exams/{id}/questions` | `GET /api/v1/exams/{id}/questions` | 仅返回已发布/结束考试的快照题目，服务端分页 |
