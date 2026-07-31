@@ -3,7 +3,7 @@
     v-model="dialogVisible"
     class="practice-edit-dialog"
     title="编辑练习"
-    width="72vw"
+    width="720px"
     align-center
     :close-on-click-modal="false"
     destroy-on-close
@@ -47,42 +47,13 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="上传类型">
-        <el-select v-model="operateInfo.file_type" disabled>
-          <el-option
-            v-for="option in fileTypeOptions"
-            :key="option.value"
-            :label="option.label"
-            :value="option.value"
-          />
-        </el-select>
-      </el-form-item>
-
-      <el-form-item label="版本号">
-        <el-input v-model="operateInfo.sop_version" disabled />
-      </el-form-item>
-
-      <el-form-item label="选择文件" class="form-span-2">
-        <div class="file-summary" :title="operateInfo.filename || '-'">
-          <el-icon class="file-icon"><Document /></el-icon>
-          <div class="file-summary-text">
-            <div class="file-name ellipsis">{{ operateInfo.filename || "-" }}</div>
-            <div class="file-meta">
-              {{ fileTypeLabel }} · {{ categorySummary }}
-            </div>
-          </div>
-        </div>
-      </el-form-item>
-
-      <el-form-item label="练习描述" class="form-span-2">
+      <el-form-item label="练习描述">
         <el-input
-          v-model="operateInfo.remark"
+          v-model="operateInfo.description"
           type="textarea"
           :rows="4"
           placeholder="请输入练习描述"
-          readonly
         />
-        <div class="field-note">当前接口暂不支持修改练习描述。</div>
       </el-form-item>
     </el-form>
 
@@ -99,7 +70,6 @@
 
 <script setup lang="ts" name="PracticeEditDialog">
 import { computed, reactive, ref, watch } from "vue";
-import { Document } from "@element-plus/icons-vue";
 import { ElMessage, FormInstance } from "element-plus";
 import { updateSopTitle } from "@/services/sop.api";
 
@@ -117,24 +87,9 @@ const emits = defineEmits(["close", "refresh"]);
 const dialogVisible = ref(true);
 const submitLoading = ref(false);
 const ruleFormRef = ref<FormInstance>();
-const fileTypeOptions = ["PDF", "DOC", "DOCX", "XLS", "XLSX"].map((value) => ({ label: value, value }));
-const getFileType = (filename: string, fileType: string) => {
-  const extension = filename.split(".").pop()?.toUpperCase();
-  return fileTypeOptions.some((option) => option.value === extension)
-    ? extension
-    : fileTypeOptions.some((option) => option.value === fileType?.toUpperCase())
-      ? fileType.toUpperCase()
-      : "";
-};
 const operateInfo = reactive({
   title: props.rowInfo?.title || props.rowInfo?.filename || "",
-  filename: props.rowInfo?.filename || props.rowInfo?.fileName || "",
-  file_type: getFileType(
-    props.rowInfo?.filename || props.rowInfo?.fileName || "",
-    props.rowInfo?.file_type || "",
-  ),
-  sop_version: props.rowInfo?.sop_version || props.rowInfo?.version || "-",
-  remark: props.rowInfo?.remark || props.rowInfo?.description || "",
+  description: props.rowInfo?.description || "",
   position_id: props.rowInfo?.position_id,
   primary_category_id: props.rowInfo?.primary_category_id || "",
   category_id: props.rowInfo?.category_id || "",
@@ -149,21 +104,6 @@ const secondaryCategories = computed(() => {
   );
   return primary?.children || [];
 });
-const selectedPrimaryCategory = computed(() =>
-  props.categories.find(
-    (category) => String(category.id) === String(operateInfo.primary_category_id),
-  ),
-);
-const fileTypeLabel = computed(
-  () => operateInfo.file_type || "未知类型",
-);
-const categorySummary = computed(() => {
-  const secondary = secondaryCategories.value.find(
-    (category) => String(category.id) === String(operateInfo.category_id),
-  );
-  return [selectedPrimaryCategory.value?.name, secondary?.name].filter(Boolean).join(" / ") || "未分类";
-});
-
 const syncPrimaryCategory = () => {
   if (operateInfo.primary_category_id || !operateInfo.category_id) return;
   const primary = props.categories.find((category) =>
@@ -182,10 +122,7 @@ const closeDialog = () => {
 const handleClosed = () => {
   Object.assign(operateInfo, {
     title: "",
-    filename: "",
-    file_type: "",
-    sop_version: "",
-    remark: "",
+    description: "",
     position_id: undefined,
     primary_category_id: "",
     category_id: "",
@@ -202,6 +139,7 @@ const handleSubmit = () => {
         title: operateInfo.title,
         position_id: operateInfo.position_id,
         category_id: operateInfo.category_id,
+        description: operateInfo.description,
       });
       if (response.data?.status !== 200) {
         throw new Error(response.data?.message || "保存失败");
@@ -219,11 +157,6 @@ const handleSubmit = () => {
 </script>
 
 <style scoped>
-.edit-form {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 28px;
-}
 .edit-form :deep(.el-form-item) {
   margin-bottom: 22px;
   min-width: 0;
@@ -235,46 +168,6 @@ const handleSubmit = () => {
 .edit-form :deep(.el-input) {
   width: 100%;
 }
-.form-span-2 {
-  grid-column: 1 / -1;
-}
-.file-summary {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 96px;
-  padding: 18px 22px;
-  overflow: hidden;
-  border: 1px dashed #91bfff;
-  border-radius: 8px;
-  background: #f7fbff;
-}
-.file-icon {
-  flex: none;
-  margin-right: 14px;
-  color: #1677ff;
-  font-size: 30px;
-}
-.file-summary-text {
-  min-width: 0;
-  max-width: calc(100% - 44px);
-}
-.file-name {
-  color: #263445;
-  font-weight: 600;
-}
-.file-meta,
-.field-note {
-  margin-top: 5px;
-  color: #98a2b3;
-  font-size: 12px;
-}
-.ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
@@ -283,22 +176,10 @@ const handleSubmit = () => {
   border-top: 1px solid #edf0f4;
 }
 :deep(.practice-edit-dialog) {
-  max-width: 1200px;
+  max-width: 720px;
 }
 :deep(.practice-edit-dialog .el-dialog__body) {
   max-height: calc(100vh - 220px);
   overflow-y: auto;
-}
-:deep(.practice-edit-dialog .el-textarea__inner[readonly]) {
-  color: #606266;
-  background: #fafafa;
-}
-@media (max-width: 768px) {
-  .edit-form {
-    grid-template-columns: 1fr;
-  }
-  .form-span-2 {
-    grid-column: auto;
-  }
 }
 </style>

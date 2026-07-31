@@ -47,20 +47,13 @@ const api = sopApi;
 // 生成 QA（支持多文件上传）
 export async function generateQa(
   files,
-  file_type,
-  strategy,
   category_id,
-  position_id,
+  description,
 ) {
   const form = new FormData();
   files.forEach((file) => form.append("files", file));
-  form.append("file_type", file_type);
-  const normalizedPositionId = String(position_id ?? "").trim().toLowerCase();
-  if (!["", "none", "null", "0"].includes(normalizedPositionId)) {
-    form.append("position_id", position_id);
-  }
-  form.append("strategy", strategy);
   form.append("category_id", category_id);
+  if (description?.trim()) form.append("description", description.trim());
 
   return api.post("/v1/dataprep/generate_qa", form);
 }

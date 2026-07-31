@@ -26,7 +26,7 @@
           <el-button
             type="primary"
             :disabled="local.saving"
-            @click.stop="onSave(true)"
+            @click.stop="onSave"
           >
             {{ $t("licenseAdmin.saveAndUpdate") }}
           </el-button>
@@ -120,7 +120,6 @@
         <el-button @click="$emit('update:modelValue', false)">{{
           $t("common.cancel")
         }}</el-button>
-        <!-- <el-button type="primary" :disabled="local.saving" @click="onSave()">保存</el-button> -->
       </div>
     </template>
   </el-dialog>
@@ -217,7 +216,7 @@ function remove(i) {
   local.items.splice(i, 1);
 }
 
-async function onSave(sync = false) {
+async function onSave() {
   if (local.saving) return; // 🔒 重入锁：已经在保存就直接返回
   local.saving = true; // 🔒 先上锁，避免双击或双触发
 
@@ -258,11 +257,7 @@ async function onSave(sync = false) {
 
   try {
     await saveQaList(payload);
-    if (sync) {
-      ElMessage.success(t("licenseAdmin.saveSuccess"));
-    } else {
-      ElMessage.success(t("common.saveSuccess"));
-    }
+    ElMessage.success(t("licenseAdmin.saveSuccess"));
     emit("update:modelValue", false);
     emit("refresh");
   } catch (e) {

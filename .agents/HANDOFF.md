@@ -55,16 +55,16 @@
 
 ## 练习编辑弹窗
 
-- `src\pages\components\licenseAdmin\editDrawer.vue` 现为 Element Plus 居中 `el-dialog`（标题“编辑练习”、`72vw`、最大 `1200px`、内容区滚动），不再使用右侧抽屉。
+- `src\pages\components\licenseAdmin\editDrawer.vue` 现为 Element Plus 居中 `el-dialog`（标题“编辑练习”、`720px`、内容区滚动），不再使用右侧抽屉。
 - 弹窗复用父页传入的分类树；先选一级、再选二级，实际保存只调用既有 SOP 更新接口并提交二级 `category_id`。保存成功后向 `LicenseAdmin.vue` 触发既有 `refresh`，当前筛选/分页状态不变。
-- 上传类型、版本、当前文件和练习描述为只读展示：当前 SOP 更新接口未提供这些字段的持久化能力。编辑弹窗不加载 QA；题目复核仍只通过 `ReviewDialog.vue` 完成。
+- 编辑弹窗只显示所属类别、细分方向和可编辑练习描述；上传类型、版本和当前文件不显示。编辑弹窗不加载 QA；题目复核仍只通过 `ReviewDialog.vue` 完成。
 
 ## 本次练习生成弹窗调整
 
-- `LicenseAdmin.vue` 的真实生成入口已调整为单列：上传类型、所属类别、细分方向、解析模式、选择文件。公司、部门、岗位、发布时间、结束时间及其局部状态、校验、组织查询都已删除，未影响其他页面的组织 API。
-- 上传类型显示并自动识别真实后缀 `PDF`、`DOC`、`DOCX`、`XLS`、`XLSX`；Element Plus 文件选择器的 `accept` 与选择类型联动。服务端仍用既有 `file_type` 枚举，当前映射 PDF/XLS/XLSX→`sop`、DOC/DOCX→`operation`，未改请求字段名。
-- 生成练习不再读取、校验或提交登录用户的 `position_id`；文件、分类和解析模式校验及加载态保留。后端将岗位作为可选归属处理，缺省记录不会因此阻断生成。
-- 编辑弹窗的两列标签宽度固定为 92px 且不换行；上传类型按已有文件名后缀只读回显，不再显示“SOP 文件”。原型底部按钮已落实为右对齐“取消 / 生成”。
+- `LicenseAdmin.vue` 的真实生成入口为单列：所属类别、细分方向、练习描述、选择文件。上传类型、解析模式、公司、部门、岗位、发布时间、结束时间及其局部状态、校验、组织查询都已删除，未影响其他页面的组织 API。
+- 文件选择器固定支持 `PDF`、`DOC`、`DOCX`、`XLS`、`XLSX`；前端不提交 `file_type`、`strategy` 或 `position_id`。Dataprep 以真实后缀映射 PDF/DOC/DOCX→`operation`、XLS/XLSX→`sop`。
+- 原型底部按钮保留右对齐“取消 / 生成”；题目复核按钮和成功提示统一显示“保存”。
+- 练习描述在生成请求与编辑保存中统一使用 `description`；后端新增独立列，`remark` 仍专用于异步失败信息，部署前需执行后端迁移。
 
 ## 岗位解绑边界
 

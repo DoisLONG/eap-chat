@@ -136,23 +136,6 @@
           :rules="rules"
           :model="importDlg"
         >
-          <el-form-item
-            label="上传类型"
-            prop="file_type"
-          >
-            <el-select
-              v-model="importDlg.file_type"
-              placeholder="请选择上传类型"
-              @change="changeFileType"
-            >
-              <el-option
-                v-for="oitem in fileTypeOptions"
-                :key="oitem.value"
-                :label="oitem.label"
-                :value="oitem.value"
-              />
-            </el-select>
-          </el-form-item>
           <el-form-item label="所属类别" prop="primary_category_id">
             <el-select
               v-model="importDlg.primary_category_id"
@@ -181,22 +164,13 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item
-            :label="$t('licenseAdmin.analysisMode')"
-            prop="strategy"
-          >
-            <el-select
-              v-model="importDlg!.strategy"
-              :placeholder="$t('licenseAdmin.analysisModePlaceholder')"
-              @change="changeFileType"
-            >
-              <el-option
-                v-for="oitem in strategyList"
-                :key="oitem.value"
-                :label="oitem.label"
-                :value="oitem.value"
-              />
-            </el-select>
+          <el-form-item label="练习描述">
+            <el-input
+              v-model="importDlg.description"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入练习描述"
+            />
           </el-form-item>
           <el-form-item
             :label="$t('licenseAdmin.selectFile')"
@@ -209,11 +183,11 @@
               :file-list="importDlg.files"
               :on-change="onUploadChange"
               :on-remove="onUploadRemove"
-              :accept="importFileType"
+              accept=".pdf,.doc,.docx,.xls,.xlsx"
             >
               <div class="el-upload__text">
                 拖拽或点击选择文件
-                <div class="el-upload__tip">仅支持 {{ importFileType || "选择上传类型后显示" }}</div>
+                <div class="el-upload__tip">仅支持 PDF、DOC、DOCX、XLS、XLSX</div>
               </div>
               <template #file="{ file }">
                 <el-tooltip :content="file.name" placement="top">
@@ -284,12 +258,6 @@ const proTable = ref<ProTableInstance>();
 const initParam = reactive({});
 const categoryTree = ref<any[]>([]);
 
-const strategyList = computed(() => [
-  { label: t("licenseAdmin.allMode"), value: "all" },
-  { label: t("licenseAdmin.stepMode"), value: "step" },
-  { label: t("licenseAdmin.errorMode"), value: "error" },
-  { label: t("licenseAdmin.dataMode"), value: "data" },
-]);
 const handleSearch = (params: any) => {
   proTable.value?.handleAlignsearch(params);
 };
@@ -530,29 +498,18 @@ const handleUpate = () => {
 const importDlg = reactive({
   visible: false,
   files: [],
-  file_type: "",
   primary_category_id: "",
   category_id: "",
+  description: "",
   running: false,
-  strategy: "all",
 });
 
 const rules = reactive({
-  file_type: [{ required: true, message: t("licenseAdmin.uploadPlaceholder") }],
-  strategy: [
-    { required: true, message: t("licenseAdmin.strategyPlaceholder") },
-  ],
   primary_category_id: [{ required: true, message: "请选择所属类别" }],
   category_id: [{ required: true, message: "请选择细分方向" }],
 });
 
-const fileTypeOptions = [
-  { label: "PDF", value: "PDF", parserType: "sop" },
-  { label: "DOC", value: "DOC", parserType: "operation" },
-  { label: "DOCX", value: "DOCX", parserType: "operation" },
-  { label: "XLS", value: "XLS", parserType: "sop" },
-  { label: "XLSX", value: "XLSX", parserType: "sop" },
-];
+const supportedExtensions = new Set(["pdf", "doc", "docx", "xls", "xlsx"]);
 const importSecondaryCategories = computed(() => {
   const primary = categoryTree.value.find(
     (category) => String(category.id) === String(importDlg.primary_category_id),
@@ -564,34 +521,20 @@ const changeImportPrimaryCategory = () => {
 };
 function resetImportDlg() {
   importDlg.files = [];
-  importDlg.file_type = "";
   importDlg.primary_category_id = "";
   importDlg.category_id = "";
-  importDlg.strategy = "all";
+  importDlg.description = "";
   ruleFormRef.value?.resetFields();
 }
 
-const importFileType = computed(() =>
-  importDlg.file_type ? `.${importDlg.file_type.toLowerCase()}` : "",
-);
-const changeFileType = () => {
-  importDlg.files = [];
-};
 function onUploadChange(file, fileList) {
-  const type = file.name.split(".").pop()?.toUpperCase() || "";
-  if (!fileTypeOptions.some((option) => option.value === type)) {
+  const extension = file.name.split(".").pop()?.toLowerCase() || "";
+  if (!supportedExtensions.has(extension)) {
     ElMessage.error("仅支持 PDF、DOC、DOCX、XLS、XLSX 文件");
     importDlg.files = fileList.filter((item) => item.uid !== file.uid);
     return;
   }
-  if (!importDlg.file_type) importDlg.file_type = type;
-  const valid = fileList.filter(
-    (item) => item.name.split(".").pop()?.toUpperCase() === importDlg.file_type,
-  );
-  if (valid.length !== fileList.length) {
-    ElMessage.error(`上传类型为 ${importDlg.file_type}，请选择对应后缀的文件`);
-  }
-  importDlg.files = valid;
+  importDlg.files = fileList;
 }
 
 function onImport() {
@@ -617,9 +560,8 @@ async function startImport() {
       console.log("importDlg", importDlg);
       const res = await generateQa(
         realFiles,
-        fileTypeOptions.find((option) => option.value === importDlg.file_type)?.parserType,
-        importDlg.strategy,
         importDlg.category_id,
+        importDlg.description,
       );
 
       console.log("generateQa", res);
