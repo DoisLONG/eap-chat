@@ -1,4 +1,24 @@
 export default {
+  web: {
+    nav: { home: "首页", study: "学习", practice: "练习", exam: "考试" },
+    layout: {
+      userTerminal: "用户端",
+      webTerminal: "Web 端",
+      adminTerminal: "管理端",
+      userTerminalUnavailable: "用户端入口待确认",
+      userPlaceholder: "当前用户",
+    },
+    page: {
+      homeTitle: "学习首页",
+      studyTitle: "学习中心",
+      practiceTitle: "练习中心",
+      examTitle: "考试中心",
+      homeDeveloping: "首页开发中",
+      studyDeveloping: "学习页面开发中",
+      practiceDeveloping: "练习页面开发中",
+      examDeveloping: "考试页面开发中",
+    },
+  },
   填空题: "填空题",
   问答题: "问答题",
   updatePwd: {

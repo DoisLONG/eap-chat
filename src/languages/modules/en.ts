@@ -1,4 +1,24 @@
 export default {
+  web: {
+    nav: { home: "Home", study: "Study", practice: "Practice", exam: "Exam" },
+    layout: {
+      userTerminal: "User",
+      webTerminal: "Web",
+      adminTerminal: "Admin",
+      userTerminalUnavailable: "User terminal destination is pending confirmation",
+      userPlaceholder: "Current user",
+    },
+    page: {
+      homeTitle: "Learning Home",
+      studyTitle: "Learning Center",
+      practiceTitle: "Practice Center",
+      examTitle: "Exam Center",
+      homeDeveloping: "Home page under development",
+      studyDeveloping: "Study page under development",
+      practiceDeveloping: "Practice page under development",
+      examDeveloping: "Exam page under development",
+    },
+  },
   填空题: "Fill in the Blank",
   问答题: "QA",
   updatePwd: {

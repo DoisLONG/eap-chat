@@ -32,7 +32,7 @@ import guideStep4 from "./components/guide-step4.vue";
 
 const emit = defineEmits(["close"]);
 const step = ref(0);
-const dialogVisible = true;
+const dialogVisible = ref(true);
 const startLearning = () => {
   step.value = 1;
 };

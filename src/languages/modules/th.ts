@@ -1,4 +1,24 @@
 export default {
+  web: {
+    nav: { home: "หน้าแรก", study: "เรียนรู้", practice: "แบบฝึกหัด", exam: "สอบ" },
+    layout: {
+      userTerminal: "ผู้ใช้",
+      webTerminal: "เว็บ",
+      adminTerminal: "ผู้ดูแล",
+      userTerminalUnavailable: "ปลายทางของผู้ใช้รอการยืนยัน",
+      userPlaceholder: "ผู้ใช้ปัจจุบัน",
+    },
+    page: {
+      homeTitle: "หน้าแรกการเรียนรู้",
+      studyTitle: "ศูนย์การเรียนรู้",
+      practiceTitle: "ศูนย์แบบฝึกหัด",
+      examTitle: "ศูนย์สอบ",
+      homeDeveloping: "หน้าแรกกำลังพัฒนา",
+      studyDeveloping: "หน้าการเรียนรู้กำลังพัฒนา",
+      practiceDeveloping: "หน้าแบบฝึกหัดกำลังพัฒนา",
+      examDeveloping: "หน้าสอบกำลังพัฒนา",
+    },
+  },
   填空题: "ข้อสอบแบบเติมช่องว่าง",
   问答题: "ข้อสอบแบบถาม-ตอบ",
   updatePwd: {

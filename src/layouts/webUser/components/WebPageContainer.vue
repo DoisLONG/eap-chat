@@ -1,0 +1,16 @@
+<template>
+  <div class="web-page-container">
+    <slot />
+  </div>
+</template>
+
+<script setup></script>
+
+<style scoped lang="scss">
+.web-page-container {
+  width: 100%;
+  max-width: var(--web-content-max-width);
+  margin: 0 auto;
+  padding: 28px;
+}
+</style>
