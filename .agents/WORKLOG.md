@@ -179,3 +179,8 @@
 - 新增独立的 `/web` 路由、Web 用户端 Layout、端类型导航、功能菜单、顶部栏、公共内容容器与首页/学习/练习/考试占位入口；未复用或修改管理端 Layout、菜单和业务页面。
 - 顶部栏从现有 Pinia `userInfo.name` 读取用户名称，缺失时显示三语“当前用户”占位；用户端/App/H5 独立跳转地址尚未确认，因此保持禁用状态。
 - 新增 `web` 三语文案与限定在 `.web-user-layout` 下的样式变量；未创建接口、mock 数据、service、store 或 hook，未运行构建、测试、服务或容器操作。
+
+## 2026-08-03 管理端与 Web 用户端双向导航
+
+- `LayoutVertical/index.vue` 的既有端类型栏新增 Web 端 button，使用 Vue Router 的 `WebUserHome` 路由 name 进入 `/web/home`；保留原有用户端 iframe 及 `activeDuan` 行为。
+- `WebUserTerminalNav.vue` 的管理端入口改为已确认的 `Dashboard` 路由 name，返回 `/dashboard`；未新增主机、端口、接口或 mock 数据，未运行构建、测试、服务或容器操作。

@@ -25,7 +25,7 @@ import { useI18n } from "vue-i18n";
 const router = useRouter();
 const { t } = useI18n();
 
-const goToAdmin = () => router.push("/dashboard");
+const goToAdmin = () => router.push({ name: "Dashboard" });
 </script>
 
 <style scoped lang="scss">
