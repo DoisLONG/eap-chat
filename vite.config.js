@@ -13,45 +13,49 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      "/exam-api": {
+        target: "http://118.196.142.69:7020",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/exam-api/, ""),
+      },
       "/sop-api": {
-        target: "http://14.103.176.8:6007",
+        target: "http://118.196.142.69:16007",
         // target: "http://14.103.144.187:30114", // 四会
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/sop-api/, ""),
         secure: false,
       },
       "/chatapi": {
-        target: "http://14.103.176.8:9010",
+        target: "http://118.196.142.69:9010",
         // target: "http://14.103.144.187:30116", // 四会
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/chatapi/, ""),
       },
       "/companyapi": {
-        target: "http://14.103.176.8:8010",
+        target: "http://118.196.142.69:8010",
         // target: "http://14.103.144.187:30117", // 四会
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/companyapi/, ""),
       },
       "/chathistoryapi": {
-        target: "http://14.103.176.8:6022",
+        target: "http://118.196.142.69:6022",
         // target: "http://14.103.144.187:30113", // 四会
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/chathistoryapi/, ""),
       },
       "/userapi": {
-        target: "http://14.103.176.8:9011",
-        // target: "http://14.103.144.187:30112", // 四会
+        target: "http://118.196.142.69:9011", // 四会
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/userapi/, ""),
       },
       "/mobileapi": {
-        target: "http://14.103.176.8:7010",
+        target: "http://118.196.142.69:7010",
         // target: "http://14.103.144.187:30115",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/mobileapi/, ""),
       },
       "/dashboardapi": {
-        target: "http://14.103.176.8:6020",
+        target: "http://118.196.142.69:6020",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/dashboardapi/, ""),
       },
@@ -59,12 +63,12 @@ export default defineConfig({
         // http://14.103.176.8:8000/docs        asr_service
         // http://14.103.176.8:8001/docs        excel_service
         // target: "https://bin-practitioner-stated-sunrise.trycloudflare.com",
-        target: "http://14.103.176.8:8000",
+        target: "http://118.196.142.69:8000",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/videoapi/, ""),
       },
       "/videoapiv2": {
-        target: "http://14.103.176.8:8001",
+        target: "http://118.196.142.69:8001",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/videoapiv2/, ""),
       },
