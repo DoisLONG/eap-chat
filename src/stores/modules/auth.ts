@@ -96,6 +96,19 @@ export const useAuthStore = defineStore("sopai-auth", {
               isKeepAlive: false,
             },
           },
+          {
+            path: "/trainingCenter/examManagement",
+            name: "ExamManagement",
+            meta: {
+              title: "考试管理",
+              i18nKey: "menu.examManagement",
+              isLink: "",
+              isHide: false,
+              isFull: false,
+              isAffix: false,
+              isKeepAlive: false,
+            },
+          },
         ],
       },
       {

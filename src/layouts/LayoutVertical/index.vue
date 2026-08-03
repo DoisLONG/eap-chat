@@ -86,6 +86,24 @@
               {{ $t("layout.adminEnd") }}
             </div>
           </div>
+          <button
+            class="duan-item duan-item-web"
+            type="button"
+            :aria-label="$t('web.layout.webTerminal')"
+            @click="goToWeb"
+          >
+            <div class="logo-content">
+              <img style="width: 26px; height: 26px" src="/logo-blue.png" alt="" />
+            </div>
+            <div
+              class="text"
+              :style="{
+                fontSize: language === 'zh' ? '14px' : '12px',
+              }"
+            >
+              {{ $t("web.layout.webTerminal") }}
+            </div>
+          </button>
           <div class="user-setting">
             <Setting />
           </div>
@@ -158,7 +176,7 @@
 
 <script setup name="layoutVertical">
 import { computed, ref, provide, nextTick } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/modules/auth";
 import { useGlobalStore } from "@/stores/modules/global";
 import Main from "@/layouts/components/Main/index.vue";
@@ -170,6 +188,7 @@ import SubMenu from "@/layouts/components/Menu/SubMenu.vue";
 import { getConfigs, setConfigs } from "@/services/user.service";
 
 const route = useRoute();
+const router = useRouter();
 const authStore = useAuthStore();
 const globalStore = useGlobalStore();
 const accordion = computed(() => globalStore.accordion);
@@ -216,6 +235,8 @@ const changeDuan = (val) => {
     });
   }
 };
+
+const goToWeb = () => router.push({ name: "WebUserHome" });
 
 const calculateH5Size = () => {
   const container = document.querySelector(".user-iframe-wrapper");
@@ -270,7 +291,7 @@ const setIframeUrl = () => {
   const token = localStorage.getItem("token");
   const origin =
     window.location.hostname === "localhost"
-      ? "http://14.103.176.8:5174"
+      ? "https://14.103.144.187:30111"
       : window.location.origin;
   userUrl.value = `${origin}/eap/#/?token=${token}&lang=${language.value}`;
   // userUrl.value = `http://localhost:8888/eap/#/?token=${token}&lang=${language.value}`;
@@ -385,6 +406,13 @@ onUnmounted(() => {
           font-weight: 400;
           color: #99a1af;
         }
+      }
+      .duan-item-web {
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        font-family: inherit;
       }
       .active {
         .logo-content {

@@ -1,0 +1,29 @@
+.web-user-layout {
+  --web-page-bg: #f4f8fc;
+  --web-surface: #ffffff;
+  --web-line: #e6edf5;
+  --web-text-primary: #26364a;
+  --web-text-secondary: #718096;
+  --web-rail-width: 62px;
+  --web-menu-width: 204px;
+  --web-header-height: 60px;
+  --web-content-max-width: 1440px;
+
+  display: flex;
+  min-height: 100vh;
+  background: var(--web-page-bg);
+  color: var(--web-text-primary);
+
+  &__main {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  &__content {
+    min-width: 0;
+    flex: 1;
+    overflow: auto;
+  }
+}
