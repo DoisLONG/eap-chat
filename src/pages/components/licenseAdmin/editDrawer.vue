@@ -1,201 +1,185 @@
 <template>
-  <el-drawer
-    v-model="drawerVisible"
-    :destroy-on-close="true"
-    size="450px"
-    :title="$t('common.edit')"
-    @close="emits('close')"
+  <el-dialog
+    v-model="dialogVisible"
+    class="practice-edit-dialog"
+    title="编辑练习"
+    width="720px"
+    align-center
+    :close-on-click-modal="false"
+    destroy-on-close
+    @closed="handleClosed"
   >
     <el-form
       ref="ruleFormRef"
-      label-width="100px"
-      label-suffix=" :"
-      :rules="rules"
+      class="edit-form"
+      label-width="92px"
+      label-suffix="："
       :model="operateInfo"
+      :rules="rules"
     >
-      <el-form-item :label="$t('licenseAdmin.newTitle')" prop="title">
+      <el-form-item label="所属类别" prop="primary_category_id">
+        <el-select
+          v-model="operateInfo.primary_category_id"
+          placeholder="请选择所属类别"
+          @change="changePrimaryCategory"
+        >
+          <el-option
+            v-for="category in categories"
+            :key="category.id"
+            :label="category.name"
+            :value="category.id"
+          />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label="细分方向" prop="category_id">
+        <el-select
+          v-model="operateInfo.category_id"
+          placeholder="请选择细分方向"
+          :disabled="!operateInfo.primary_category_id"
+        >
+          <el-option
+            v-for="category in secondaryCategories"
+            :key="category.id"
+            :label="category.name"
+            :value="category.id"
+          />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label="练习描述">
         <el-input
-          v-model="operateInfo!.title"
-          :placeholder="$t('licenseAdmin.newTitlePlaceholder')"
-          clearable
-        ></el-input>
-      </el-form-item>
-      <el-form-item :label="$t('licenseAdmin.company')" prop="company_id">
-        <el-select
-          v-model="operateInfo!.company_id"
-          :placeholder="$t('licenseAdmin.companyPlaceholder')"
-          @change="changeCompany"
-        >
-          <el-option
-            v-for="oitem in companyList"
-            :key="oitem.value"
-            :label="oitem.label"
-            :value="oitem.value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="$t('licenseAdmin.deptment')" prop="department_id">
-        <el-select
-          v-model="operateInfo!.department_id"
-          :placeholder="$t('licenseAdmin.deptmentPlaceholder')"
-          @change="changeDept"
-        >
-          <el-option
-            v-for="oitem in deptList"
-            :key="oitem.value"
-            :label="oitem.label"
-            :value="oitem.value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="$t('licenseAdmin.position')" prop="position_id">
-        <el-select
-          v-model="operateInfo!.position_id"
-          :placeholder="$t('licenseAdmin.positionPlaceholder')"
-        >
-          <el-option
-            v-for="oitem in postList"
-            :key="oitem.value"
-            :label="oitem.label"
-            :value="oitem.value"
-          />
-        </el-select>
+          v-model="operateInfo.description"
+          type="textarea"
+          :rows="4"
+          placeholder="请输入练习描述"
+        />
       </el-form-item>
     </el-form>
+
     <template #footer>
-      <el-button @click="emits('close')">{{ $t("common.cancel") }}</el-button>
-      <el-button
-        type="primary"
-        :loading="submitLoading"
-        @click="handleSubmit"
-        >{{ $t("common.confirm") }}</el-button
-      >
+      <div class="dialog-footer">
+        <el-button :disabled="submitLoading" @click="closeDialog">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">
+          保存
+        </el-button>
+      </div>
     </template>
-  </el-drawer>
+  </el-dialog>
 </template>
 
-<script setup lang="ts" name="UserDrawer">
-import { ref, reactive, toRefs } from "vue";
+<script setup lang="ts" name="PracticeEditDialog">
+import { computed, reactive, ref, watch } from "vue";
 import { ElMessage, FormInstance } from "element-plus";
-import {
-  getCompanyList,
-  getPostList,
-  getDeptList,
-} from "@/services/company.service";
 import { updateSopTitle } from "@/services/sop.api";
-import { useI18n } from "vue-i18n";
-const { t } = useI18n();
 
-const emits = defineEmits(["close", "refresh"]);
-const rules = reactive({
-  title: [{ required: true, message: t("licenseAdmin.newTitlePlaceholder") }],
-  company_id: [
-    { required: true, message: t("licenseAdmin.companyPlaceholder") },
-  ],
-  department_id: [
-    { required: true, message: t("licenseAdmin.deptmentPlaceholder") },
-  ],
-  position_id: [
-    { required: true, message: t("licenseAdmin.positionPlaceholder") },
-  ],
-});
-const submitLoading = ref(false);
+type Category = {
+  id: number;
+  name: string;
+  children?: Array<{ id: number; name: string }>;
+};
 
 const props = defineProps<{
   rowInfo: any;
+  categories: Category[];
 }>();
-
-const { rowInfo } = toRefs(props);
-
-const operateInfo = ref<any>({ ...rowInfo.value });
-const drawerVisible = ref(true);
-
-// 公司部门岗位
-const companyList = ref<{ label: string; value: string }[]>([]);
-const deptList = ref<{ label: string; value: string }[]>([]);
-const postList = ref<{ label: string; value: string }[]>([]);
-const queryCompany = () => {
-  const params: any = {};
-  getCompanyList(params).then((res) => {
-    const data = res.data.results || [];
-    companyList.value = data.map((item: any) => ({
-      label: item.company_name,
-      value: item.company_id,
-    }));
-  });
-};
-queryCompany();
-const queryDept = () => {
-  const params: any = {};
-  if (operateInfo.value?.company_id) {
-    params.company_id = operateInfo.value.company_id;
-  }
-  getDeptList(params).then((res) => {
-    const data = res.data.results || [];
-    deptList.value = data.map((item: any) => ({
-      label: item.department_name,
-      value: item.department_id,
-    }));
-  });
-};
-queryDept();
-
-const queryPost = () => {
-  const params: any = {};
-  if (operateInfo.value?.company_id) {
-    params.company_id = operateInfo.value.company_id;
-  }
-  if (operateInfo.value?.department_id) {
-    params.department_id = operateInfo.value.department_id;
-  }
-  getPostList(params).then((res) => {
-    const data = res.data.results || [];
-    postList.value = data.map((item: any) => ({
-      label: item.position_name,
-      value: item.position_id,
-    }));
-    console.log("postList.value", postList.value);
-  });
-};
-queryPost();
-
-const changeCompany = () => {
-  queryDept();
-  postList.value = [];
-  operateInfo.value.department_id = "";
-  operateInfo.value.position_id = "";
-};
-const changeDept = () => {
-  queryPost();
-  operateInfo.value.position_id = "";
-};
-
-// 提交数据（新增/编辑）
+const emits = defineEmits(["close", "refresh"]);
+const dialogVisible = ref(true);
+const submitLoading = ref(false);
 const ruleFormRef = ref<FormInstance>();
+const operateInfo = reactive({
+  title: props.rowInfo?.title || props.rowInfo?.filename || "",
+  description: props.rowInfo?.description || "",
+  position_id: props.rowInfo?.position_id,
+  primary_category_id: props.rowInfo?.primary_category_id || "",
+  category_id: props.rowInfo?.category_id || "",
+});
+const rules = {
+  primary_category_id: [{ required: true, message: "请选择所属类别", trigger: "change" }],
+  category_id: [{ required: true, message: "请选择细分方向", trigger: "change" }],
+};
+const secondaryCategories = computed(() => {
+  const primary = props.categories.find(
+    (category) => String(category.id) === String(operateInfo.primary_category_id),
+  );
+  return primary?.children || [];
+});
+const syncPrimaryCategory = () => {
+  if (operateInfo.primary_category_id || !operateInfo.category_id) return;
+  const primary = props.categories.find((category) =>
+    category.children?.some((child) => String(child.id) === String(operateInfo.category_id)),
+  );
+  if (primary) operateInfo.primary_category_id = primary.id;
+};
+watch(() => props.categories, syncPrimaryCategory, { immediate: true });
+
+const changePrimaryCategory = () => {
+  operateInfo.category_id = "";
+};
+const closeDialog = () => {
+  dialogVisible.value = false;
+};
+const handleClosed = () => {
+  Object.assign(operateInfo, {
+    title: "",
+    description: "",
+    position_id: undefined,
+    primary_category_id: "",
+    category_id: "",
+  });
+  emits("close");
+};
 const handleSubmit = () => {
-  ruleFormRef.value!.validate(async (valid) => {
+  ruleFormRef.value?.validate(async (valid) => {
     if (!valid) return;
+    submitLoading.value = true;
     try {
-      submitLoading.value = true;
-      const params = {
-        record_id: operateInfo.value.id,
-        title: operateInfo.value.title,
-        company_id: operateInfo.value.company_id,
-        department_id: operateInfo.value.department_id,
-        position_id: operateInfo.value.position_id,
-      };
-      const res = await updateSopTitle(params);
-      submitLoading.value = false;
-      if (res.data.status !== 200) {
-        ElMessage.error({ message: res.data.message || "操作失败！" });
-        return;
+      const response = await updateSopTitle({
+        record_id: props.rowInfo.id,
+        title: operateInfo.title,
+        position_id: operateInfo.position_id,
+        category_id: operateInfo.category_id,
+        description: operateInfo.description,
+      });
+      if (response.data?.status !== 200) {
+        throw new Error(response.data?.message || "保存失败");
       }
-      emits("close");
+      ElMessage.success("保存成功");
       emits("refresh");
-      ElMessage.success({ message: t("common.editSuccess") });
+      closeDialog();
     } catch (error) {
-      console.log(error);
+      ElMessage.error((error as any)?.response?.data?.message || (error as Error)?.message || "保存失败");
+    } finally {
+      submitLoading.value = false;
     }
   });
 };
 </script>
+
+<style scoped>
+.edit-form :deep(.el-form-item) {
+  margin-bottom: 22px;
+  min-width: 0;
+}
+.edit-form :deep(.el-form-item__label) {
+  white-space: nowrap;
+}
+.edit-form :deep(.el-select),
+.edit-form :deep(.el-input) {
+  width: 100%;
+}
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid #edf0f4;
+}
+:deep(.practice-edit-dialog) {
+  max-width: 720px;
+}
+:deep(.practice-edit-dialog .el-dialog__body) {
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+}
+</style>

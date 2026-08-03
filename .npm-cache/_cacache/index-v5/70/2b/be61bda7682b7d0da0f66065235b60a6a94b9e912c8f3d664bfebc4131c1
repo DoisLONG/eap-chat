@@ -1,0 +1,2 @@
+
+af65d44674ef0b2ff020de7629c7df8923e9ccab	{"key":"make-fetch-happen:request-cache:https://registry.npm.taobao.org/vue","integrity":null,"time":1783577568654,"size":"262","metadata":{"time":1783577568654,"url":"https://registry.npm.taobao.org/vue","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Thu, 09 Jul 2026 06:12:47 GMT","location":"https://registry.npmmirror.com/vue"},"options":{"compress":true},"status":301}}

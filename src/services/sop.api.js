@@ -6,13 +6,13 @@ import { $t } from "@/languages/index.js";
 
 const router = useRouter();
 
-const api = axios.create({
+export const sopApi = axios.create({
   baseURL: "/sop-api",
   timeout: 60000,
 });
 
 // 请求拦截器，添加token
-api.interceptors.request.use(
+sopApi.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -26,7 +26,7 @@ api.interceptors.request.use(
 );
 
 // 响应拦截器 - 处理token过期等情况
-api.interceptors.response.use(
+sopApi.interceptors.response.use(
   (response) => {
     return response;
   },
@@ -42,24 +42,18 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+const api = sopApi;
 // 生成 QA（支持多文件上传）
 export async function generateQa(
   files,
-  file_type,
-  position_id,
-  strategy,
-  start_time,
-  end_time,
+  category_id,
+  description,
 ) {
   const form = new FormData();
   files.forEach((file) => form.append("files", file));
-  form.append("file_type", file_type);
-  form.append("position_id", position_id);
-  form.append("strategy", strategy);
-  form.append("start_time", start_time);
-  if (end_time) {
-    form.append("end_time", end_time);
-  }
+  form.append("category_id", category_id);
+  if (description?.trim()) form.append("description", description.trim());
 
   return api.post("/v1/dataprep/generate_qa", form);
 }
@@ -127,17 +121,31 @@ export async function getSops(parmas) {
   return api.post("/v1/dataprep/sops", upParams);
 }
 
+// SOP 两级分类树（考试管理与练习管理共用）。
+export const getSopCategoryTree = () =>
+  api.post("/v1/dataprep/sop/categories/tree");
+
 // 拉取某个文件的 QA 列表（如果需要接入复核弹窗）
 export const getQaList = (params) => {
   return api.post("/v1/dataprep/qa/list", params);
 };
 // 保存 QA（复核完成后）
-export async function saveQaList(sop_info_id, records) {
+export function saveQaList({ sop_info_id, file_name, records }) {
   return api.post("/v1/dataprep/qa/save", {
     sop_info_id,
+    file_name,
     records,
   });
 }
+
+export const getPracticeReviewSource = (sopId) =>
+  api.get(`/v1/dataprep/sops/${sopId}/source`);
+
+export const getPracticeSourceFile = (sopId, download = false) =>
+  api.get(`/v1/dataprep/sops/${sopId}/source-file`, {
+    params: { download },
+    responseType: "blob",
+  });
 
 // 删除某个 SOP 文件
 export async function deleteSop(sop_record_id) {

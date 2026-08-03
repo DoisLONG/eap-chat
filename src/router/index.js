@@ -27,6 +27,38 @@ const routes = [
     name: "h5Preview",
     component: () => import("@/pages/h5Preview/index.vue"),
   },
+  // Web 用户端独立框架（不复用管理端 Layout 或菜单）
+  {
+    path: "/web",
+    component: () => import("@/layouts/webUser/WebUserLayout.vue"),
+    redirect: "/web/home",
+    children: [
+      {
+        path: "home",
+        name: "WebUserHome",
+        component: () => import("@/pages/webUser/home/index.vue"),
+        meta: { titleKey: "web.page.homeTitle" },
+      },
+      {
+        path: "study",
+        name: "WebUserStudy",
+        component: () => import("@/pages/webUser/study/index.vue"),
+        meta: { titleKey: "web.page.studyTitle" },
+      },
+      {
+        path: "practice",
+        name: "WebUserPractice",
+        component: () => import("@/pages/webUser/practice/index.vue"),
+        meta: { titleKey: "web.page.practiceTitle" },
+      },
+      {
+        path: "exam",
+        name: "WebUserExam",
+        component: () => import("@/pages/webUser/exam/index.vue"),
+        meta: { titleKey: "web.page.examTitle" },
+      },
+    ],
+  },
   // 带侧边栏的主框架
   {
     path: "/",
@@ -123,6 +155,27 @@ const routes = [
               icon: "Menu",
               title: "练习管理",
               i18nKey: "menu.practiceManagement",
+              isLink: "",
+              isHide: false,
+              isFull: false,
+              isAffix: false,
+              isKeepAlive: false,
+            },
+          },
+          {
+            path: "/trainingCenter/practiceManagement/review/:sopId",
+            name: "PracticeQuestionReview",
+            component: () => import("@/pages/practiceReview/index.vue"),
+            meta: { isHide: true, isKeepAlive: false },
+          },
+          {
+            path: "/trainingCenter/examManagement",
+            name: "ExamManagement",
+            component: () => import("@/pages/examManagement/index.vue"),
+            meta: {
+              icon: "Tickets",
+              title: "考试管理",
+              i18nKey: "menu.examManagement",
               isLink: "",
               isHide: false,
               isFull: false,
