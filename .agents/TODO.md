@@ -8,5 +8,6 @@
 - [ ] 确认用户端/App/H5 的独立跳转目标与是否应在 Web 用户端中提供入口；当前 Web 端已安全禁用该入口。
 - [ ] 用户执行 `npm run dev` 后验证 `/web/home`、`/web/study`、`/web/practice`、`/web/exam` 的访问、菜单高亮、管理端跳转以及 SPA 刷新。
 - [ ] 用户验证管理端端类型栏与 Web 用户端之间多次双向切换、浏览器前进/后退和 Console；用户端/App/H5 的独立跳转目标仍待确认。
+- [ ] 确认用户端练习列表接口的授权范围、请求字段与响应契约；接入时由 adapter 映射为页面 `PracticeViewModel`，并验证 Web 练习进入与退出 `ChatExam` 的完整链路。
 
 不把历史原型中的 localStorage、模拟数据或未确认功能列为实现待办。

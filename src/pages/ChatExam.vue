@@ -365,6 +365,14 @@ const sopName = route.query.sopName || "";
 const sopId = route.query.sopId || "";
 const position_id = route.query.position_id || "";
 
+const getPracticeReturnTarget = () => {
+  if (route.query.entry === "web-practice") {
+    return { name: "WebUserPractice" };
+  }
+
+  return "/chat/sop";
+};
+
 const scrollBox = ref(null);
 const input = ref("");
 const sending = ref(false);
@@ -380,7 +388,7 @@ const storageKey = `chat_hist_${position_id || sopId || "default"}`;
 const userAvatar = "/logo2.png";
 const botAvatar = "/logo1.png";
 
-if (!sopId && !position_id) router.replace("/chat/sop");
+if (!sopId && !position_id) router.replace(getPracticeReturnTarget());
 
 // ========== 语音状态 ==========
 const mobileInputMode = ref("text"); // text | voice
@@ -1014,7 +1022,7 @@ async function send() {
 function endExam() {
   persist();
   ElMessage.success(t("ChatExam.testOver"));
-  router.replace("/chat/sop");
+  router.replace(getPracticeReturnTarget());
 }
 
 onMounted(() => {

@@ -184,3 +184,17 @@
 
 - `LayoutVertical/index.vue` 的既有端类型栏新增 Web 端 button，使用 Vue Router 的 `WebUserHome` 路由 name 进入 `/web/home`；保留原有用户端 iframe 及 `activeDuan` 行为。
 - `WebUserTerminalNav.vue` 的管理端入口改为已确认的 `Dashboard` 路由 name，返回 `/dashboard`；未新增主机、端口、接口或 mock 数据，未运行构建、测试、服务或容器操作。
+
+## 2026-08-03 Web 用户端练习页
+
+- `pages/webUser/practice/index.vue` 从占位页面改为筛选、禁用的综合练习区域、列表总数与正式空状态；当前 `practices` 保持空数组，不请求用户端以外的接口，也不使用 mock、localStorage 或管理端 SOP 数据。
+- 新增实际被页面使用的 `PracticeCard.vue`，仅接收明确标注为页面展示模型的字段，并通过 `start` emit 将动作交还给页面；历史练习按钮保持禁用。
+- 页面未来以 `{ sopId, sopName }` 进入 `ChatExam` 并带固定 `entry=web-practice`。`ChatExam.vue` 仅新增该固定标识的安全返回分支，其他入口仍返回 `/chat/sop`；未改会话、SSE、接口、历史或鉴权逻辑。
+- 新增练习页三语文案；未运行构建、测试、服务或容器操作。
+
+## 2026-08-03 Web 用户端练习筛选与综合练习视觉修正
+
+- Web 练习页复用管理端 `getSopCategoryTree()` 的 `{ id, name, children }` 分类树和一级切换时清空二级选择的规则；没有复用管理端 `searchForm.vue`，因为其与管理端表格查询、参数和中文文案耦合。
+- 一级“全部 / 产品 / 运营 / 技术”仍为页面状态；选择具体一级后显示真实 `children` 二级分类，保留二级 `id`，失败时显示轻量提示且不伪造分类。该请求仅取分类树，未调用练习列表 `getSops`。
+- 搜索区移到分类区下方左侧；综合练习改为白色卡片和可点击主按钮，点击仅提示三语“暂未开放”。空状态将筛选无结果的主标题与辅助说明分离，避免重复文案。
+- 未修改 ChatExam、管理端、列表接口、后端、数据库、Docker 或代理，未运行构建、测试、服务或容器操作。

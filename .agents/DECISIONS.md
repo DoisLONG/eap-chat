@@ -17,6 +17,16 @@
 - 管理端与 Web 用户端同属当前 Vue Router 应用，终端切换统一使用已确认的 route name：`WebUserHome` 与 `Dashboard`；不使用完整 URL 或 `window.location`。
 - 管理端既有“用户端”仍由 `activeDuan` 与 iframe 管理，本次只新增 Web 端入口，不改变其状态、尺寸计算或 iframe 地址逻辑。
 
+## 2026-08-03 Web 用户端练习页
+
+- 用户端练习列表的接口、权限和响应契约未确认；页面在此之前只保留空数组、页面筛选状态和不绑定接口的展示模型，不得用管理端 SOP 接口或原型数据补齐列表。
+- 单项练习只允许经 `{ sopId, sopName, entry: 'web-practice' }` 进入既有 `ChatExam`。返回逻辑只识别这一个固定来源标识并返回 `WebUserPractice`，不接受任意 `returnUrl`；没有该标识的 App/H5 流程继续回 `/chat/sop`。
+
+## 2026-08-03 Web 用户端分类筛选
+
+- Web 用户端允许只读复用管理端的 `getSopCategoryTree()`，因为它仅提供通用分类树；练习列表仍未确认，严禁调用 `getSops` 或将分类树推断为用户可练习内容。
+- 管理端 `searchForm.vue` 直接驱动管理端列表查询，不能作为 Web 用户端组件复用。Web 页面私有实现保留同一 `id / name / children` 与一级变化清空二级的规则，避免引入管理端业务耦合。
+
 ## 2026-07-28 恢复决策
 
 | 决策 | 结论 | 依据/影响 |
