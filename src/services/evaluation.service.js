@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const evaluationApi = axios.create({
-  baseURL: "/evaluationapi",
+  baseURL: "/question-bank-evaluate-api",
   timeout: 15000,
 });
 
