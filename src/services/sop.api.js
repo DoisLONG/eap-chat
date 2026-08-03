@@ -138,6 +138,15 @@ export function saveQaList({ sop_info_id, file_name, records }) {
   });
 }
 
+export const getPracticeReviewSource = (sopId) =>
+  api.get(`/v1/dataprep/sops/${sopId}/source`);
+
+export const getPracticeSourceFile = (sopId, download = false) =>
+  api.get(`/v1/dataprep/sops/${sopId}/source-file`, {
+    params: { download },
+    responseType: "blob",
+  });
+
 // 删除某个 SOP 文件
 export async function deleteSop(sop_record_id) {
   const res = await api.post("/v1/dataprep/delete_sop", {

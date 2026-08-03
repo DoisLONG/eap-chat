@@ -46,8 +46,8 @@
         <el-link
           v-if="isTaskReady(row)"
           type="primary"
-          :loading="review.loading"
-          :disabled="review.loading"
+          :loading="reviewLoading"
+          :disabled="reviewLoading"
           @click="openReview(row)"
         >
           复核题目
@@ -110,13 +110,6 @@
         </div>
       </template>
     </ProTable>
-    <!-- 复核弹窗 -->
-    <ReviewDialog
-      v-model="review.visible"
-      :data="review.data"
-      @refresh="handleUpate"
-    />
-
     <!-- 生成练习弹窗 -->
     <el-dialog
       v-model="importDlg.visible"
@@ -227,8 +220,8 @@
 
 <script setup lang="tsx" name="useProTable">
 import { ref, reactive, onMounted, onUnmounted, computed } from "vue";
+import { useRouter } from "vue-router";
 import searchForm from "./components/licenseAdmin/searchForm.vue";
-import ReviewDialog from "@/components/exam/ReviewDialog.vue";
 // import editDialog from "./components/licenseAdmin/editDialog.vue";
 import editDrawer from "./components/licenseAdmin/editDrawer.vue";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -239,7 +232,6 @@ import {
   getSops,
   generateQa,
   deleteSop,
-  getQaList,
   getTaskStatus,
   getSopCategoryTree,
 } from "@/services/sop.api";
@@ -248,6 +240,8 @@ import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
+const router = useRouter();
+const reviewLoading = ref(false);
 
 const userStore = useUserStore();
 const { userInfo } = storeToRefs(userStore);
@@ -349,13 +343,6 @@ const columns = computed<ColumnProps[]>(() => {
   ];
 });
 
-const review = reactive({
-  visible: false,
-  data: { id: null, title: "", fileName: "", items: [] },
-  currentRow: null,
-  loading: false,
-});
-
 const editDlg = reactive({
   visible: false,
   record_id: null,
@@ -364,13 +351,7 @@ const editDlg = reactive({
 });
 
 async function openReview(row) {
-  review.loading = true;
-  review.currentRow = row;
-  review.data.title = row.title;
-  review.data.id = row.id;
-  review.data.fileName = row.filename || row.fileName || "";
-  review.data.items = [];
-
+  reviewLoading.value = true;
   try {
     const taskId = row.task_id || "";
     if (taskId) {
@@ -387,25 +368,12 @@ async function openReview(row) {
       return;
     }
 
-    const { data } = await getQaList({ id: row.id });
-    const items = Array.isArray(data?.results) ? data.results : [];
-
-    review.data.items = items.map((x, i) => ({
-      ...x,
-      _key: `${i}-${Date.now()}`,
-      position: x.position ?? "",
-      question: x.question ?? "",
-      answer: x.answer ?? "",
-      content: x.content ?? "",
-      type: x.type ?? "",
-    }));
-    review.visible = true;
-    ElMessage.success(t("licenseAdmin.loadSuccess", { num: items.length }));
+    router.push({ name: "PracticeQuestionReview", params: { sopId: row.id } });
   } catch (e) {
     console.error("[复核失败]", e);
     ElMessage.warning((e as any)?.message || t("licenseAdmin.loadFail"));
   } finally {
-    review.loading = false;
+    reviewLoading.value = false;
   }
 }
 

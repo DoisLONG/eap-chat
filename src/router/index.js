@@ -131,6 +131,12 @@ const routes = [
             },
           },
           {
+            path: "/trainingCenter/practiceManagement/review/:sopId",
+            name: "PracticeQuestionReview",
+            component: () => import("@/pages/practiceReview/index.vue"),
+            meta: { isHide: true, isKeepAlive: false },
+          },
+          {
             path: "/trainingCenter/examManagement",
             name: "ExamManagement",
             component: () => import("@/pages/examManagement/index.vue"),
