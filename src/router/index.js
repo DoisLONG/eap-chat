@@ -118,7 +118,7 @@ const routes = [
               import("@/pages/knowledgeManagement/materialLibrary/index.vue"),
             meta: {
               icon: "Folder",
-              title: "素材库",
+              title: "资料管理",
               i18nKey: "menu.materialLibrary",
               isLink: "",
               isHide: false,

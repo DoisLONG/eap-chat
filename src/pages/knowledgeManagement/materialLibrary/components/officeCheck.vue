@@ -10,14 +10,24 @@
   >
     <div class="preview-container">
       <div class="preview-content">
+        <video
+            v-if="isVideo"
+            class="video-preview"
+            :src="fileSrc"
+            controls
+            preload="metadata"
+            playsinline
+            @error="onDocError"
+        />
+
         <OfficeViewer
-          ref="officeViewerRef"
+          v-else
           :type="fileType"
           :src="fileSrc"
           height="100%"
           @rendered="onDocRendered"
           @error="onDocError"
-        />
+/>
       </div>
     </div>
   </el-drawer>
@@ -41,7 +51,10 @@ const props = defineProps<{
 
 const { fileType, fileSrc } = toRefs(props);
 const drawerVisible = ref(true);
-
+const isVideo = computed(() => {
+  const type = fileType.value.toLowerCase().replace(/^\./, "");
+  return ["mp4", "mov"].includes(type);
+});
 const onDocRendered = () => {
   console.log("文档预览完成");
 };
@@ -149,6 +162,12 @@ const onDocError = (err: any) => {
       }
     }
   }
+}
+.video-preview {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  object-fit: contain;
 }
 
 // 平滑过渡动画

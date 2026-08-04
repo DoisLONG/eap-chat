@@ -8,6 +8,77 @@
       :data-callback="dataCallback"
       rowKey="material_id"
     >
+      <template #searchForm>
+        <section class="material-filter-card">
+          <h2 class="filter-title">
+            {{ $t("materialLibrary.filterTitle") }}
+          </h2>
+
+          <div
+            class="filter-category-row"
+            :class="{ 'has-subcategory': filterSubCategoryOptions.length }"
+          >
+            <span class="filter-label">
+              {{ $t("materialLibrary.filterCategory") }}：
+            </span>
+            <div class="category-options">
+              <el-button
+                v-for="item in filterCategoryOptions"
+                :key="item.value"
+                class="category-button"
+                :class="{ 'is-active': filterForm.category === item.value }"
+                @click="changeFilterCategory(item.value)"
+              >
+                {{ item.label }}
+              </el-button>
+            </div>
+          </div>
+
+          <div
+            v-if="filterSubCategoryOptions.length"
+            class="filter-subcategory-row"
+          >
+            <el-button
+              v-for="item in filterSubCategoryOptions"
+              :key="item.value"
+              class="subcategory-button"
+              :class="{ 'is-active': filterForm.categoryId === item.value }"
+              @click="changeFilterSubCategory(item.value)"
+            >
+              {{ item.label }}
+            </el-button>
+          </div>
+
+          <div class="filter-search-row">
+            <div class="name-filter">
+              <label class="filter-label" for="material-name-filter">
+                {{ $t("materialLibrary.filterName") }}：
+              </label>
+              <el-input
+                id="material-name-filter"
+                v-model="filterForm.title"
+                class="name-filter-input"
+                :placeholder="$t('materialLibrary.filterPlaceholder')"
+                clearable
+                @keyup.enter="handleFilterSearch"
+                @clear="handleFilterSearch"
+              />
+            </div>
+            <div class="filter-actions">
+              <el-button
+                type="primary"
+                :icon="Search"
+                @click="handleFilterSearch"
+              >
+                {{ $t("common.search") }}
+              </el-button>
+              <el-button :icon="RefreshLeft" @click="resetFilters">
+                {{ $t("common.reset") }}
+              </el-button>
+            </div>
+          </div>
+        </section>
+      </template>
       <!-- 表格 header 按钮 -->
       <template #tableHeader="scope">
         <el-button
@@ -56,6 +127,7 @@
       v-if="operateDrawerVisible"
       :rowInfo="rowInfo"
       :type="drawerType"
+      :category-options="materialCategoryOptions"
       @refresh="refreshTable"
       @close="operateDrawerVisible = false"
       ref="drawerRef"
@@ -72,13 +144,20 @@
 </template>
 
 <script setup lang="tsx" name="useProTable">
-import { ref, reactive } from "vue";
+import { computed, reactive, ref } from "vue";
 import ProTable from "@/components/ProTable/index.vue";
 import OfficeCheck from "./components/officeCheck.vue";
 import OperateDrawer from "./components/operateDrawer.vue";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage, ElMessageBox, ElTag } from "element-plus";
 import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
-import { Upload, Delete, EditPen, View } from "@element-plus/icons-vue";
+import {
+  Upload,
+  Delete,
+  EditPen,
+  View,
+  Search,
+  RefreshLeft,
+} from "@element-plus/icons-vue";
 import {
   getMaterialList,
   deleteMaterial,
@@ -87,12 +166,105 @@ import {
 
 import { useHandleData } from "@/hooks/useHandleData";
 import { formatDateTime } from "@/utils/dateFormat";
+import { joinUrl } from "@/utils";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
 const proTable = ref<ProTableInstance>();
 
 const initParam = reactive({});
+const filterForm = reactive<{
+  title: string;
+  category: string;
+  categoryId: number | "";
+}>({
+  title: "",
+  category: "",
+  categoryId: "",
+});
+const materialCategoryOptions = computed(() => [
+  {
+    label: t("materialLibrary.filterProduct"),
+    value: "产品",
+    allLabel: t("materialLibrary.filterAllProducts"),
+    children: [
+      { label: t("materialLibrary.filterAiPortal"), value: 13 },
+      { label: t("materialLibrary.filterAiHub"), value: 14 },
+      { label: t("materialLibrary.filterBeat"), value: 15 },
+      { label: t("materialLibrary.filterBams"), value: 16 },
+    ],
+  },
+  {
+    label: t("materialLibrary.filterOperations"),
+    value: "运营",
+    allLabel: t("materialLibrary.filterAllOperations"),
+    children: [
+      {
+        label: t("materialLibrary.filterCompanyArticles"),
+        value: 17,
+      },
+    ],
+  },
+  {
+    label: t("materialLibrary.filterTechnology"),
+    value: "技术",
+    allLabel: t("materialLibrary.filterAllTechnology"),
+    children: [
+      { label: t("materialLibrary.filterK8s"), value: 18 },
+    ],
+  },
+]);
+const filterCategoryOptions = computed(() => [
+  { label: t("materialLibrary.filterAll"), value: "" },
+  ...materialCategoryOptions.value.map(({ label, value }) => ({
+    label,
+    value,
+  })),
+]);
+const filterSubCategoryOptions = computed(() => {
+  const category = materialCategoryOptions.value.find(
+    (item) => item.value === filterForm.category,
+  );
+  if (!category) return [];
+  return [
+    { label: category.allLabel, value: "" as const },
+    ...category.children,
+  ];
+});
+
+const getFilterParams = () => {
+  const params: Record<string, string | number> = {};
+  const title = filterForm.title.trim();
+  if (title) params.title = title;
+  if (filterForm.category) params.category = filterForm.category;
+  if (filterForm.categoryId !== "") {
+    params.category_id = filterForm.categoryId;
+  }
+  return params;
+};
+
+const handleFilterSearch = () => {
+  proTable.value?.handleAlignsearch(getFilterParams());
+};
+
+const changeFilterCategory = (category: string) => {
+  filterForm.category = category;
+  filterForm.categoryId = "";
+  handleFilterSearch();
+};
+
+const changeFilterSubCategory = (categoryId: number | "") => {
+  filterForm.categoryId = categoryId;
+  handleFilterSearch();
+};
+
+const resetFilters = () => {
+  filterForm.title = "";
+  filterForm.category = "";
+  filterForm.categoryId = "";
+  proTable.value?.handleAlignsearch({});
+};
+
 const dataCallback = (data: any) => {
   const res = data.data;
   return {
@@ -106,6 +278,12 @@ const getTableList = (params: any) => {
   return getMaterialList(newParams);
 };
 
+const categoryTagClassMap: Record<string, string> = {
+  产品: "is-product",
+  运营: "is-operations",
+  技术: "is-technology",
+};
+
 // 表格配置项
 const columns = reactive<ColumnProps[]>([
   { type: "selection", fixed: "left", width: 70 },
@@ -114,13 +292,6 @@ const columns = reactive<ColumnProps[]>([
     label: "素材名称",
     i18nKey: "materialLibrary.name",
     minWidth: 200,
-    search: {
-      el: "input",
-      props: {
-        clearable: true,
-        placeholder: t("materialLibrary.searchKeyword"),
-      },
-    },
   },
   {
     prop: "file_type",
@@ -132,17 +303,42 @@ const columns = reactive<ColumnProps[]>([
     prop: "category",
     label: "素材分类",
     i18nKey: "materialLibrary.category",
-    minWidth: 120,
+    minWidth: 180,
     render: (scope) => {
       const category = scope.row.category;
-      const list = [
-        { label: t("course.safetyTraining"), value: "安全培训" },
-        { label: t("course.skillImprovement"), value: "技能提升" },
-        { label: t("course.onboardingTraining"), value: "入职培训" },
-        { label: t("course.productTraining"), value: "产品培训" },
-      ];
-      const item = list.find((item) => item.value === category);
-      return item?.label || "-";
+      const subCategoryName = scope.row.sub_category_name;
+      if (!category && !subCategoryName) return "-";
+
+      const currentItem = materialCategoryOptions.value.find(
+        (item) => item.value === category,
+      );
+      const label = currentItem?.label || String(category);
+      const tagClass = categoryTagClassMap[category] || "is-default";
+
+      return (
+        <div class="material-category-cell">
+          {category ? (
+            <ElTag
+              class={["material-category-tag", tagClass]}
+              effect="plain"
+              disableTransitions
+              title={label}
+            >
+              {label}
+            </ElTag>
+          ) : null}
+          {subCategoryName ? (
+            <ElTag
+              class="material-subcategory-tag"
+              effect="plain"
+              disableTransitions
+              title={String(subCategoryName)}
+            >
+              {String(subCategoryName)}
+            </ElTag>
+          ) : null}
+        </div>
+      );
     },
   },
   {
@@ -177,18 +373,6 @@ const columns = reactive<ColumnProps[]>([
   //   i18nKey: "deptManagement.dept_name",
   //   minWidth: 150,
   // },
-  {
-    prop: "position_name",
-    label: "岗位名称",
-    i18nKey: "companyManagement.position",
-    minWidth: 120,
-  },
-  {
-    prop: "course_title",
-    label: "关联课程",
-    i18nKey: "materialLibrary.course",
-    minWidth: 200,
-  },
   {
     prop: "created_at",
     label: "上传时间",
@@ -248,7 +432,7 @@ const operateOfficeVisible = ref(false);
 
 const checkPreView = async (row) => {
   if (row.file_url) {
-    fileSrc.value = `/mobileapi/${row.file_url}`;
+    fileSrc.value = joinUrl("/mobileapi", row.file_url);
     fileType.value = row.file_type;
     fileTitle.value = row.title;
     operateOfficeVisible.value = true;
@@ -272,3 +456,236 @@ const refreshTable = () => {
   proTable.value?.getTableList();
 };
 </script>
+
+<style scoped lang="scss">
+.material-filter-card {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 20px 24px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 4%);
+}
+
+.filter-title {
+  margin: 0 0 18px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--el-text-color-primary);
+}
+
+:deep(.material-category-cell) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+:deep(.material-category-tag),
+:deep(.material-subcategory-tag) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 8px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 28px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: none;
+  border-radius: 999px;
+}
+
+:deep(.material-category-tag) {
+  width: 64px;
+
+  &.is-product {
+    color: #1677ff;
+    background-color: #e6f4ff;
+  }
+
+  &.is-operations {
+    color: #fa8c16;
+    background-color: #fff7e6;
+  }
+
+  &.is-technology {
+    color: #52c41a;
+    background-color: #f6ffed;
+  }
+
+  &.is-default {
+    color: var(--el-text-color-secondary);
+    background-color: var(--el-fill-color-light);
+  }
+}
+
+:deep(.material-subcategory-tag) {
+  max-width: 120px;
+  color: var(--el-text-color-regular);
+  background-color: var(--el-fill-color-light);
+}
+
+.filter-category-row,
+.filter-subcategory-row,
+.filter-search-row,
+.name-filter,
+.category-options,
+.filter-actions {
+  display: flex;
+  align-items: center;
+}
+
+.filter-category-row {
+  gap: 16px;
+  margin-bottom: 20px;
+
+  &.has-subcategory {
+    margin-bottom: 12px;
+  }
+}
+
+.filter-label {
+  flex: 0 0 auto;
+  font-size: 14px;
+  line-height: 32px;
+  color: var(--el-text-color-regular);
+  white-space: nowrap;
+}
+
+.category-options {
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.category-button {
+  height: 36px;
+  padding: 0 20px;
+  margin-left: 0;
+  color: var(--el-text-color-primary);
+  background: var(--el-fill-color-light);
+  border-color: transparent;
+  border-radius: 6px;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+    border-color: var(--el-color-primary-light-7);
+  }
+
+  &.is-active {
+    color: var(--el-color-white);
+    background: var(--el-color-primary);
+    border-color: var(--el-color-primary);
+  }
+}
+
+.filter-subcategory-row {
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  background: var(--el-fill-color-lighter);
+  border-radius: 8px;
+}
+
+.subcategory-button {
+  height: 32px;
+  padding: 0 16px;
+  margin-left: 0;
+  color: var(--el-text-color-primary);
+  background: var(--el-bg-color);
+  border-color: var(--el-border-color);
+  border-radius: 999px;
+
+  &:hover,
+  &:focus-visible,
+  &.is-active {
+    color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+    border-color: var(--el-color-primary);
+  }
+}
+
+.filter-search-row {
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.name-filter {
+  flex: 1 1 auto;
+  gap: 16px;
+  min-width: 0;
+}
+
+.name-filter-input {
+  width: 340px;
+  max-width: 100%;
+}
+
+.filter-actions {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-left: auto;
+
+  .el-button {
+    min-width: 80px;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .material-filter-card {
+    padding: 18px 16px;
+  }
+
+  .filter-category-row,
+  .filter-search-row {
+    align-items: flex-start;
+  }
+
+  .filter-category-row {
+    gap: 8px 12px;
+  }
+
+  .filter-search-row {
+    flex-wrap: wrap;
+  }
+
+  .name-filter {
+    flex: 1 1 100%;
+  }
+
+  .name-filter-input {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  .filter-actions {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-category-row,
+  .name-filter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .name-filter-input {
+    width: 100%;
+  }
+}
+</style>

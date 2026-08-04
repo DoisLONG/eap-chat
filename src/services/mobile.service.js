@@ -78,6 +78,7 @@ export function getCourseInfo(course_id) {
  * @param {string} formData.title - 资料名称（必填）
  * @param {string} formData.description - 说明（选填）
  * @param {string} formData.category - 分类（选填）
+ * @param {number} formData.category_id - 细分方向ID（选填）
  * @param {string} formData.course_id - 关联课程ID（选填）
  * @returns {Promise} 返回上传结果
  */
