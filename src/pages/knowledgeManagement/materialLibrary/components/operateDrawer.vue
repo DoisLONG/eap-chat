@@ -46,7 +46,7 @@
 
       <el-form-item :label="$t('materialLibrary.subCategory')">
         <el-select
-          v-model="operateInfo.sub_category"
+          v-model="operateInfo.category_id"
           :placeholder="$t('materialLibrary.unselected')"
           :disabled="!operateInfo.category"
           clearable
@@ -156,7 +156,7 @@ interface CategoryOption {
   allLabel: string;
   children: {
     label: string;
-    value: string;
+    value: number;
   }[];
 }
 
@@ -181,11 +181,17 @@ const title = computed(() => {
 });
 
 const createInitialFormData = () => {
-  const category = props.categoryOptions.some(
-    (item) => item.value === rowInfo.value?.category,
-  )
-    ? rowInfo.value.category
-    : "";
+  const rawCategoryId = rowInfo.value?.category_id;
+  const categoryId =
+    rawCategoryId === null || rawCategoryId === undefined || rawCategoryId === ""
+      ? ""
+      : Number(rawCategoryId);
+  const category =
+    props.categoryOptions.find(
+      (item) =>
+        item.value === rowInfo.value?.category ||
+        item.children.some((child) => child.value === categoryId),
+    )?.value || "";
 
   return {
     ...rowInfo.value,
@@ -193,8 +199,7 @@ const createInitialFormData = () => {
     title: rowInfo.value?.title || "",
     description: rowInfo.value?.description || "",
     category,
-    sub_category:
-      rowInfo.value?.sub_category || rowInfo.value?.subCategory || "",
+    category_id: categoryId,
   };
 };
 
@@ -242,7 +247,7 @@ const rules = computed(() => ({
 }));
 
 const handleCategoryChange = () => {
-  operateInfo.value.sub_category = "";
+  operateInfo.value.category_id = "";
 };
 
 const isAllowedFile = (fileName: string) => {
@@ -320,8 +325,8 @@ const handleSubmit = () => {
         formData.append("title", operateInfo.value.title);
         formData.append("category", operateInfo.value.category);
 
-        if (operateInfo.value.sub_category) {
-          formData.append("sub_category", operateInfo.value.sub_category);
+        if (operateInfo.value.category_id !== "") {
+          formData.append("category_id", String(operateInfo.value.category_id));
         }
         if (operateInfo.value.description) {
           formData.append("description", operateInfo.value.description);
@@ -340,7 +345,10 @@ const handleSubmit = () => {
           title: operateInfo.value.title,
           description: operateInfo.value.description,
           category: operateInfo.value.category,
-          sub_category: operateInfo.value.sub_category,
+          category_id:
+            operateInfo.value.category_id === ""
+              ? null
+              : Number(operateInfo.value.category_id),
         });
         if (res.data.code != 0) {
           ElMessage.error({

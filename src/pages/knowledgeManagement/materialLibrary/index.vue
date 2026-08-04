@@ -42,7 +42,7 @@
               v-for="item in filterSubCategoryOptions"
               :key="item.value"
               class="subcategory-button"
-              :class="{ 'is-active': filterForm.subCategory === item.value }"
+              :class="{ 'is-active': filterForm.categoryId === item.value }"
               @click="changeFilterSubCategory(item.value)"
             >
               {{ item.label }}
@@ -172,10 +172,14 @@ const { t } = useI18n();
 const proTable = ref<ProTableInstance>();
 
 const initParam = reactive({});
-const filterForm = reactive({
+const filterForm = reactive<{
+  title: string;
+  category: string;
+  categoryId: number | "";
+}>({
   title: "",
   category: "",
-  subCategory: "",
+  categoryId: "",
 });
 const materialCategoryOptions = computed(() => [
   {
@@ -183,10 +187,10 @@ const materialCategoryOptions = computed(() => [
     value: "产品",
     allLabel: t("materialLibrary.filterAllProducts"),
     children: [
-      { label: t("materialLibrary.filterAiPortal"), value: "AI Portal" },
-      { label: t("materialLibrary.filterAiHub"), value: "AI Hub" },
-      { label: t("materialLibrary.filterBeat"), value: "BEAT" },
-      { label: t("materialLibrary.filterBams"), value: "BAMS" },
+      { label: t("materialLibrary.filterAiPortal"), value: 13 },
+      { label: t("materialLibrary.filterAiHub"), value: 14 },
+      { label: t("materialLibrary.filterBeat"), value: 15 },
+      { label: t("materialLibrary.filterBams"), value: 16 },
     ],
   },
   {
@@ -196,7 +200,7 @@ const materialCategoryOptions = computed(() => [
     children: [
       {
         label: t("materialLibrary.filterCompanyArticles"),
-        value: "公司章程",
+        value: 17,
       },
     ],
   },
@@ -205,7 +209,7 @@ const materialCategoryOptions = computed(() => [
     value: "技术",
     allLabel: t("materialLibrary.filterAllTechnology"),
     children: [
-      { label: t("materialLibrary.filterK8s"), value: "K8s" },
+      { label: t("materialLibrary.filterK8s"), value: 18 },
     ],
   },
 ]);
@@ -222,18 +226,18 @@ const filterSubCategoryOptions = computed(() => {
   );
   if (!category) return [];
   return [
-    { label: category.allLabel, value: "" },
+    { label: category.allLabel, value: "" as const },
     ...category.children,
   ];
 });
 
 const getFilterParams = () => {
-  const params: Record<string, string> = {};
+  const params: Record<string, string | number> = {};
   const title = filterForm.title.trim();
   if (title) params.title = title;
   if (filterForm.category) params.category = filterForm.category;
-  if (filterForm.subCategory) {
-    params.sub_category = filterForm.subCategory;
+  if (filterForm.categoryId !== "") {
+    params.category_id = filterForm.categoryId;
   }
   return params;
 };
@@ -244,19 +248,19 @@ const handleFilterSearch = () => {
 
 const changeFilterCategory = (category: string) => {
   filterForm.category = category;
-  filterForm.subCategory = "";
+  filterForm.categoryId = "";
   handleFilterSearch();
 };
 
-const changeFilterSubCategory = (subCategory: string) => {
-  filterForm.subCategory = subCategory;
+const changeFilterSubCategory = (categoryId: number | "") => {
+  filterForm.categoryId = categoryId;
   handleFilterSearch();
 };
 
 const resetFilters = () => {
   filterForm.title = "";
   filterForm.category = "";
-  filterForm.subCategory = "";
+  filterForm.categoryId = "";
   proTable.value?.handleAlignsearch({});
 };
 
@@ -298,10 +302,11 @@ const columns = reactive<ColumnProps[]>([
     prop: "category",
     label: "素材分类",
     i18nKey: "materialLibrary.category",
-    minWidth: 120,
+    minWidth: 180,
     render: (scope) => {
       const category = scope.row.category;
-      if (!category) return "-";
+      const subCategoryName = scope.row.sub_category_name;
+      if (!category && !subCategoryName) return "-";
 
       const currentItem = materialCategoryOptions.value.find(
         (item) => item.value === category,
@@ -310,14 +315,28 @@ const columns = reactive<ColumnProps[]>([
       const tagClass = categoryTagClassMap[category] || "is-default";
 
       return (
-        <ElTag
-          class={["material-category-tag", tagClass]}
-          effect="plain"
-          disableTransitions
-          title={label}
-        >
-          {label}
-        </ElTag>
+        <div class="material-category-cell">
+          {category ? (
+            <ElTag
+              class={["material-category-tag", tagClass]}
+              effect="plain"
+              disableTransitions
+              title={label}
+            >
+              {label}
+            </ElTag>
+          ) : null}
+          {subCategoryName ? (
+            <ElTag
+              class="material-subcategory-tag"
+              effect="plain"
+              disableTransitions
+              title={String(subCategoryName)}
+            >
+              {String(subCategoryName)}
+            </ElTag>
+          ) : null}
+        </div>
       );
     },
   },
@@ -458,11 +477,19 @@ const refreshTable = () => {
   color: var(--el-text-color-primary);
 }
 
-:deep(.material-category-tag) {
+:deep(.material-category-cell) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+:deep(.material-category-tag),
+:deep(.material-subcategory-tag) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
   height: 28px;
   padding: 0 8px;
   overflow: hidden;
@@ -472,6 +499,10 @@ const refreshTable = () => {
   white-space: nowrap;
   border: none;
   border-radius: 999px;
+}
+
+:deep(.material-category-tag) {
+  width: 64px;
 
   &.is-product {
     color: #1677ff;
@@ -492,6 +523,12 @@ const refreshTable = () => {
     color: var(--el-text-color-secondary);
     background-color: var(--el-fill-color-light);
   }
+}
+
+:deep(.material-subcategory-tag) {
+  max-width: 120px;
+  color: var(--el-text-color-regular);
+  background-color: var(--el-fill-color-light);
 }
 
 .filter-category-row,
