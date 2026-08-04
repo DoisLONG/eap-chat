@@ -8,6 +8,7 @@
 
 <style scoped lang="scss">
 .web-page-container {
+  box-sizing: border-box;
   width: 100%;
   max-width: var(--web-content-max-width);
   margin: 0 auto;

@@ -208,7 +208,7 @@ const uploadRef = ref<UploadInstance>();
 const uploadProgress = ref(0);
 const submitLoading = ref(false);
 const ruleFormRef = ref<FormInstance>();
-const importFileType = ref(".xlsx,.xls,.pdf,.pptx,.ppt,.doc,.docx");
+const importFileType = ref(".xlsx,.xls,.pdf,.pptx,.ppt,.doc,.docx,.mp4,.mov");
 
 const categoryOptions = computed(() => props.categoryOptions);
 const subCategoryOptions = computed(() => {
