@@ -72,3 +72,9 @@
 - `ChatExam.vue` 的 `/chatapi/v1/exams/answer` 已按后端 `TrainParams` 发送顶层 `session_id`、`messages`、`streaming` 和 `stream_options`，移除了错误的 `input` 包装。
 - start 和 answer 在读取 JSON/SSE 前检查非 2xx；失败会记录 HTTP 状态及后端响应到 Console，并在页面显示现有失败提示，不会解析错误响应为 SSE 空白气泡。
 - 未运行构建、浏览器或服务器测试；需与重建后的 Smart Practice 一起由用户联调。
+
+## 考试重新发布与卡片 tooltip（2026-08-04）
+
+- `pages/examManagement/components/ExamFormDrawer.vue` 不再提供结束时间编辑器。它只读显示“开始时间 + duration”，发布时只提交开始时间；已结束考试默认选择发布并以“重新发布考试”提示用户替换过期开始时间。
+- `components/webUser/exam/ExamCard.vue` 已移除可用主按钮的空 `el-tooltip`；禁用按钮和历史按钮仅在存在文案时显示无箭头 tooltip。
+- 未运行构建、浏览器或真实接口；部署后按验收清单检查 Element Plus 弹层、时间显示、后端 400/409 与重发后的版本快照。

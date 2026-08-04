@@ -42,13 +42,14 @@
     <footer class="web-exam-card__footer">
       <span>{{ disabledReasonText }}</span>
       <div class="web-exam-card__actions">
-        <el-tooltip :content="primaryActionTooltip">
-          <span>
-            <el-button type="primary" :disabled="!canPrimaryAction" :loading="exam.starting" @click="emit('action', exam)">{{ primaryActionText }}</el-button>
+        <el-tooltip v-if="!canPrimaryAction && primaryActionTooltip" :content="primaryActionTooltip" placement="top" :show-arrow="false">
+          <span class="web-exam-card__tooltip-trigger">
+            <el-button type="primary" disabled>{{ primaryActionText }}</el-button>
           </span>
         </el-tooltip>
-        <el-tooltip :content="t('web.exam.historyPending')">
-          <span>
+        <el-button v-else type="primary" :loading="exam.starting" @click="emit('action', exam)">{{ primaryActionText }}</el-button>
+        <el-tooltip v-if="historyTooltip" :content="historyTooltip" placement="top" :show-arrow="false">
+          <span class="web-exam-card__tooltip-trigger">
             <el-button plain disabled>{{ t("web.exam.history") }}</el-button>
           </span>
         </el-tooltip>
@@ -97,6 +98,8 @@ const primaryActionTooltip = computed(() =>
     ? (canPrimaryAction.value ? "" : t("web.exam.resultPending"))
     : canPrimaryAction.value ? "" : t("web.exam.answerPending"),
 );
+
+const historyTooltip = computed(() => t("web.exam.historyPending"));
 
 const canPrimaryAction = computed(() =>
   props.exam.statusKey === "pending" ? props.exam.canStart : props.exam.statusKey === "inProgress" ? props.exam.canContinue : props.exam.canViewResult,
@@ -152,6 +155,10 @@ const displayScore = (value) => displayWithUnit(value, "web.exam.scoreUnit");
     :deep(.el-tag) {
       max-width: 50%;
     }
+  }
+
+  &__tooltip-trigger {
+    display: inline-flex;
   }
 
   &__category {
