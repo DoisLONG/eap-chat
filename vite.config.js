@@ -18,6 +18,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/exam-api/, ""),
       },
+      "/question-bank-evaluate-api": {
+        target: "http://118.196.142.69:7021",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/question-bank-evaluate-api/, ""),
+      },
       "/sop-api": {
         target: "http://118.196.142.69:16007",
         // target: "http://14.103.144.187:30114", // 四会
