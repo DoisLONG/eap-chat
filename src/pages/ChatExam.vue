@@ -365,6 +365,14 @@ const sopName = route.query.sopName || "";
 const sopId = route.query.sopId || "";
 const position_id = route.query.position_id || "";
 
+const getPracticeReturnTarget = () => {
+  if (route.query.entry === "web-practice") {
+    return { name: "WebUserPractice" };
+  }
+
+  return "/chat/sop";
+};
+
 const scrollBox = ref(null);
 const input = ref("");
 const sending = ref(false);
@@ -380,7 +388,7 @@ const storageKey = `chat_hist_${position_id || sopId || "default"}`;
 const userAvatar = "/logo2.png";
 const botAvatar = "/logo1.png";
 
-if (!sopId && !position_id) router.replace("/chat/sop");
+if (!sopId && !position_id) router.replace(getPracticeReturnTarget());
 
 // ========== 语音状态 ==========
 const mobileInputMode = ref("text"); // text | voice
@@ -483,10 +491,6 @@ function loadSession(id) {
   scrollBottom();
 }
 
-function ensureExcelFileName(name) {
-  return name.match(/\.(xls|xlsx)$/i) ? name : `${name}.xlsx`;
-}
-
 // 新建对话
 function newSession() {
   sessionId.value = String(Date.now());
@@ -524,7 +528,15 @@ function newSession() {
     },
     body: JSON.stringify(params),
   })
-    .then((r) => r.json())
+    .then(async (response) => {
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Smart Practice start failed: HTTP ${response.status}: ${errorText}`,
+        );
+      }
+      return response.json();
+    })
     .then((res) => {
       if (res?.results?.exams_id) {
         examId.value = res?.results?.exams_id || "";
@@ -534,7 +546,10 @@ function newSession() {
         ElMessage.error(res?.message || t("ChatExam.startError"));
       }
     })
-    .catch(() => ElMessage.error(t("ChatExam.startError")));
+    .catch((error) => {
+      console.error("Smart Practice start failed", error);
+      ElMessage.error(t("ChatExam.startError"));
+    });
 
   persist();
 }
@@ -894,25 +909,30 @@ async function send() {
         Accept: "text/event-stream",
         Authorization: `Bearer ${token}`,
       },
+      // TrainParams 直接接收 session_id 和 messages；不能再包一层 input。
       body: JSON.stringify({
-        input: {
-          id: examId.value,
-          session_id: examId.value,
-          source_file_name: ensureExcelFileName(sopName),
-          messages: (() => {
-            const filtered = [...messages];
-            if (filtered[filtered.length - 1].role === "assistant") {
-              filtered.pop();
-            }
-            return filtered.map(({ role, content }) => ({ role, content }));
-          })(),
-          streaming: true,
-          stream_options: { include_usage: true },
-        },
+        session_id: examId.value,
+        messages: (() => {
+          const filtered = [...messages];
+          if (filtered[filtered.length - 1].role === "assistant") {
+            filtered.pop();
+          }
+          return filtered.map(({ role, content }) => ({ role, content }));
+        })(),
+        streaming: true,
+        stream_options: { include_usage: true },
       }),
     });
 
-    if (!res.body) throw new Error("SSE body missing");
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(
+        `Smart Practice answer failed: HTTP ${res.status}: ${errorText}`,
+      );
+    }
+    if (!res.body) {
+      throw new Error("Smart Practice answer response body is empty");
+    }
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder("utf-8");
@@ -1002,9 +1022,10 @@ async function send() {
     scrollBottom();
     persist();
   } catch (err) {
-    console.error("SSE error", err);
+    console.error("Smart Practice SSE error", err);
     replyMsg.content = t("ChatExam.errorTip");
     replyMsg.done = true;
+    ElMessage.error(t("ChatExam.errorTip"));
   } finally {
     sending.value = false;
     scrollBottom();
@@ -1014,7 +1035,7 @@ async function send() {
 function endExam() {
   persist();
   ElMessage.success(t("ChatExam.testOver"));
-  router.replace("/chat/sop");
+  router.replace(getPracticeReturnTarget());
 }
 
 onMounted(() => {

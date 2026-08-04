@@ -1,10 +1,7 @@
 // src/services/sop.api.js
 import axios from "axios";
-import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { $t } from "@/languages/index.js";
-
-const router = useRouter();
 
 export const sopApi = axios.create({
   baseURL: "/sop-api",
