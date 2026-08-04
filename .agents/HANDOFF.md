@@ -56,6 +56,17 @@
 - `/web/exam` 现在以真实后端列表、状态统计、分类/关键词/状态/分页筛选驱动卡片；旧请求不会覆盖新筛选。卡片题型从后端 `question_type_counts` 选择两项真实展示指标，不把填空题归成选择题。
 - 开始、继续、作答、结果和历史功能未实现，按钮固定禁用并显示三语提示；尚未执行浏览器、构建或接口联调。
 
+## Web 用户端考试第二阶段（2026-08-04）
+
+- `/web/exam/:examId/answer`（`WebUserExamAnswer`）已使用正式用户端 Exam start/attempt/answer 接口恢复试卷和保存答案；操作均不经 Smart Practice。
+- 未实现交卷、评分、结果、历史、补考或超时自动提交；用户需在部署后验证倒计时、刷新恢复和保存失败提示。
+
+## Web 用户端考试第三阶段（2026-08-04）
+
+- 已接入 `POST /api/v1/user/exams/{id}/submit`、`GET /result`，新增结果页路由 `WebUserExamResult`；考试卡片的完成状态可进入结果或评分进度。
+- 答题页提交前强制等待当前题保存，保存失败会提示且不静默交卷；超时是客户端尽力调用同一 submit 接口，网络失败显示“尚未确认”与重试，不能保证关闭浏览器后的自动交卷。
+- 未运行构建、浏览器或真实接口；仍未实现 history、retake、manual grading、eval report、服务端定时自动交卷或管理端成绩统计。
+
 ## ChatExam 与 Smart Practice（2026-08-04）
 
 - `ChatExam.vue` 的 `/chatapi/v1/exams/answer` 已按后端 `TrainParams` 发送顶层 `session_id`、`messages`、`streaming` 和 `stream_options`，移除了错误的 `input` 包装。

@@ -57,6 +57,18 @@ const routes = [
         component: () => import("@/pages/webUser/exam/index.vue"),
         meta: { titleKey: "web.page.examTitle" },
       },
+      {
+        path: "exam/:examId/answer",
+        name: "WebUserExamAnswer",
+        component: () => import("@/pages/webUser/exam/answer.vue"),
+        meta: { titleKey: "web.page.examTitle", activeMenu: "/web/exam" },
+      },
+      {
+        path: "exam/:examId/result",
+        name: "WebUserExamResult",
+        component: () => import("@/pages/webUser/exam/result.vue"),
+        meta: { titleKey: "web.page.examTitle", activeMenu: "/web/exam" },
+      },
     ],
   },
   // 带侧边栏的主框架

@@ -83,3 +83,8 @@
 | 用户端考试 API | 使用独立 `services/webUser/exam.service.js` | 仅调用 `/exam-api/api/v1/user/exams*`，不复用管理端 `exam.api.js` 业务方法。 |
 | 题型展示 | 以后端 `question_type_counts` 为准 | 填空题、选择题、问答题和未知题型保持独立，adapter 选择卡片前两项真实指标。 |
 | 操作能力 | 第一阶段全部禁用 | 尚无 start/continue/result/history 接口，ViewModel 中 `can*` 固定为 false，不能伪造权限。 |
+
+## 2026-08-04 Web 用户端考试第三阶段
+
+- 结果页只依据 Exam 服务返回的 `showAnswer` 渲染答案和解析；前端不保存或推断标准答案。
+- 超时交卷为浏览器端尽力行为，统一调用正式 submit；网络/关闭浏览器无法保证成功，不宣称具备服务端自动交卷能力。

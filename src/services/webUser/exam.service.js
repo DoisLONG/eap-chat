@@ -65,9 +65,10 @@ const toExamViewModel = (record) => {
     maxAttempts: record.max_attempts ?? null,
     remainingAttempts: record.remaining_attempts ?? null,
     disabledReason: record.disabled_reason ?? null,
-    canStart: false,
-    canContinue: false,
-    canViewResult: false,
+    remainingSeconds: record.remaining_seconds ?? null,
+    canStart: Boolean(record.can_start),
+    canContinue: Boolean(record.can_continue),
+    canViewResult: Boolean(record.can_view_result),
   };
 };
 
@@ -129,4 +130,98 @@ export async function getUserExamCounts(options = {}) {
 export async function getUserExamDetail(examId) {
   const result = await request({ url: `/api/v1/user/exams/${examId}`, method: "get" });
   return toExamViewModel(result);
+}
+
+export const startUserExam = (examId) => request({ url: `/api/v1/user/exams/${examId}/start`, method: "post" });
+
+const parseSavedAnswer = (value, questionType) => {
+  const normalizedType = { 多选题: "multiple_choice", 判断题: "true_false" }[questionType] || questionType;
+  if (value === null || value === undefined || value === "") return normalizedType === "multiple_choice" ? [] : "";
+  if (normalizedType === "multiple_choice") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  if (normalizedType === "true_false") return value === "true" ? true : value === "false" ? false : value;
+  return value;
+};
+
+export async function getCurrentExamAttempt(examId) {
+  const result = await request({ url: `/api/v1/user/exams/${examId}/attempt`, method: "get" });
+  return {
+    exam: result.exam,
+    attempt: {
+      id: result.attempt.id,
+      attemptNo: result.attempt.attempt_no,
+      status: result.attempt.status,
+      startedAt: result.attempt.started_at,
+      expiresAt: result.attempt.expires_at,
+      serverNow: result.attempt.server_now,
+      remainingSeconds: toCount(result.attempt.remaining_seconds),
+      questionCount: toCount(result.attempt.question_count),
+      answeredCount: toCount(result.attempt.answered_count),
+      effectiveStatus: result.attempt.effective_status,
+      disabledReason: result.attempt.disabled_reason,
+    },
+    questions: Array.isArray(result.questions) ? result.questions.map((question) => ({
+      examQuestionId: question.exam_question_id,
+      questionType: question.question_type,
+      questionText: question.question_text,
+      options: Array.isArray(question.options) ? question.options : null,
+      maxScore: toCount(question.max_score),
+      sortOrder: toCount(question.sort_order),
+      userAnswer: parseSavedAnswer(question.user_answer, question.question_type),
+      answeredAt: question.answered_at,
+    })) : [],
+  };
+}
+
+export const saveUserExamAnswer = (examId, examQuestionId, userAnswer) =>
+  request({ url: `/api/v1/user/exams/${examId}/answers/${examQuestionId}`, method: "put", data: { user_answer: userAnswer } });
+
+export const submitUserExam = (examId) => request({ url: `/api/v1/user/exams/${examId}/submit`, method: "post" });
+
+export async function getUserExamResult(examId) {
+  const result = await request({ url: `/api/v1/user/exams/${examId}/result`, method: "get" });
+  return {
+    examId: result.exam_id,
+    examName: result.exam_name ?? "",
+    userExamId: result.user_exam_id,
+    attemptNo: toCount(result.attempt_no),
+    status: result.status,
+    startedAt: result.started_at ?? null,
+    submittedAt: result.submitted_at ?? null,
+    gradedAt: result.graded_at ?? null,
+    durationSeconds: toCount(result.duration_seconds),
+    questionCount: toCount(result.question_count),
+    answeredCount: toCount(result.answered_count),
+    correctCount: toCount(result.correct_count),
+    wrongCount: toCount(result.wrong_count),
+    unansweredCount: toCount(result.unanswered_count),
+    totalScore: toCount(result.total_score),
+    earnedScore: toCount(result.earned_score),
+    accuracyRate: toCount(result.accuracy_rate),
+    passStatus: result.pass_status ?? null,
+    showAnswer: Boolean(result.show_answer),
+    resultReady: Boolean(result.result_ready),
+    gradingStatus: result.grading_status ?? null,
+    questions: Array.isArray(result.questions) ? result.questions.map((question) => ({
+      examQuestionId: question.exam_question_id,
+      sortOrder: toCount(question.sort_order),
+      questionType: question.question_type,
+      questionText: question.question_text,
+      options: Array.isArray(question.options) ? question.options : null,
+      userAnswer: parseSavedAnswer(question.user_answer, question.question_type),
+      resultStatus: question.result_status ?? "pending",
+      maxScore: toCount(question.max_score),
+      earnedScore: toCount(question.earned_score),
+      gradingMode: question.grading_mode ?? null,
+      gradingAnalysis: question.grading_analysis ?? null,
+      correctAnswer: question.correct_answer === null || question.correct_answer === undefined ? null : parseSavedAnswer(question.correct_answer, question.question_type),
+      answerAnalysis: question.answer_analysis ?? null,
+    })).sort((left, right) => left.sortOrder - right.sortOrder) : [],
+  };
 }

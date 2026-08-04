@@ -44,7 +44,7 @@
       <div class="web-exam-card__actions">
         <el-tooltip :content="primaryActionTooltip">
           <span>
-            <el-button type="primary" disabled>{{ primaryActionText }}</el-button>
+            <el-button type="primary" :disabled="!canPrimaryAction" :loading="exam.starting" @click="emit('action', exam)">{{ primaryActionText }}</el-button>
           </span>
         </el-tooltip>
         <el-tooltip :content="t('web.exam.historyPending')">
@@ -69,6 +69,7 @@ const props = defineProps({
     required: true,
   },
 });
+const emit = defineEmits(["action"]);
 
 const statusText = computed(() => {
   const statusKey = props.exam.statusKey;
@@ -92,7 +93,13 @@ const categoryTone = computed(() => {
 });
 
 const primaryActionTooltip = computed(() =>
-  props.exam.statusKey === "completed" ? t("web.exam.resultPending") : t("web.exam.answerPending"),
+  props.exam.statusKey === "completed"
+    ? (canPrimaryAction.value ? "" : t("web.exam.resultPending"))
+    : canPrimaryAction.value ? "" : t("web.exam.answerPending"),
+);
+
+const canPrimaryAction = computed(() =>
+  props.exam.statusKey === "pending" ? props.exam.canStart : props.exam.statusKey === "inProgress" ? props.exam.canContinue : props.exam.canViewResult,
 );
 
 const disabledReasonText = computed(() => {

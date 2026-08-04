@@ -104,7 +104,7 @@
         </el-result>
 
         <div v-else-if="exams.length" class="web-exam-list__grid">
-          <ExamCard v-for="exam in exams" :key="exam.id" :exam="exam" />
+          <ExamCard v-for="exam in exams" :key="exam.id" :exam="exam" @action="handleExamAction" />
         </div>
 
         <el-empty
@@ -133,12 +133,15 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { useRouter } from "vue-router";
 import WebPageContainer from "@/layouts/webUser/components/WebPageContainer.vue";
 import ExamCard from "@/components/webUser/exam/ExamCard.vue";
 import { getSopCategoryTree } from "@/services/sop.api";
-import { getUserExamCounts, getUserExamList } from "@/services/webUser/exam.service";
+import { getUserExamCounts, getUserExamList, startUserExam } from "@/services/webUser/exam.service";
 
 const { t } = useI18n();
+const router = useRouter();
 
 const filterTitleId = "web-exam-filter-title";
 const listTitleId = "web-exam-list-title";
@@ -302,6 +305,33 @@ const resetFilters = () => {
 const handlePageSizeChange = () => {
   pageNum.value = 1;
   loadExams();
+};
+
+const handleExamAction = async (exam) => {
+  if (exam.canViewResult) {
+    router.push({ name: "WebUserExamResult", params: { examId: exam.id } });
+    return;
+  }
+  if (exam.canContinue) {
+    router.push({ name: "WebUserExamAnswer", params: { examId: exam.id } });
+    return;
+  }
+  if (!exam.canStart || exam.starting) return;
+  try {
+    await ElMessageBox.confirm(
+      `${t("web.exam.startConfirm")}\n${t("web.exam.duration")}: ${exam.durationMinutes} ${t("web.exam.minuteUnit")}\n${t("web.exam.endTime")}: ${exam.endTime || "--"}`,
+      t("web.exam.start"),
+      { confirmButtonText: t("web.exam.start"), cancelButtonText: t("common.cancel") },
+    );
+    exam.starting = true;
+    await startUserExam(exam.id);
+    router.push({ name: "WebUserExamAnswer", params: { examId: exam.id } });
+  } catch (error) {
+    if (error === "cancel" || error === "close") return;
+    ElMessage.error(error?.message || t("web.exam.loadFailed"));
+  } finally {
+    exam.starting = false;
+  }
 };
 
 onMounted(() => {
