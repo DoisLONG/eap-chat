@@ -39,6 +39,23 @@
 - `PracticeCard.vue` 已改用填空题、问答题和总题量；没有真实进度时显示 `--` 且不渲染 0% 进度条，开始按钮固定为“开始练习”。
 - 未实现进度、历史练习和综合练习；用户需在真实已登录环境验证列表及进入/返回 `ChatExam`。
 
+## Web 用户端考试页（2026-08-04）
+
+- `/web/exam`（`WebUserExam`）已从占位页调整为用户端考试筛选、分类树、状态页签、列表容器、空态、错误态、分页状态及两列响应式卡片布局；继续使用既有 `WebUserLayout` 与 `WebPageContainer`。
+- 当前没有已确认的用户端考试接口，因此页面不调用 `exam.api.js` 的管理端 CRUD；考试数组和状态统计保持空/`--`，卡片动作均禁用并提示“功能接口待确认”。
+- 分类树只读复用 `getSopCategoryTree()`，以实际返回名称渲染；未创建 `services/webUser/exam.service.js`、未使用 mock 或 localStorage。
+
+## Web 用户端考试筛选细化（2026-08-04）
+
+- 考试页的 `selectedPrimaryCategoryId` 和 `selectedSecondaryCategoryId` 是独立状态。一级选择会清空二级；“全部”使两者都为 `null` 并隐藏二级区；二级只读取当前一级分类树节点的 `children`，默认标签使用“全部 + 一级名称”。
+- 页面视觉已参照 `D:\PL\HTML\用户端-考试.html` 收紧为浅色筛选卡、满宽浅蓝二级区、标签胶囊、两行搜索、三段状态栏和 1200px 以上两列等宽卡片。用户端考试接口仍未确认，以上筛选状态不得接到管理端 `exam.api.js`；需先确认用户端 endpoint、请求分类字段和状态枚举，再创建独立 adapter/service。
+
+## Web 用户端考试第一阶段接入（2026-08-04）
+
+- `src/services/webUser/exam.service.js` 已接入 Exam 的用户端只读接口：`GET /exam-api/api/v1/user/exams`、`/counts`、`/{id}`；复用既有 Axios token 与 401 处理，不复用管理端 CRUD。
+- `/web/exam` 现在以真实后端列表、状态统计、分类/关键词/状态/分页筛选驱动卡片；旧请求不会覆盖新筛选。卡片题型从后端 `question_type_counts` 选择两项真实展示指标，不把填空题归成选择题。
+- 开始、继续、作答、结果和历史功能未实现，按钮固定禁用并显示三语提示；尚未执行浏览器、构建或接口联调。
+
 ## ChatExam 与 Smart Practice（2026-08-04）
 
 - `ChatExam.vue` 的 `/chatapi/v1/exams/answer` 已按后端 `TrainParams` 发送顶层 `session_id`、`messages`、`streaming` 和 `stream_options`，移除了错误的 `input` 包装。

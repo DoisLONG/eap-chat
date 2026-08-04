@@ -33,6 +33,11 @@
 - 分类树继续只读复用 `getSopCategoryTree()`；页面只把分类树中的真实 ID 作为一级或二级筛选参数提交。
 - 服务端当前不提供用户进度或历史记录，因此卡片将 `progressPercent: null` 显示为 `--`，不伪造 0% 或“继续练习”状态。
 
+## 2026-08-04 Web 用户端考试页
+
+- 当前只确认 `/exam-api/api/v1/exams` 为管理端 CRUD；未确认用户端考试列表、状态统计、开始/继续、结果或历史契约。因此 `/web/exam` 仅实现可靠的展示、筛选状态和空态，不调用管理端接口或构造 mock 数据。
+- 分类按钮只读复用已确认的分类树并显示其真实名称；考试状态页签仅维护页面 UI 选中态，在后端枚举确认前不作为请求参数。
+
 ## 2026-08-04 ChatExam 练习协议
 
 - Smart Practice 的 `TrainParams` 是顶层 `session_id` 与 `messages`；ChatExam 不再发送历史的 `{ input: {...} }` 包装，也不发送后端未定义的 `source_file_name`。
@@ -70,3 +75,11 @@
 | 练习文件解析 | 不在 UI 暴露上传类型或解析模式 | Dataprep 以真实后缀决定解析器：PDF/DOC/DOCX→`operation`、XLS/XLSX→`sop`；旧 `file_type` 请求字段仅为兼容保留且被忽略。 |
 | 练习描述存储 | 使用独立 `description` 字段 | `remark` 继续保存异步任务失败原因，避免生成失败覆盖用户填写的练习描述。 |
 | 生成练习组织字段 | 移除可见组织/日期表单，岗位仅取登录上下文 | 后端 `generate_qa` 的 `position_id` 仍必传；缺少当前登录用户岗位时前端明确阻止提交，不构造默认岗位。 |
+
+## 2026-08-04 Web 用户端考试第一阶段
+
+| 决策 | 结论 | 依据/影响 |
+|---|---|---|
+| 用户端考试 API | 使用独立 `services/webUser/exam.service.js` | 仅调用 `/exam-api/api/v1/user/exams*`，不复用管理端 `exam.api.js` 业务方法。 |
+| 题型展示 | 以后端 `question_type_counts` 为准 | 填空题、选择题、问答题和未知题型保持独立，adapter 选择卡片前两项真实指标。 |
+| 操作能力 | 第一阶段全部禁用 | 尚无 start/continue/result/history 接口，ViewModel 中 `can*` 固定为 false，不能伪造权限。 |
