@@ -1,27 +1,28 @@
 <template>
   <article class="practice-card">
     <div class="practice-card__tags">
-      <el-tag effect="plain">{{ displayValue(practice.primaryCategory) }}</el-tag>
+      <el-tag effect="plain">{{ displayCategory(practice.primaryCategory) }}</el-tag>
       <el-tag effect="plain" type="info">
-        {{ displayValue(practice.secondaryCategory) }}
+        {{ displayCategory(practice.secondaryCategory) }}
       </el-tag>
       <el-tag effect="light" type="primary">{{ displayValue(practice.version) }}</el-tag>
     </div>
 
     <h3>{{ practice.title }}</h3>
+    <p v-if="practice.description" class="practice-card__description">{{ practice.description }}</p>
 
     <dl class="practice-card__meta">
       <div>
-        <dt>{{ t("web.practice.choiceCount") }}</dt>
-        <dd>{{ displayValue(practice.choiceCount) }}</dd>
+        <dt>{{ t("web.practice.fillBlankCount") }}</dt>
+        <dd>{{ displayValue(practice.fillBlankCount) }}</dd>
       </div>
       <div>
         <dt>{{ t("web.practice.answerCount") }}</dt>
         <dd>{{ displayValue(practice.answerCount) }}</dd>
       </div>
       <div>
-        <dt>{{ t("web.practice.estimatedMinutes") }}</dt>
-        <dd>{{ displayValue(practice.estimatedMinutes) }}</dd>
+        <dt>{{ t("web.practice.totalQuestions") }}</dt>
+        <dd>{{ displayValue(practice.totalQuestions) }}</dd>
       </div>
     </dl>
 
@@ -30,7 +31,7 @@
         <span>{{ t("web.practice.progress") }}</span>
         <strong>{{ progressText }}</strong>
       </div>
-      <el-progress :percentage="progressPercentage" :show-text="false" />
+      <el-progress v-if="hasProgress" :percentage="progressPercentage" :show-text="false" />
     </div>
 
     <div class="practice-card__actions">
@@ -40,7 +41,7 @@
         </span>
       </el-tooltip>
       <el-button type="primary" @click="emit('start', practice)">
-        {{ progressPercentage > 0 ? t("web.practice.continue") : t("web.practice.start") }}
+        {{ t("web.practice.start") }}
       </el-button>
     </div>
   </article>
@@ -53,19 +54,20 @@ import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
 /**
- * Stable page display model for the future user-side practice-list adapter.
- * It is intentionally not a contract for any backend response.
+ * Stable display model returned by the user-practice service adapter.
  *
  * @typedef {Object} PracticeViewModel
- * @property {string} id
- * @property {string} sopId
- * @property {string} sopName
- * @property {string} title
- * @property {string} primaryCategory
- * @property {string} secondaryCategory
- * @property {string} version
- * @property {number | null} choiceCount
- * @property {number | null} answerCount
+ * @property {number} id
+ * @property {number} sopId
+ * @property {string | null} sopName
+ * @property {string | null} title
+ * @property {string | null} description
+ * @property {{ id: number, name: string } | null} primaryCategory
+ * @property {{ id: number, name: string } | null} secondaryCategory
+ * @property {string | null} version
+ * @property {number} fillBlankCount
+ * @property {number} answerCount
+ * @property {number} totalQuestions
  * @property {number | null} estimatedMinutes
  * @property {number | null} progressPercent
  */
@@ -79,15 +81,19 @@ const props = defineProps({
 
 const emit = defineEmits(["start"]);
 
+const hasProgress = computed(
+  () => props.practice.progressPercent !== null && props.practice.progressPercent !== undefined && Number.isFinite(Number(props.practice.progressPercent)),
+);
+
 const progressPercentage = computed(() => {
   const value = Number(props.practice.progressPercent);
-  if (!Number.isFinite(value)) return 0;
+  if (!hasProgress.value) return 0;
 
   return Math.min(Math.max(value, 0), 100);
 });
 
 const progressText = computed(() => {
-  if (props.practice.progressPercent === null || props.practice.progressPercent === undefined) {
+  if (!hasProgress.value) {
     return "--";
   }
 
@@ -95,6 +101,7 @@ const progressText = computed(() => {
 });
 
 const displayValue = (value) => (value === null || value === undefined || value === "" ? "--" : value);
+const displayCategory = (category) => displayValue(category?.name);
 </script>
 
 <style scoped lang="scss">
@@ -127,6 +134,18 @@ const displayValue = (value) => (value === null || value === undefined || value 
     line-height: 1.5;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  &__description {
+    display: -webkit-box;
+    min-height: 21px;
+    margin: 8px 0 0;
+    overflow: hidden;
+    color: var(--web-text-secondary);
+    font-size: 13px;
+    line-height: 1.6;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
   &__meta {

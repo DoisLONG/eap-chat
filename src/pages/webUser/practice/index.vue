@@ -23,7 +23,7 @@
               class="web-practice-filter__secondary-button"
               :class="{ 'is-active': !selectedSecondaryCategoryId }"
               :aria-pressed="!selectedSecondaryCategoryId"
-              @click="selectedSecondaryCategoryId = ''"
+              @click="selectSecondaryCategory(null)"
             >
               {{ t("web.practice.category.all") }}
             </el-button>
@@ -33,7 +33,7 @@
               class="web-practice-filter__secondary-button"
               :class="{ 'is-active': String(selectedSecondaryCategoryId) === String(category.id) }"
               :aria-pressed="String(selectedSecondaryCategoryId) === String(category.id)"
-              @click="selectedSecondaryCategoryId = category.id"
+              @click="selectSecondaryCategory(category.id)"
             >
               {{ category.name }}
             </el-button>
@@ -67,7 +67,7 @@
 
           <dl>
             <div>
-              <dt>{{ t("web.practice.choiceCount") }}</dt>
+              <dt>{{ t("web.practice.fillBlankCount") }}</dt>
               <dd>--</dd>
             </div>
             <div>
@@ -85,13 +85,32 @@
         </el-button>
       </section>
 
-      <section class="web-practice-surface web-practice-list" :aria-labelledby="listTitleId">
+      <section
+        v-loading="practiceLoading"
+        class="web-practice-surface web-practice-list"
+        :aria-labelledby="listTitleId"
+      >
         <header class="web-practice-list__header">
           <h2 :id="listTitleId">{{ t("web.practice.listTitle") }}</h2>
-          <span>{{ t("web.practice.total", { count: practices.length }) }}</span>
+          <span>{{ t("web.practice.total", { count: total }) }}</span>
         </header>
 
-        <div v-if="practices.length" class="web-practice-list__grid">
+        <el-skeleton v-if="practiceLoading && !practices.length" class="web-practice-list__loading" :rows="6" animated />
+
+        <el-result
+          v-else-if="practiceLoadError"
+          class="web-practice-list__result"
+          icon="error"
+          :title="t(practiceErrorTitleKey)"
+        >
+          <template #extra>
+            <el-button type="primary" :loading="practiceLoading" @click="loadPractices">
+              {{ t("web.common.retry") }}
+            </el-button>
+          </template>
+        </el-result>
+
+        <div v-else-if="practices.length" class="web-practice-list__grid">
           <PracticeCard
             v-for="practice in practices"
             :key="practice.id"
@@ -112,6 +131,18 @@
           </template>
           <h3>{{ t(hasAppliedFilter ? "web.practice.noMatch" : "web.practice.empty") }}</h3>
         </el-empty>
+
+        <el-pagination
+          v-if="!practiceLoadError && !practiceLoading && total > 0 && totalPages > 0"
+          v-model:current-page="page"
+          v-model:page-size="pageSize"
+          class="web-practice-list__pagination"
+          :total="total"
+          :page-sizes="[20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="loadPractices"
+          @size-change="handlePageSizeChange"
+        />
       </section>
     </section>
   </WebPageContainer>
@@ -125,6 +156,7 @@ import { Document } from "@element-plus/icons-vue";
 import { useI18n } from "vue-i18n";
 import WebPageContainer from "@/layouts/webUser/components/WebPageContainer.vue";
 import { getSopCategoryTree } from "@/services/sop.api";
+import { getUserPracticeList } from "@/services/webUser/practice.service";
 import PracticeCard from "./components/PracticeCard.vue";
 
 const { t } = useI18n();
@@ -142,9 +174,17 @@ const primaryCategoryDefinitions = [
 const categoryTree = ref([]);
 const categoryLoadFailed = ref(false);
 const selectedPrimaryCategory = ref("all");
-const selectedSecondaryCategoryId = ref("");
+const selectedSecondaryCategoryId = ref(null);
 const keyword = ref("");
 const appliedKeyword = ref("");
+const practices = ref([]);
+const total = ref(0);
+const page = ref(1);
+const pageSize = ref(20);
+const totalPages = ref(0);
+const practiceLoading = ref(false);
+const practiceLoadError = ref(null);
+let practiceRequestSequence = 0;
 
 const primaryCategories = computed(() => [
   { key: "all", labelKey: "web.practice.category.all", id: null, children: [] },
@@ -171,12 +211,6 @@ const secondaryCategories = computed(
   () => selectedPrimaryCategoryData.value?.children || [],
 );
 
-/**
- * This is deliberately an empty, page-level display collection until a
- * confirmed user-side list service can adapt its response to PracticeViewModel.
- */
-const practices = ref([]);
-
 const hasAppliedFilter = computed(
   () =>
     selectedPrimaryCategory.value !== "all" ||
@@ -184,13 +218,73 @@ const hasAppliedFilter = computed(
     Boolean(appliedKeyword.value),
 );
 
+const practiceErrorTitleKey = computed(() => {
+  const status = Number(practiceLoadError.value?.response?.status || practiceLoadError.value?.status);
+  if (status === 403) return "web.practice.forbidden";
+  if (status === 401) return "web.practice.loginRequired";
+  return "web.practice.loadFailed";
+});
+
+const loadPractices = async () => {
+  const requestSequence = ++practiceRequestSequence;
+  practiceLoading.value = true;
+  practiceLoadError.value = null;
+  practices.value = [];
+  total.value = 0;
+  totalPages.value = 0;
+
+  try {
+    const result = await getUserPracticeList({
+      page: page.value,
+      pageSize: pageSize.value,
+      keyword: appliedKeyword.value,
+      primaryCategoryId: selectedPrimaryCategoryId.value,
+      secondaryCategoryId: selectedSecondaryCategoryId.value,
+    });
+    if (requestSequence !== practiceRequestSequence) return;
+
+    practices.value = result.records;
+    total.value = result.total;
+    page.value = result.page;
+    pageSize.value = result.pageSize;
+    totalPages.value = result.totalPages;
+  } catch (error) {
+    if (requestSequence !== practiceRequestSequence) return;
+
+    practiceLoadError.value = error;
+    practices.value = [];
+    total.value = 0;
+    totalPages.value = 0;
+    console.error("Failed to load user practice list", error);
+  } finally {
+    if (requestSequence === practiceRequestSequence) {
+      practiceLoading.value = false;
+    }
+  }
+};
+
 const selectPrimaryCategory = (categoryKey) => {
   selectedPrimaryCategory.value = categoryKey;
-  selectedSecondaryCategoryId.value = "";
+  selectedSecondaryCategoryId.value = null;
+  page.value = 1;
+  loadPractices();
+};
+
+const selectSecondaryCategory = (categoryId) => {
+  selectedSecondaryCategoryId.value = categoryId;
+  page.value = 1;
+  loadPractices();
 };
 
 const applySearch = () => {
   appliedKeyword.value = keyword.value.trim();
+  page.value = 1;
+  loadPractices();
+};
+
+const handlePageSizeChange = () => {
+  page.value = 1;
+  loadPractices();
 };
 
 const notifyComprehensiveUnavailable = () => {
@@ -223,13 +317,20 @@ const loadCategoryTree = async () => {
 
     categoryTree.value = Array.isArray(data?.results) ? data.results : [];
     categoryLoadFailed.value = false;
+    if (selectedPrimaryCategory.value !== "all") {
+      page.value = 1;
+      loadPractices();
+    }
   } catch {
     categoryTree.value = [];
     categoryLoadFailed.value = true;
   }
 };
 
-onMounted(loadCategoryTree);
+onMounted(() => {
+  loadCategoryTree();
+  loadPractices();
+});
 </script>
 
 <style scoped lang="scss">
@@ -451,6 +552,17 @@ onMounted(loadCategoryTree);
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
     margin-top: 20px;
+  }
+
+  &__loading,
+  &__result {
+    min-height: 260px;
+    margin-top: 20px;
+  }
+
+  &__pagination {
+    justify-content: flex-end;
+    margin-top: 24px;
   }
 
   &__empty {

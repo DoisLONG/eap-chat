@@ -31,3 +31,16 @@
 
 - `pages/webUser/practice/index.vue` 现在只读调用 `getSopCategoryTree()` 获取分类树；一级按产品/运营/技术映射到真实节点，二级直接来自该节点 `children`。任何未来练习列表 service 都必须独立确认，不能复用 `getSops`。
 - 综合练习只保留白色视觉卡片，按钮点击提示未开放；筛选仅改变页面状态，空列表始终不发起练习列表请求。
+
+## Web 用户端练习列表接入（2026-08-03）
+
+- 新增 `src/services/webUser/practice.service.js`，将后端 snake_case 响应唯一转换为 `PracticeViewModel` camelCase 字段，并通过已有 `sopApi` 请求 `/v1/dataprep/user/practices`。
+- 练习页现在独立加载分类树和用户端列表，支持一级/二级分类、点击/回车关键词搜索、服务端分页、加载、空状态、403/网络失败与重试；筛选变动会重置到第一页，旧请求不会覆盖新筛选。
+- `PracticeCard.vue` 已改用填空题、问答题和总题量；没有真实进度时显示 `--` 且不渲染 0% 进度条，开始按钮固定为“开始练习”。
+- 未实现进度、历史练习和综合练习；用户需在真实已登录环境验证列表及进入/返回 `ChatExam`。
+
+## ChatExam 与 Smart Practice（2026-08-04）
+
+- `ChatExam.vue` 的 `/chatapi/v1/exams/answer` 已按后端 `TrainParams` 发送顶层 `session_id`、`messages`、`streaming` 和 `stream_options`，移除了错误的 `input` 包装。
+- start 和 answer 在读取 JSON/SSE 前检查非 2xx；失败会记录 HTTP 状态及后端响应到 Console，并在页面显示现有失败提示，不会解析错误响应为 SSE 空白气泡。
+- 未运行构建、浏览器或服务器测试；需与重建后的 Smart Practice 一起由用户联调。

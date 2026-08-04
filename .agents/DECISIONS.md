@@ -27,6 +27,17 @@
 - Web 用户端允许只读复用管理端的 `getSopCategoryTree()`，因为它仅提供通用分类树；练习列表仍未确认，严禁调用 `getSops` 或将分类树推断为用户可练习内容。
 - 管理端 `searchForm.vue` 直接驱动管理端列表查询，不能作为 Web 用户端组件复用。Web 页面私有实现保留同一 `id / name / children` 与一级变化清空二级的规则，避免引入管理端业务耦合。
 
+## 2026-08-03 Web 用户端练习列表接入
+
+- 用户端列表已确认使用独立的 `GET /sop-api/v1/dataprep/user/practices` 契约；新增 `services/webUser/practice.service.js` 复用 `sopApi`，不复用管理端 `getSops`。
+- 分类树继续只读复用 `getSopCategoryTree()`；页面只把分类树中的真实 ID 作为一级或二级筛选参数提交。
+- 服务端当前不提供用户进度或历史记录，因此卡片将 `progressPercent: null` 显示为 `--`，不伪造 0% 或“继续练习”状态。
+
+## 2026-08-04 ChatExam 练习协议
+
+- Smart Practice 的 `TrainParams` 是顶层 `session_id` 与 `messages`；ChatExam 不再发送历史的 `{ input: {...} }` 包装，也不发送后端未定义的 `source_file_name`。
+- ChatExam 在解析 SSE 前必须检查 HTTP 状态和响应体；422、500 或网络错误显示既有错误提示并记录控制台错误，不能保留空白教练气泡。
+
 ## 2026-07-28 恢复决策
 
 | 决策 | 结论 | 依据/影响 |
