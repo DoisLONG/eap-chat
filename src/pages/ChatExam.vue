@@ -19,30 +19,7 @@
       </div>
 
       <div class="right">
-        <el-switch
-          v-if="!isMobile"
-          v-model="showHistory"
-          :active-text="$t('ChatExam.historyChat')"
-        />
-        <el-button
-          v-if="isMobile"
-          class="mobile-history-btn"
-          size="small"
-          round
-          @click="showHistory = !showHistory"
-        >
-          {{ $t("ChatExam.history") }}
-        </el-button>
-
-        <el-button
-          v-if="!isMobile"
-          size="small"
-          round
-          @click="newSession"
-          disabled
-        >
-          {{ $t("ChatExam.add") }}
-        </el-button>
+        <el-button class="back-top-btn" size="small" @click="scrollToTop">回到顶部</el-button>
 
         <el-popconfirm :title="$t('ChatExam.confirmOver')" @confirm="endExam">
           <template #reference>
@@ -56,29 +33,17 @@
 
     <!-- Main -->
     <div class="content">
-      <aside v-if="showHistory && !isMobile" class="history">
-        <div class="hist-head">{{ $t("ChatExam.historyChat") }}</div>
-        <div class="hist-list">
-          <div
-            v-for="s in sessions"
-            :key="s.id"
-            class="hist-item"
-            :class="{ active: s.id === sessionId }"
-            @click="
-              loadSession(s.id);
-              showHistory = false;
-            "
-          >
-            <div class="hist-title ell">{{ s.title }}</div>
-            <div class="hist-time">{{ s.time }}</div>
-          </div>
-        </div>
-      </aside>
-
       <main class="chat-main" ref="scrollBox">
+        <section class="session-head" aria-label="练习进度">
+          <div class="session-row">
+            <div class="session-title"><span class="session-dot"></span>知识问答练习</div>
+            <div class="session-meta">{{ practiceProgressLabel }}</div>
+          </div>
+          <div class="session-progress"><span :style="{ width: `${practiceProgress}%` }"></span></div>
+        </section>
         <div class="chat-panel">
           <div
-            v-for="m in messages"
+            v-for="(m, messageIndex) in messages"
             :key="m.id"
             class="msg-row"
             :class="m.role"
@@ -87,23 +52,27 @@
               <img :src="m.role === 'user' ? userAvatar : botAvatar" />
             </div>
 
-            <div class="msg-content">
+            <div class="msg-content" :class="messageVisualKind(m)">
               <div class="nick">
                 {{
                   m.role === "user" ? $t("ChatExam.me") : $t("ChatExam.coach")
                 }}
               </div>
 
-              <div class="bubble" :class="m.role">
+              <div class="bubble" :class="[m.role, messageVisualKind(m)]">
                 <div class="text">
                   <div v-if="m.role === 'user'">{{ m.content }}</div>
                   <template v-else>
                     <div v-if="!m.done" class="streaming-text">{{ m.raw }}</div>
+                    <NextQuestionCard v-else-if="isNextQuestionMessage(m)" :content="m.content" />
                     <MarkdownRenderer v-else :content="m.content" />
                   </template>
                 </div>
               </div>
             </div>
+          </div>
+          <div v-if="isResultMessage(m) && isNextQuestionMessage(messages[messageIndex + 1])" class="next-tip">
+            已自动进入下一题，请直接在下方输入答案。
           </div>
           <div v-if="autoStartFailed" class="retry-start">
             <el-button type="primary" :loading="initializing" @click="startExam">
@@ -313,30 +282,6 @@
         </template>
       </div>
     </footer>
-
-    <el-drawer
-      v-if="isMobile"
-      v-model="showHistory"
-      :title="$t('ChatExam.historyChat')"
-      size="86%"
-      direction="ltr"
-    >
-      <div class="hist-list">
-        <div
-          v-for="s in sessions"
-          :key="s.id"
-          class="hist-item"
-          :class="{ active: s.id === sessionId }"
-          @click="
-            loadSession(s.id);
-            showHistory = false;
-          "
-        >
-          <div class="hist-title ell">{{ s.title }}</div>
-          <div class="hist-time">{{ s.time }}</div>
-        </div>
-      </div>
-    </el-drawer>
   </div>
 </template>
 
@@ -351,6 +296,7 @@ import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import { synthesizeXfyunTts } from "@/services/xfyunTts";
 import { transcribeXfyunAsr } from "@/services/xfyunAsr";
+import NextQuestionCard from "@/components/chat/NextQuestionCard.vue";
 
 const { t, locale } = useI18n();
 
@@ -363,6 +309,7 @@ const router = useRouter();
 const sopName = route.query.sopName || "";
 const sopId = route.query.sopId || "";
 const position_id = route.query.position_id || "";
+const routeQuestionTotal = Number(route.query.totalQuestions || route.query.questionCount || 0);
 
 const getPracticeReturnTarget = () => {
   if (route.query.entry === "web-practice") {
@@ -376,14 +323,11 @@ const scrollBox = ref(null);
 const input = ref("");
 const sending = ref(false);
 const isMobile = ref(window.innerWidth <= 900);
-const showHistory = ref(!isMobile.value);
 
 const sessionId = ref("");
 const examId = ref("");
 const messages = reactive([]);
-const sessions = ref([]);
-const storageKey = `chat_hist_${position_id || sopId || "default"}`;
-const activeSessionKey = `chat_exam_active_${position_id || sopId || "default"}`;
+const activeSessionKey = `chat_exam_active_v2_${position_id || sopId || "default"}`;
 const initializing = ref(false);
 const autoStartFailed = ref(false);
 
@@ -442,12 +386,32 @@ const latestAssistantText = computed(() => {
   return (last.done ? last.content : last.raw) || "";
 });
 
+const currentQuestionNumber = computed(() => {
+  for (const message of [...messages].reverse()) {
+    const match = String(message.content || message.raw || "").match(/^第\s*(\d+)\s*题[：:]/);
+    if (match) return Number(match[1]);
+  }
+  return 1;
+});
+const practiceQuestionTotal = computed(() => Number.isInteger(routeQuestionTotal) && routeQuestionTotal > 0 ? routeQuestionTotal : null);
+const practiceProgress = computed(() => {
+  if (!practiceQuestionTotal.value) return 0;
+  return Math.min(Math.round((currentQuestionNumber.value / practiceQuestionTotal.value) * 100), 100);
+});
+const practiceProgressLabel = computed(() => practiceQuestionTotal.value
+  ? `第 ${currentQuestionNumber.value} / ${practiceQuestionTotal.value} 题 · 已完成 ${practiceProgress.value}%`
+  : `第 ${currentQuestionNumber.value} 题 · 练习进行中`);
+
 // 滚动到底
 function scrollBottom() {
   nextTick(() => {
     const el = scrollBox.value;
     if (el) el.scrollTop = el.scrollHeight + 999;
   });
+}
+
+function scrollToTop() {
+  scrollBox.value?.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function updateViewport() {
@@ -457,24 +421,8 @@ function updateViewport() {
   }
 }
 
-// 本地存储
+// 保留当前会话，供刷新页面后继续答题；不再显示历史会话列表。
 function persist() {
-  const idx = sessions.value.findIndex((s) => s.id === sessionId.value);
-  const title = (
-    messages.find((m) => m.role === "user")?.content || sopName
-  ).slice(0, 20);
-
-  const item = {
-    id: sessionId.value,
-    title,
-    time: new Date().toLocaleString(),
-    messages: JSON.parse(JSON.stringify(messages)),
-  };
-
-  if (idx >= 0) sessions.value[idx] = item;
-  else sessions.value.unshift(item);
-
-  localStorage.setItem(storageKey, JSON.stringify(sessions.value));
   if (examId.value) {
     sessionStorage.setItem(activeSessionKey, JSON.stringify({
       sessionId: sessionId.value,
@@ -482,22 +430,6 @@ function persist() {
       messages: JSON.parse(JSON.stringify(messages)),
     }));
   }
-}
-
-function loadSessions() {
-  try {
-    sessions.value = JSON.parse(localStorage.getItem(storageKey) || "[]");
-  } catch {
-    sessions.value = [];
-  }
-}
-
-function loadSession(id) {
-  const found = sessions.value.find((s) => s.id === id);
-  if (!found) return;
-  sessionId.value = id;
-  messages.splice(0, messages.length, ...found.messages);
-  scrollBottom();
 }
 
 // 创建考试会话；第一题通过内部请求获取，不创建“开始考试”用户气泡。
@@ -555,10 +487,6 @@ async function startExam() {
   } finally {
     initializing.value = false;
   }
-}
-
-function newSession() {
-  startExam();
 }
 
 function onEnter(e) {
@@ -1064,15 +992,31 @@ async function send(isAutomatic = false) {
   }
 }
 
-function endExam() {
-  persist();
+async function closeActiveExam() {
+  const closingExamId = examId.value;
+  sessionStorage.removeItem(activeSessionKey);
+  examId.value = "";
+
+  if (!closingExamId) return;
+  try {
+    await endExamSession({
+      user_id: String(userInfo.value.id),
+      exams_id: closingExamId,
+    });
+  } catch (error) {
+    // The local session must still be discarded even if the finish request fails.
+    console.warn("Smart Practice finish request failed", error);
+  }
+}
+
+async function endExam() {
+  await closeActiveExam();
   ElMessage.success(t("ChatExam.testOver"));
   router.replace(getPracticeReturnTarget());
 }
 
 onMounted(() => {
   updateViewport();
-  loadSessions();
   try {
     const saved = JSON.parse(sessionStorage.getItem(activeSessionKey) || "null");
     if (saved?.examId && Array.isArray(saved.messages) && saved.messages.length) {
@@ -1087,6 +1031,25 @@ onMounted(() => {
   }
   window.addEventListener("resize", updateViewport, { passive: true });
 });
+
+function isResultMessage(message) {
+  return message?.role === "assistant" && String(message.content || "").startsWith("## 🧾 答题结果");
+}
+
+function isNextQuestionMessage(message) {
+  return message?.role === "assistant" && /^第\d+题：/.test(String(message.content || "").trim());
+}
+
+function messageVisualKind(message) {
+  if (isResultMessage(message)) {
+    const content = String(message.content || "");
+    if (content.includes("部分正确")) return "answer-result-card result-partial";
+    if (content.includes("回答正确")) return "answer-result-card result-correct";
+    return "answer-result-card result-error";
+  }
+  if (isNextQuestionMessage(message)) return "next-question-card";
+  return "";
+}
 
 onUnmounted(() => {
   stopAudio();
@@ -1103,11 +1066,14 @@ onUnmounted(() => {
   cleanupRecorder();
   window.removeEventListener("resize", updateViewport);
 
-  if (!examId.value) return;
+  const closingExamId = examId.value;
+  sessionStorage.removeItem(activeSessionKey);
+  examId.value = "";
+  if (!closingExamId) return;
   endExamSession({
     user_id: String(userInfo.value.id),
-    exams_id: examId.value,
-  });
+    exams_id: closingExamId,
+  }).catch((error) => console.warn("Smart Practice finish request failed", error));
 });
 </script>
 
@@ -1345,6 +1311,150 @@ onUnmounted(() => {
   border-top-left-radius: 10px;
 }
 
+/* Fixed Smart Practice result Markdown only. Other coach Markdown keeps its existing appearance. */
+.bubble.answer-result-card {
+  width: fit-content;
+  min-width: 480px;
+  max-width: 620px;
+  padding: 18px;
+  border: 1px solid #e8edf5;
+  border-top-left-radius: 16px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(31, 50, 81, 0.08);
+}
+
+:deep(.answer-result-card .markdown-body) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px 16px;
+  color: #334155;
+  line-height: 1.7;
+  white-space: normal;
+}
+
+:deep(.answer-result-card .markdown-body > h2) {
+  grid-column: 1;
+  margin: 0;
+  color: #172033;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+:deep(.answer-result-card .markdown-body > h2::after) {
+  content: "本题判定已完成";
+  display: block;
+  margin-top: 4px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+:deep(.answer-result-card .markdown-body > blockquote) {
+  margin: 0;
+  border: 0;
+}
+
+:deep(.answer-result-card .markdown-body > blockquote:first-of-type) {
+  grid-column: 2;
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+}
+
+:deep(.answer-result-card .markdown-body > blockquote:first-of-type h3) {
+  margin: 0;
+  padding: 7px 12px;
+  border: 1px solid #fecdd3;
+  border-radius: 999px;
+  background: #fff1f2;
+  color: #be123c;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+:deep(.answer-result-card .markdown-body > blockquote:first-of-type p) {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+  text-align: right;
+}
+
+:deep(.answer-result-card .markdown-body > blockquote:first-of-type strong) {
+  display: block;
+  font-weight: 500;
+}
+
+:deep(.answer-result-card .markdown-body > blockquote:first-of-type code) {
+  display: block;
+  margin-top: 1px;
+  padding: 0;
+  background: transparent;
+  color: #172033;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.bubble.answer-result-card.result-correct :deep(.markdown-body > blockquote:first-of-type h3) {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.bubble.answer-result-card.result-partial :deep(.markdown-body > blockquote:first-of-type h3) {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+:deep(.answer-result-card .markdown-body > hr) {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 1px;
+  margin: 1px 0 0;
+  border: 0;
+  background: #edf1f6;
+}
+
+:deep(.answer-result-card .markdown-body > h3) {
+  grid-column: 1 / -1;
+  margin: 1px 0 -5px;
+  color: #1e293b;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+:deep(.answer-result-card .markdown-body > blockquote:nth-of-type(2)) {
+  grid-column: 1 / -1;
+  padding: 9px 12px;
+  border-radius: 9px;
+  background: #eff6ff;
+  color: #164e9b;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+:deep(.answer-result-card .markdown-body > blockquote:nth-of-type(2) p),
+:deep(.answer-result-card .markdown-body > p) {
+  margin: 0;
+}
+
+:deep(.answer-result-card .markdown-body > p) {
+  grid-column: 1 / -1;
+  color: #475569;
+  word-break: break-word;
+}
+
+.bubble.next-question-card {
+  width: fit-content;
+  max-width: 620px;
+  padding: 16px 18px;
+  border: 1px solid #dbe7f7;
+  border-top-left-radius: 14px;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(31, 50, 81, 0.06);
+}
+
 .bubble.user {
   background: linear-gradient(135deg, #1677ff 0%, #4ea1ff 100%);
   color: #fff;
@@ -1506,6 +1616,36 @@ onUnmounted(() => {
     font-size: 14px;
     line-height: 1.65;
     border-radius: 18px;
+  }
+
+  .bubble.answer-result-card,
+  .bubble.next-question-card {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .bubble.answer-result-card {
+    padding: 15px;
+  }
+
+  :deep(.answer-result-card .markdown-body) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  :deep(.answer-result-card .markdown-body > h2),
+  :deep(.answer-result-card .markdown-body > blockquote:first-of-type) {
+    grid-column: 1;
+  }
+
+  :deep(.answer-result-card .markdown-body > blockquote:first-of-type) {
+    justify-items: start;
+  }
+
+  :deep(.answer-result-card .markdown-body > blockquote:first-of-type p) {
+    text-align: left;
   }
 
   .chat-input {
@@ -1808,5 +1948,135 @@ onUnmounted(() => {
     border-radius: 20px;
     padding: 12px;
   }
+}
+
+/* Practice workspace: a focused single-column session without conversation history. */
+.chat-page {
+  height: 100vh;
+  min-height: 620px;
+  background: radial-gradient(circle at 15% 0%, rgba(59, 130, 246, 0.07), transparent 26%), #f5f7fb;
+}
+
+.chat-header {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 68px;
+  padding: 0 max(20px, calc((100% - 1160px) / 2));
+  background: rgba(255, 255, 255, 0.92);
+  border: 0;
+  border-bottom: 1px solid #e7ebf2;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.right { gap: 10px; }
+.back-top-btn { color: #5b667a; border-color: #e7ebf2; font-weight: 600; }
+
+.content {
+  display: block;
+  min-height: 0;
+  padding: 90px 20px 122px;
+}
+
+.chat-main {
+  width: min(1280px, calc(100vw - 48px));
+  height: calc(100vh - 212px);
+  margin: 0 auto;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.session-head {
+  margin-bottom: 16px;
+  padding: 18px 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e7ebf2;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(30, 64, 175, 0.08);
+}
+
+.session-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.session-title { display: flex; align-items: center; gap: 9px; color: #172033; font-size: 15px; font-weight: 700; }
+.session-dot { width: 9px; height: 9px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.1); }
+.session-meta { color: #8b95a7; font-size: 13px; white-space: nowrap; }
+.session-progress { height: 7px; margin-top: 14px; overflow: hidden; border-radius: 999px; background: #edf1f7; }
+.session-progress span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #2563eb, #60a5fa); transition: width 0.25s ease; }
+
+.chat-panel {
+  min-height: auto;
+  padding: 0 0 18px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.msg-row { gap: 11px; margin-bottom: 16px; }
+.msg-content { max-width: min(790px, calc(100% - 56px)); }
+.msg-row.user .msg-content { max-width: min(360px, calc(100% - 56px)); }
+.msg-content.answer-result-card { width: min(760px, calc(100vw - 160px)); max-width: min(760px, calc(100vw - 160px)); }
+.nick { margin: 0 0 6px 3px; color: #8b95a7; }
+.msg-row.user .nick { margin-right: 3px; }
+.bubble { padding: 0; border-radius: 14px; font-size: 15px; line-height: 1.7; }
+.bubble.assistant { border: 1px solid #e7ebf2; border-top-left-radius: 14px; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05); }
+.bubble.next-question-card { padding: 17px 18px; border-color: #e7ebf2; border-radius: 14px; }
+.bubble.user { padding: 11px 16px; border-radius: 14px 14px 4px 14px; }
+.bubble.answer-result-card { width: 100%; min-width: 0; max-width: none; padding: 0; overflow: hidden; border-radius: 14px; }
+.next-tip { margin: -2px 0 16px 45px; padding: 11px 14px; color: #475569; background: #f8fafc; border: 1px dashed #dbe2ea; border-radius: 11px; font-size: 13px; line-height: 1.6; }
+
+/* Result content follows the prototype's label/value rows instead of a vertical stack. */
+:deep(.answer-result-card .markdown-body) { grid-template-columns: 104px minmax(0, 1fr); gap: 14px 16px; }
+:deep(.answer-result-card .markdown-body > h2) { grid-column: 1; align-self: center; }
+:deep(.answer-result-card .markdown-body > blockquote:first-of-type) { grid-column: 2; align-self: center; }
+:deep(.answer-result-card .markdown-body > hr) { margin: 2px 0; }
+:deep(.answer-result-card .markdown-body > h3) { grid-column: 1; align-self: start; margin: 4px 0 0; color: #475569; font-size: 13px; }
+:deep(.answer-result-card .markdown-body > h3::before) { margin-right: 6px; color: #3b82f6; content: "◆"; font-size: 10px; }
+:deep(.answer-result-card .markdown-body > blockquote:nth-of-type(2)) { grid-column: 2; min-height: 38px; padding: 9px 12px; }
+:deep(.answer-result-card .markdown-body > p) { grid-column: 2; min-height: 38px; padding: 9px 12px; border-radius: 9px; background: #f7f9fc; line-height: 1.65; }
+
+.chat-input {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 900;
+  padding: 12px 20px 16px;
+  background: linear-gradient(to top, #f5f7fb 58%, rgba(245, 247, 251, 0));
+}
+
+.composer-card {
+  width: min(1160px, 100%);
+  margin: 0 auto;
+  padding: 10px;
+  border: 1px solid #e7ebf2;
+  border-radius: 16px;
+  box-shadow: 0 10px 34px rgba(15, 23, 42, 0.12);
+}
+
+.voice-toolbar { display: none; }
+.input-shell { gap: 10px; }
+.chat-textarea :deep(.el-textarea__inner) { min-height: 44px !important; padding: 11px 12px; border: 0; border-radius: 10px; }
+.send-btn { min-width: 84px; height: 42px; border-radius: 11px; }
+
+@media (max-width: 900px) {
+  .chat-header { height: 62px; padding: 0 12px; }
+  .back-top-btn { display: none; }
+  .content { padding: 76px 12px 114px; }
+  .chat-main { width: 100%; height: calc(100vh - 190px); }
+  .session-head { padding: 15px; margin-bottom: 14px; }
+  .session-meta { font-size: 12px; }
+  .msg-content, .msg-row.user .msg-content { max-width: calc(100% - 45px); }
+  .msg-content.answer-result-card { width: calc(100% - 45px); max-width: calc(100% - 45px); }
+  .bubble.answer-result-card { width: 100%; min-width: 0; }
+  :deep(.answer-result-card .markdown-body) { grid-template-columns: 1fr; gap: 10px; }
+  :deep(.answer-result-card .markdown-body > h2),
+  :deep(.answer-result-card .markdown-body > blockquote:first-of-type),
+  :deep(.answer-result-card .markdown-body > h3),
+  :deep(.answer-result-card .markdown-body > blockquote:nth-of-type(2)),
+  :deep(.answer-result-card .markdown-body > p) { grid-column: 1; }
+  :deep(.answer-result-card .markdown-body > p) { min-height: 0; }
+  .next-tip { margin-left: 0; }
+  .chat-input { padding: 8px 12px calc(10px + env(safe-area-inset-bottom)); }
 }
 </style>
