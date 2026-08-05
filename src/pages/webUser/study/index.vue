@@ -186,6 +186,7 @@ import { ElMessage } from "element-plus";
 import { useI18n } from "vue-i18n";
 import WebPageContainer from "@/layouts/webUser/components/WebPageContainer.vue";
 import OfficeCheck from "@/pages/knowledgeManagement/materialLibrary/components/officeCheck.vue";
+import { joinUrl } from "@/utils";
 import { getStudyMaterialList } from "@/services/webUser/study.service";
 import { formatDate } from "@/utils/dateFormat";
 
@@ -273,7 +274,7 @@ const openPreview = (item) => {
   }
   previewFileTitle.value = item.title || t("web.study.untitled");
   previewFileType.value = item.fileType || "";
-  previewFileSrc.value = `/mobileapi/${item.fileUrl}`;
+  previewFileSrc.value = joinUrl("/mobileapi", item.fileUrl);
   previewVisible.value = true;
 };
 

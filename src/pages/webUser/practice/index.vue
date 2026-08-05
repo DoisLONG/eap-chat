@@ -305,6 +305,7 @@ const startPractice = (practice) => {
     query: {
       sopId,
       sopName,
+      totalQuestions: String(Number(practice?.totalQuestions) || ""),
       entry: "web-practice",
     },
   });

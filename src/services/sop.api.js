@@ -55,6 +55,15 @@ export async function generateQa(
   return api.post("/v1/dataprep/generate_qa", form);
 }
 
+// 从资料管理中已上传的受控资料生成练习；不传递对象存储 URI 或文件内容。
+export function generateQaFromMaterial({ material_id, category_id, description }) {
+  return api.post("/v1/dataprep/generate_qa_from_material", {
+    material_id,
+    category_id,
+    description: description?.trim() || undefined,
+  });
+}
+
 // 轮询任务状态
 export async function getTaskStatus(taskId) {
   const res = await api.post("/v1/dataprep/task_status", { task_id: taskId });

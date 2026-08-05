@@ -115,7 +115,7 @@
       v-model="importDlg.visible"
       class="practice-import-dialog"
       title="生成练习"
-      width="720px"
+      width="800px"
       align-center
       :close-on-click-modal="false"
       @close="resetImportDlg"
@@ -148,6 +148,7 @@
               v-model="importDlg.category_id"
               placeholder="请选择细分方向"
               :disabled="!importDlg.primary_category_id"
+              @change="changeImportCategory"
             >
               <el-option
                 v-for="category in importSecondaryCategories"
@@ -165,29 +166,28 @@
               placeholder="请输入练习描述"
             />
           </el-form-item>
-          <el-form-item
-            :label="$t('licenseAdmin.selectFile')"
-            class="upload-file"
-          >
-            <el-upload
-              drag
-              multiple
-              :auto-upload="false"
-              :file-list="importDlg.files"
-              :on-change="onUploadChange"
-              :on-remove="onUploadRemove"
-              accept=".pdf,.doc,.docx,.xls,.xlsx"
-            >
-              <div class="el-upload__text">
-                拖拽或点击选择文件
-                <div class="el-upload__tip">仅支持 PDF、DOC、DOCX、XLS、XLSX</div>
+          <el-form-item label="选择资料" prop="material_id" class="material-picker">
+            <div class="material-panel">
+              <div class="material-panel-head">
+                <el-input v-model="importDlg.materialKeyword" clearable placeholder="搜索当前分类下的资料名称" :disabled="!importDlg.category_id" @input="loadMaterials" />
+                <span>共 {{ importDlg.materialTotal }} 个资料</span>
               </div>
-              <template #file="{ file }">
-                <el-tooltip :content="file.name" placement="top">
-                  <span class="upload-file-name">{{ file.name }}</span>
-                </el-tooltip>
-              </template>
-            </el-upload>
+              <div v-loading="importDlg.materialLoading" class="material-list">
+                <div v-if="!importDlg.primary_category_id" class="material-state">请先选择所属类别和细分方向</div>
+                <div v-else-if="!importDlg.category_id" class="material-state">请选择细分方向</div>
+                <div v-else-if="importDlg.materialError" class="material-state material-error">资料加载失败，请稍后重试</div>
+                <div v-else-if="!importDlg.materials.length" class="material-state">{{ importDlg.materialKeyword ? "未找到匹配的资料" : "当前分类下暂无可用资料" }}</div>
+                <label v-for="material in importDlg.materials" :key="material.material_id" class="material-card" :class="{ selected: material.material_id === importDlg.material_id }" @click="selectMaterial(material)">
+                  <el-radio v-model="importDlg.material_id" :value="material.material_id" @change="selectMaterial(material)" />
+                  <div class="material-content">
+                    <div class="material-title-row"><strong>{{ material.title || material.filename || "未命名资料" }}</strong><el-tag size="small" effect="plain">{{ material.file_type?.toUpperCase() || "FILE" }}</el-tag></div>
+                    <p>{{ material.description || "暂无描述" }}</p>
+                    <small>大小：{{ formatMaterialSize(material.size) }}　 更新时间：{{ formatDateTime(material.updated_at) }}</small>
+                  </div>
+                </label>
+              </div>
+              <div class="material-selected">已选择：{{ importDlg.selectedMaterial?.title || importDlg.selectedMaterial?.filename || "未选择资料" }}</div>
+            </div>
           </el-form-item>
         </el-form>
       </div>
@@ -201,7 +201,7 @@
           type="primary"
           @click="startImport"
           :loading="importDlg.running"
-          :disabled="!importDlg.files.length"
+          :disabled="!canGenerate"
         >
           生成
         </el-button>
@@ -230,11 +230,12 @@ import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
 import { CirclePlus, Delete, EditPen } from "@element-plus/icons-vue";
 import {
   getSops,
-  generateQa,
+  generateQaFromMaterial,
   deleteSop,
   getTaskStatus,
   getSopCategoryTree,
 } from "@/services/sop.api";
+import { getMaterialList } from "@/services/mobile.service";
 import { useUserStore } from "@/stores/modules/user";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
@@ -463,21 +464,27 @@ const handleUpate = () => {
   proTable.value?.getTableList();
 };
 
-const importDlg = reactive({
+const importDlg = reactive<any>({
   visible: false,
-  files: [],
   primary_category_id: "",
   category_id: "",
   description: "",
   running: false,
+  materialKeyword: "",
+  materialLoading: false,
+  materialError: false,
+  materials: [],
+  materialTotal: 0,
+  material_id: "",
+  selectedMaterial: null,
 });
 
 const rules = reactive({
   primary_category_id: [{ required: true, message: "请选择所属类别" }],
   category_id: [{ required: true, message: "请选择细分方向" }],
+  material_id: [{ required: true, message: "请选择资料" }],
 });
 
-const supportedExtensions = new Set(["pdf", "doc", "docx", "xls", "xlsx"]);
 const importSecondaryCategories = computed(() => {
   const primary = categoryTree.value.find(
     (category) => String(category.id) === String(importDlg.primary_category_id),
@@ -486,53 +493,87 @@ const importSecondaryCategories = computed(() => {
 });
 const changeImportPrimaryCategory = () => {
   importDlg.category_id = "";
+  resetMaterials();
 };
+const canGenerate = computed(() => Boolean(
+  importDlg.primary_category_id && importDlg.category_id && importDlg.material_id && !importDlg.running,
+));
+const formatMaterialSize = (size) => {
+  const value = Number(size);
+  if (!Number.isFinite(value) || value < 0) return "-";
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+};
+function resetMaterials() {
+  importDlg.materialKeyword = "";
+  importDlg.materialLoading = false;
+  importDlg.materialError = false;
+  importDlg.materials = [];
+  importDlg.materialTotal = 0;
+  importDlg.material_id = "";
+  importDlg.selectedMaterial = null;
+}
+async function loadMaterials() {
+  if (!importDlg.category_id) return resetMaterials();
+  importDlg.materialLoading = true;
+  importDlg.materialError = false;
+  importDlg.material_id = "";
+  importDlg.selectedMaterial = null;
+  try {
+    const response = await getMaterialList({
+      pageNum: 1,
+      pageSize: 100,
+      category_id: importDlg.category_id,
+      title: importDlg.materialKeyword.trim(),
+    });
+    const payload = response.data?.data || response.data?.results || response.data;
+    if (!Array.isArray(payload?.items)) throw new Error("invalid material list response");
+    importDlg.materials = payload.items;
+    importDlg.materialTotal = Number(payload.total) || 0;
+  } catch (error) {
+    console.error("[资料加载失败]", error);
+    importDlg.materials = [];
+    importDlg.materialTotal = 0;
+    importDlg.materialError = true;
+  } finally {
+    importDlg.materialLoading = false;
+  }
+}
+function changeImportCategory() {
+  resetMaterials();
+  loadMaterials();
+}
+function selectMaterial(material) {
+  importDlg.material_id = material.material_id;
+  importDlg.selectedMaterial = material;
+}
 function resetImportDlg() {
-  importDlg.files = [];
   importDlg.primary_category_id = "";
   importDlg.category_id = "";
   importDlg.description = "";
+  resetMaterials();
   ruleFormRef.value?.resetFields();
-}
-
-function onUploadChange(file, fileList) {
-  const extension = file.name.split(".").pop()?.toLowerCase() || "";
-  if (!supportedExtensions.has(extension)) {
-    ElMessage.error("仅支持 PDF、DOC、DOCX、XLS、XLSX 文件");
-    importDlg.files = fileList.filter((item) => item.uid !== file.uid);
-    return;
-  }
-  importDlg.files = fileList;
 }
 
 function onImport() {
   resetImportDlg();
   importDlg.visible = true;
 }
-function onUploadRemove(file, fileList) {
-  importDlg.files = fileList;
-}
 
 async function startImport() {
-  if (!importDlg.files.length)
+  if (!importDlg.material_id)
     return ElMessage.warning(t("licenseAdmin.selectFirst"));
-  // const realFiles = importDlg.files.map((f) => f.raw).filter(Boolean);
-  // if (!realFiles.length) return ElMessage.warning(t("licenseAdmin.fileError"));
-  const realFiles = importDlg.files.map((f) => f.raw).filter(Boolean);
-  if (!realFiles.length) return ElMessage.warning(t("licenseAdmin.fileError"));
 
   ruleFormRef.value!.validate(async (valid) => {
     if (!valid) return;
     importDlg.running = true;
     try {
-      console.log("importDlg", importDlg);
-      const res = await generateQa(
-        realFiles,
-        importDlg.category_id,
-        importDlg.description,
-      );
-
-      console.log("generateQa", res);
+      const res = await generateQaFromMaterial({
+        material_id: importDlg.material_id,
+        category_id: importDlg.category_id,
+        description: importDlg.description,
+      });
 
       // ✅ 后端返回非200/201时，主动抛错
       if (res?.data.status !== 200 && res?.data.status !== 201) {
@@ -603,9 +644,7 @@ onUnmounted(() => {
 .import-form :deep(.el-form-item__label) {
   white-space: nowrap;
 }
-.import-form :deep(.el-select),
-.import-form :deep(.el-upload),
-.import-form :deep(.el-upload-dragger) {
+.import-form :deep(.el-select) {
   width: 100%;
 }
 
@@ -631,15 +670,25 @@ onUnmounted(() => {
   justify-content: flex-end;
   gap: 12px;
 }
-.upload-file :deep(.el-form-item__content) div:nth-of-type(1) {
-  width: 100%;
-}
-.upload-file-name {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.material-picker :deep(.el-form-item__content) { display: block; }
+.material-panel { width: 100%; border: 1px solid #e4e7ed; border-radius: 8px; overflow: hidden; }
+.material-panel-head { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border-bottom: 1px solid #ebeef5; color: #909399; font-size: 13px; }
+.material-panel-head :deep(.el-input) { flex: 1; }
+.material-panel-head span { white-space: nowrap; }
+.material-list { max-height: 310px; overflow-y: auto; background: #fff; }
+.material-card { display: flex; gap: 10px; padding: 12px; border-bottom: 1px solid #f0f2f5; cursor: pointer; transition: .2s ease; }
+.material-card:hover { border-color: #b3d8ff; box-shadow: 0 2px 8px rgba(64, 158, 255, .12); }
+.material-card.selected { background: #ecf5ff; box-shadow: inset 0 0 0 1px #409eff; }
+.material-card :deep(.el-radio) { margin-top: 2px; }
+.material-content { min-width: 0; flex: 1; }
+.material-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #303133; }
+.material-title-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.material-title-row :deep(.el-tag) { color: #409eff; background: #ecf5ff; border-color: #d9ecff; }
+.material-content p { margin: 5px 0; color: #606266; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.material-content small { color: #909399; }
+.material-state { padding: 40px 12px; text-align: center; color: #909399; }
+.material-error { color: #f56c6c; }
+.material-selected { padding: 10px 12px; color: #606266; background: #fafafa; border-top: 1px solid #ebeef5; }
 :deep(.practice-import-dialog) {
   max-width: calc(100vw - 32px);
 }

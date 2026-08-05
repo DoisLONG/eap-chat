@@ -176,7 +176,7 @@ export default {
       false: "False",
       enterAnswer: "Enter your answer",
     },
-  
+
   },
   填空题: "Fill in the Blank",
   问答题: "QA",
@@ -406,6 +406,8 @@ export default {
     saveChanges: "Save Changes",
     publishExam: "Publish Exam",
     publishConfirm: "After publishing, this exam can no longer be edited or deleted. Continue?",
+    republishExam: "Republish Exam",
+    republishConfirm: "Republishing creates a new paper version. New candidates receive the new paper; historical attempts and grades are unchanged. Continue?",
     publishAction: "Publish",
     withdrawAction: "Withdraw",
     publishRowConfirm: "Publish exam “{name}”? It will become published.",
@@ -419,6 +421,11 @@ export default {
     examTime: "Exam Time",
     unset: "Not set",
     timeRangeRequired: "Set both the exam start and end times",
+    estimatedEndTime: "Expected End Time",
+    endTimeCalculated: "The end time is calculated automatically from the start time and exam duration.",
+    startTimeRequired: "Select a start time",
+    startTimePast: "The start time cannot be earlier than now",
+    durationInvalid: "The exam duration must be greater than 0",
     questionSource: "Question Source",
     editUnavailable: "The current status does not allow editing",
     deleteUnavailable: "The current status does not allow deletion",
@@ -490,6 +497,7 @@ export default {
     newModuleTit: "New Module",
     titTip:
       "Question {i} has incomplete information, please fill in all fields before saving",
+    fill: "Fill-in-the-Blank Question",
   },
   userManagement: {
     add: "Add User",

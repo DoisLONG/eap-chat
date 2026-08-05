@@ -4,6 +4,15 @@ import { FieldNamesProps } from "@/components/ProTable/interface";
 const mode = "history"; // 路由模式 hash || history
 
 /**
+ * @description 拼接基础地址和相对路径，避免交界处出现重复斜杠。
+ */
+export function joinUrl(baseUrl: string, path: string) {
+  const base = baseUrl.replace(/\/+$/, "");
+  const normalizedPath = path.replace(/^\/+/, "");
+  return base ? `${base}/${normalizedPath}` : `/${normalizedPath}`;
+}
+
+/**
  * @description 获取localStorage
  * @param {String} key Storage名称
  * @returns {String}

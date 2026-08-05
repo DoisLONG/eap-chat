@@ -166,6 +166,7 @@ import {
 
 import { useHandleData } from "@/hooks/useHandleData";
 import { formatDateTime } from "@/utils/dateFormat";
+import { joinUrl } from "@/utils";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
@@ -431,7 +432,7 @@ const operateOfficeVisible = ref(false);
 
 const checkPreView = async (row) => {
   if (row.file_url) {
-    fileSrc.value = `/mobileapi/${row.file_url}`;
+    fileSrc.value = joinUrl("/mobileapi", row.file_url);
     fileType.value = row.file_type;
     fileTitle.value = row.title;
     operateOfficeVisible.value = true;

@@ -176,7 +176,7 @@ export default {
       false: "ผิด",
       enterAnswer: "กรุณากรอกคำตอบ",
     },
-   
+
   },
   填空题: "ข้อสอบแบบเติมช่องว่าง",
   问答题: "ข้อสอบแบบถาม-ตอบ",
@@ -403,6 +403,8 @@ export default {
     saveChanges: "บันทึกการแก้ไข",
     publishExam: "เผยแพร่ข้อสอบ",
     publishConfirm: "หลังเผยแพร่จะไม่สามารถแก้ไขหรือลบข้อสอบได้ ต้องการดำเนินการต่อหรือไม่",
+    republishExam: "เผยแพร่ข้อสอบอีกครั้ง",
+    republishConfirm: "การเผยแพร่ซ้ำจะสร้างเวอร์ชันข้อสอบใหม่ ผู้เข้าสอบใหม่จะใช้ข้อสอบใหม่ ส่วนประวัติและคะแนนเดิมจะไม่เปลี่ยนแปลง ต้องการดำเนินการต่อหรือไม่",
     publishAction: "เผยแพร่",
     withdrawAction: "ถอนการเผยแพร่",
     publishRowConfirm: "ยืนยันเผยแพร่ข้อสอบ “{name}” หรือไม่ ข้อสอบจะเปลี่ยนเป็นเผยแพร่แล้ว",
@@ -416,6 +418,11 @@ export default {
     examTime: "เวลาสอบ",
     unset: "ไม่ได้ตั้งค่า",
     timeRangeRequired: "โปรดตั้งเวลาเริ่มและสิ้นสุดการสอบพร้อมกัน",
+    estimatedEndTime: "เวลาสิ้นสุดโดยประมาณ",
+    endTimeCalculated: "เวลาสิ้นสุดจะคำนวณจากเวลาเริ่มและระยะเวลาทำข้อสอบโดยอัตโนมัติ",
+    startTimeRequired: "กรุณาเลือกเวลาเริ่ม",
+    startTimePast: "เวลาเริ่มต้องไม่เร็วกว่าปัจจุบัน",
+    durationInvalid: "ระยะเวลาทำข้อสอบต้องมากกว่า 0",
     questionSource: "แหล่งที่มาของคำถาม",
     editUnavailable: "สถานะปัจจุบันไม่อนุญาตให้แก้ไข",
     deleteUnavailable: "สถานะปัจจุบันไม่อนุญาตให้ลบ",
@@ -486,6 +493,7 @@ export default {
     newModuleTit: "โมดูลใหม่",
     titTip:
       "ข้อที่ {i} มีเนื้อหาที่ยังไม่ได้กรอก กรุณากรอกให้ครบถ้วนก่อนบันทึก",
+    fill: "ข้อสอบแบบเติมคำ",
   },
   userManagement: {
     add: "เพิ่มผู้ใช้ใหม่",
@@ -875,6 +883,8 @@ export default {
       recommendLowLatency: "แนะนำความหน่วงต่ำ",
       practiceInteractionDesc:
         "เหมาะสำหรับสถานการณ์เช่นคำถาม-ตอบแบบเรียลไทม์ ความคิดเห็นจากเครือข่าย และการโต้ตอบการสนทนา แนะนำให้เลือกโมเดลที่มีอัตราการตอบสนองเร็ว",
+      embeddingModel: "โมเดล Embedding",
+      asrModel: "โมเดล ASR",
       embeddingConfigTitle: "II. การตั้งค่า Embedding",
       require1024D: "ต้องรองรับ 1024 มิติ",
       embeddingConfigDesc:
