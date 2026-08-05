@@ -105,6 +105,11 @@
               </div>
             </div>
           </div>
+          <div v-if="autoStartFailed" class="retry-start">
+            <el-button type="primary" :loading="initializing" @click="startExam">
+              重新尝试加载第一题
+            </el-button>
+          </div>
         </div>
       </main>
     </div>
@@ -176,11 +181,7 @@
               :disabled="!input.trim()"
               @click="send"
             >
-              {{
-                messages.length <= 1
-                  ? $t("ChatExam.begin")
-                  : $t("ChatExam.send")
-              }}
+              {{ $t("ChatExam.send") }}
             </el-button>
           </div>
         </template>
@@ -253,9 +254,7 @@
             :disabled="!input.trim()"
             @click="send"
           >
-            {{
-              messages.length <= 1 ? $t("ChatExam.begin") : $t("ChatExam.send")
-            }}
+            {{ $t("ChatExam.send") }}
           </el-button>
         </template>
 
@@ -384,6 +383,9 @@ const examId = ref("");
 const messages = reactive([]);
 const sessions = ref([]);
 const storageKey = `chat_hist_${position_id || sopId || "default"}`;
+const activeSessionKey = `chat_exam_active_${position_id || sopId || "default"}`;
+const initializing = ref(false);
+const autoStartFailed = ref(false);
 
 const userAvatar = "/logo2.png";
 const botAvatar = "/logo1.png";
@@ -473,6 +475,13 @@ function persist() {
   else sessions.value.unshift(item);
 
   localStorage.setItem(storageKey, JSON.stringify(sessions.value));
+  if (examId.value) {
+    sessionStorage.setItem(activeSessionKey, JSON.stringify({
+      sessionId: sessionId.value,
+      examId: examId.value,
+      messages: JSON.parse(JSON.stringify(messages)),
+    }));
+  }
 }
 
 function loadSessions() {
@@ -491,14 +500,14 @@ function loadSession(id) {
   scrollBottom();
 }
 
-// 新建对话
-function newSession() {
+// 创建考试会话；第一题通过内部请求获取，不创建“开始考试”用户气泡。
+async function startExam() {
+  if (initializing.value || sending.value) return;
+  initializing.value = true;
+  autoStartFailed.value = false;
   sessionId.value = String(Date.now());
-  messages.splice(0, messages.length, {
-    id: sessionId.value,
-    role: "assistant",
-    content: t("ChatExam.beginTip") || "准备开始考试",
-  });
+  examId.value = "";
+  messages.splice(0, messages.length);
 
   recognizedText.value = "";
   input.value = "";
@@ -520,38 +529,36 @@ function newSession() {
   }
 
   const token = localStorage.getItem("token");
-  fetch("/chatapi/v1/exams/start", {
+  try {
+    const response = await fetch("/chatapi/v1/exams/start", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(params),
-  })
-    .then(async (response) => {
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Smart Practice start failed: HTTP ${response.status}: ${errorText}`,
-        );
-      }
-      return response.json();
-    })
-    .then((res) => {
-      if (res?.results?.exams_id) {
-        examId.value = res?.results?.exams_id || "";
-        ElMessage.success(t("ChatExam.beginTest"));
-        nextTick(() => send());
-      } else {
-        ElMessage.error(res?.message || t("ChatExam.startError"));
-      }
-    })
-    .catch((error) => {
-      console.error("Smart Practice start failed", error);
-      ElMessage.error(t("ChatExam.startError"));
     });
+    if (!response.ok) throw new Error(`Smart Practice start failed: HTTP ${response.status}`);
+    const res = await response.json();
+    if (!res?.results?.exams_id) throw new Error("Smart Practice start returned no session id");
+    examId.value = res.results.exams_id;
+    if (!(await send(true))) throw new Error("Smart Practice first question request failed");
+    persist();
+  } catch (error) {
+    console.error("Smart Practice start failed", error);
+    autoStartFailed.value = true;
+    messages.splice(0, messages.length, {
+      id: `${Date.now()}-start-error`, role: "assistant", done: true,
+      content: "加载第一题失败，请重新尝试。",
+    });
+    ElMessage.error(t("ChatExam.startError"));
+  } finally {
+    initializing.value = false;
+  }
+}
 
-  persist();
+function newSession() {
+  startExam();
 }
 
 function onEnter(e) {
@@ -877,15 +884,14 @@ function playAssistantAudio() {
 }
 
 // ========== 答题 ==========
-async function send() {
+async function send(isAutomatic = false) {
   const rawText = input.value.trim();
-  const isFirstRound = !rawText && messages.length <= 1;
-  const text = rawText || (isFirstRound ? "开始考试" : "");
-
-  if (!text && messages.length > 1) return;
+  const text = rawText;
+  if (!isAutomatic && !text) return;
+  if (!examId.value) return;
   sending.value = true;
 
-  messages.push({ id: Date.now() + "", role: "user", content: text });
+  if (!isAutomatic) messages.push({ id: Date.now() + "", role: "user", content: text });
   input.value = "";
   recognizedText.value = "";
   await nextTick();
@@ -912,7 +918,7 @@ async function send() {
       // TrainParams 直接接收 session_id 和 messages；不能再包一层 input。
       body: JSON.stringify({
         session_id: examId.value,
-        messages: (() => {
+        messages: isAutomatic ? [{ role: "user", content: "开始考试" }] : (() => {
           const filtered = [...messages];
           if (filtered[filtered.length - 1].role === "assistant") {
             filtered.pop();
@@ -925,10 +931,7 @@ async function send() {
     });
 
     if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(
-        `Smart Practice answer failed: HTTP ${res.status}: ${errorText}`,
-      );
+      throw new Error(`Smart Practice answer failed: HTTP ${res.status}`);
     }
     if (!res.body) {
       throw new Error("Smart Practice answer response body is empty");
@@ -938,6 +941,8 @@ async function send() {
     const decoder = new TextDecoder("utf-8");
     let docs = [];
     let pending = "";
+    let structuredReceived = false;
+    let sseBuffer = "";
 
     const flush = async () => {
       if (!pending) return;
@@ -951,10 +956,13 @@ async function send() {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split(/\r?\n/);
+      sseBuffer += decoder.decode(value, { stream: true });
+      const eventBlocks = sseBuffer.split(/\r?\n\r?\n/);
+      sseBuffer = eventBlocks.pop() || "";
 
-      for (let raw of lines) {
+      for (const eventBlock of eventBlocks) {
+        const lines = eventBlock.split(/\r?\n/);
+        for (let raw of lines) {
         if (!raw || !raw.startsWith("data:")) continue;
         let line = raw.slice(5).trim();
 
@@ -963,6 +971,23 @@ async function send() {
         if (line[0] === "{") {
           try {
             const parsed = JSON.parse(line);
+
+            if (["result", "next_question", "summary"].includes(parsed?.type)) {
+              if (!structuredReceived) {
+                const placeholderIndex = messages.findIndex((m) => m.id === replyMsg.id);
+                if (placeholderIndex >= 0) messages.splice(placeholderIndex, 1);
+                structuredReceived = true;
+              }
+              messages.push({
+                id: `${Date.now()}-${parsed.type}-${messages.length}`,
+                role: "assistant",
+                content: normalizeMd(parsed.content || ""),
+                done: true,
+              });
+              await nextTick();
+              scrollBottom();
+              continue;
+            }
 
             if (Array.isArray(parsed?.documents) && parsed.documents.length) {
               docs = parsed.documents.filter(
@@ -996,6 +1021,7 @@ async function send() {
           pending += line;
           await flush();
         }
+        }
       }
     }
 
@@ -1003,7 +1029,7 @@ async function send() {
       replyMsg.raw += pending.replace(/\\n/g, "\n");
     }
 
-    if (docs.length > 0) {
+    if (!structuredReceived && docs.length > 0) {
       replyMsg.raw += `\n\n<details><summary>📄 ${t(
         "ChatExam.fromDoc",
       )}</summary>\n`;
@@ -1015,17 +1041,23 @@ async function send() {
       replyMsg.raw += `</details>\n`;
     }
 
-    replyMsg.content = normalizeMd(replyMsg.raw);
-    replyMsg.done = true;
+    if (!structuredReceived) {
+      replyMsg.content = normalizeMd(replyMsg.raw);
+      replyMsg.done = true;
+    }
 
     await nextTick();
     scrollBottom();
     persist();
+    return true;
   } catch (err) {
     console.error("Smart Practice SSE error", err);
-    replyMsg.content = t("ChatExam.errorTip");
-    replyMsg.done = true;
+    if (!structuredReceived) {
+      replyMsg.content = t("ChatExam.errorTip");
+      replyMsg.done = true;
+    }
     ElMessage.error(t("ChatExam.errorTip"));
+    return false;
   } finally {
     sending.value = false;
     scrollBottom();
@@ -1041,7 +1073,18 @@ function endExam() {
 onMounted(() => {
   updateViewport();
   loadSessions();
-  newSession();
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(activeSessionKey) || "null");
+    if (saved?.examId && Array.isArray(saved.messages) && saved.messages.length) {
+      sessionId.value = saved.sessionId || String(Date.now());
+      examId.value = saved.examId;
+      messages.splice(0, messages.length, ...saved.messages);
+    } else {
+      startExam();
+    }
+  } catch {
+    startExam();
+  }
   window.addEventListener("resize", updateViewport, { passive: true });
 });
 

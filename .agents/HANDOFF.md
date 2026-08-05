@@ -78,3 +78,6 @@
 - `pages/examManagement/components/ExamFormDrawer.vue` 不再提供结束时间编辑器。它只读显示“开始时间 + duration”，发布时只提交开始时间；已结束考试默认选择发布并以“重新发布考试”提示用户替换过期开始时间。
 - `components/webUser/exam/ExamCard.vue` 已移除可用主按钮的空 `el-tooltip`；禁用按钮和历史按钮仅在存在文案时显示无箭头 tooltip。
 - 未运行构建、浏览器或真实接口；部署后按验收清单检查 Element Plus 弹层、时间显示、后端 400/409 与重发后的版本快照。
+# 2026-08-05 智能陪练答题页
+
+- 实际页面为 `src/pages/ChatExam.vue`，已与 Smart Practice 的结构化 SSE 同步。需由用户验证首题自动展示、结果/下一题两条气泡、刷新恢复和断流提示。
