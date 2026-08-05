@@ -28,6 +28,13 @@
 - 管理端与 Web 用户端同属当前 Vue Router 应用，终端切换统一使用已确认的 route name：`WebUserHome` 与 `Dashboard`；不使用完整 URL 或 `window.location`。
 - 管理端既有“用户端”仍由 `activeDuan` 与 iframe 管理，本次只新增 Web 端入口，不改变其状态、尺寸计算或 iframe 地址逻辑。
 
+## 2026-08-05 多端统一入口
+
+- `currentPlatform` 归属既有持久化 `global` Pinia store，默认 `admin`；刷新通过现有 localStorage 持久化恢复，而不增加新的 store 或自定义存储键。
+- `/dashboard` 是管理端与 Web 端的统一首页入口：同一路径根据平台渲染既有管理仪表盘或既有 Web 首页。Web 端类型切换不再前往 `/web/home`。
+- `/web/home`、`/web/study`、`/web/practice`、`/web/exam` 保持兼容，但其外壳改为复用 `LayoutVertical`；Web 子菜单仍使用这些既有路径，以保持与管理端菜单相同的路由切换行为和唯一导航框架。
+- Web 子路由会强制切换为 Web 平台；端类型按钮进入 `/dashboard` 时写入安全的 history state，浏览器在 Web 子页与 `/dashboard` 之间前进/后退可恢复相应的平台显示，刷新仍以持久化 Pinia 状态为准。
+
 ## 2026-07-28 恢复决策
 
 | 决策 | 结论 | 依据/影响 |

@@ -234,3 +234,9 @@
 - `src/pages/webUser/study/index.vue` 启用卡片“查看”，复用管理端纯展示 `officeCheck.vue` / `OfficeViewer`，按既有规则使用 `/mobileapi/${fileUrl}` 打开单个全屏预览；关闭后保留当前筛选和分页。
 - 缺少 `fileUrl` 时使用三语 Element Plus 提示，不打开空预览；不支持类型和加载失败继续由现有预览组件处理。
 - 未修改管理端、路由、公共 Layout、接口参数、代理、权限、依赖或部署；未运行构建、测试、服务或容器操作，验证由用户执行。
+
+## 2026-08-05 多端统一入口
+
+- `global` Pinia store 新增并持久化 `currentPlatform`；端类型切换仅保存 `admin` / `web`，不保存敏感数据。
+- `LayoutVertical` 根据平台切换管理端权限菜单或 Web 的首页、学习、练习、考试菜单；Web 端按钮与管理端按钮均回到 `/dashboard`，Web 子菜单继续沿用既有 `/web/*` 路由并复用同一 Layout。
+- `/dashboard` 在 Web 平台直接复用 `pages/webUser/home/index.vue`，管理端仪表盘请求仅在管理端显示时加载；未修改接口、代理、权限、部署或路由路径，未运行构建、测试、服务或容器。

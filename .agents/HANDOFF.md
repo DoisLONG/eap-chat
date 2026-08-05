@@ -45,3 +45,9 @@
 - `src/services/webUser/study.service.js` 复用现有资料只读列表调用并集中转换展示模型；未接入课程、详情、预览、学习进度、权限或任何管理端写操作。
 - “查看”入口复用管理端纯展示 `officeCheck.vue` / `OfficeViewer`，展示模型将 `file_url` 映射为 `fileUrl`，并按管理端既有 `/mobileapi/${fileUrl}` 规则打开单个全屏预览；缺少地址时显示三语提示。
 - 未接入学习详情路由、课程、学习进度、权限或任何管理端写操作。构建、普通学习账号文件权限、支持类型、加载失败、三语和 1024px/1200px/1440px 视觉验证由用户执行。
+
+## 多端统一入口（2026-08-05）
+
+- `src/stores/modules/global.ts` 的持久化状态新增 `currentPlatform`。点击管理端或 Web 端都会进入 `/dashboard`；前者渲染原管理仪表盘，后者复用 `pages/webUser/home/index.vue`。
+- `WebUserLayout.vue` 仅复用 `LayoutVertical`，使 `/web/*` 保持兼容的同时使用相同端类型栏、BLUEDOT Logo、顶部栏和菜单样式。`LayoutVertical` 继续通过 `authStore.showMenuListGet` 渲染管理端权限菜单，Web 平台使用首页、学习、练习、考试四项静态菜单。
+- 用户需验证平台切换、刷新恢复、`/web/*` 子菜单路由与高亮、浏览器前进/后退及管理端首次引导/H5 iframe；`/dashboard` 导航历史会携带非敏感的平台状态。未运行构建、测试、服务或容器。

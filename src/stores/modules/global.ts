@@ -5,6 +5,7 @@ import piniaPersistConfig from "@/stores/helper/persist";
 export const useGlobalStore = defineStore("sopai-global", {
   state: () => ({
     layout: "vertical",
+    currentPlatform: "admin",
     language: null,
     assemblySize: "default",
     maximize: false,
@@ -19,6 +20,9 @@ export const useGlobalStore = defineStore("sopai-global", {
   }),
   getters: {},
   actions: {
+    setPlatform(platform) {
+      this.currentPlatform = platform;
+    },
     setGlobalState(...args) {
       this.$patch({ [args[0]]: args[1] });
     },

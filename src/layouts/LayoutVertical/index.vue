@@ -1,6 +1,6 @@
 <!-- 纵向布局 -->
 <template>
-  <div class="layout-container">
+  <div class="layout-container" :class="{ 'web-user-platform': isWebPlatform }">
     <!-- 管理端布局 -->
     <el-container class="layout">
       <el-aside>
@@ -31,7 +31,7 @@
           <div
             class="duan-item"
             :class="{
-              active: activeDuan === 'admin',
+              active: activeDuan === 'admin' && !isWebPlatform,
               'duan-item-admin': isFirst,
             }"
             @click="changeDuan('admin')"
@@ -48,7 +48,7 @@
                   <img
                     style="width: 26px; height: 26px"
                     :src="
-                      activeDuan === 'admin'
+                      activeDuan === 'admin' && !isWebPlatform
                         ? '/logo-white.png'
                         : '/logo-blue.png'
                     "
@@ -88,12 +88,17 @@
           </div>
           <button
             class="duan-item duan-item-web"
+            :class="{ active: isWebPlatform }"
             type="button"
             :aria-label="$t('web.layout.webTerminal')"
             @click="goToWeb"
           >
             <div class="logo-content">
-              <img style="width: 26px; height: 26px" src="/logo-blue.png" alt="" />
+              <img
+                style="width: 26px; height: 26px"
+                :src="isWebPlatform ? '/logo-white.png' : '/logo-blue.png'"
+                alt=""
+              />
             </div>
             <div
               class="text"
@@ -176,6 +181,7 @@
 
 <script setup name="layoutVertical">
 import { computed, ref, provide, nextTick } from "vue";
+import { Collection, DocumentChecked, EditPen, House } from "@element-plus/icons-vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/modules/auth";
 import { useGlobalStore } from "@/stores/modules/global";
@@ -194,9 +200,18 @@ const globalStore = useGlobalStore();
 const accordion = computed(() => globalStore.accordion);
 const language = computed(() => globalStore.language);
 const isCollapse = computed(() => globalStore.isCollapse);
-const lang = computed(() => globalStore.language);
-const menuList = computed(() => authStore.showMenuListGet);
+const isWebPlatform = computed(() => globalStore.currentPlatform === "web");
+const webMenuList = [
+  { path: "/dashboard", meta: { icon: House, i18nKey: "web.nav.home", isLink: "" } },
+  { path: "/web/study", meta: { icon: Collection, i18nKey: "web.nav.study", isLink: "" } },
+  { path: "/web/practice", meta: { icon: EditPen, i18nKey: "web.nav.practice", isLink: "" } },
+  { path: "/web/exam", meta: { icon: DocumentChecked, i18nKey: "web.nav.exam", isLink: "" } },
+];
+const menuList = computed(() =>
+  isWebPlatform.value ? webMenuList : authStore.showMenuListGet,
+);
 const activeMenu = computed(() => {
+  if (isWebPlatform.value && route.path === "/web/home") return "/dashboard";
   return route.meta.activeMenu ? route.meta.activeMenu : route.path;
 });
 
@@ -229,6 +244,10 @@ const changeDuan = (val) => {
   if (isFirst.value && val === "admin") return;
   activeDuan.value = val;
   localStorage.setItem("activeDuan", val);
+  if (val === "admin") {
+    globalStore.setPlatform("admin");
+    router.push({ path: "/dashboard", state: { platform: "admin" } });
+  }
   if (val === "user") {
     nextTick(() => {
       calculateH5Size();
@@ -236,7 +255,29 @@ const changeDuan = (val) => {
   }
 };
 
-const goToWeb = () => router.push({ name: "WebUserHome" });
+const goToWeb = () => {
+  activeDuan.value = "admin";
+  localStorage.setItem("activeDuan", "admin");
+  globalStore.setPlatform("web");
+  router.push({ path: "/dashboard", state: { platform: "web" } });
+};
+
+watch(
+  () => route.path,
+  (path) => {
+    if (path.startsWith("/web")) {
+      activeDuan.value = "admin";
+      localStorage.setItem("activeDuan", "admin");
+      if (!isWebPlatform.value) globalStore.setPlatform("web");
+      return;
+    }
+    const platform = window.history.state?.platform;
+    if (path === "/dashboard" && ["admin", "web"].includes(platform)) {
+      globalStore.setPlatform(platform);
+    }
+  },
+  { immediate: true },
+);
 
 const calculateH5Size = () => {
   const container = document.querySelector(".user-iframe-wrapper");
@@ -554,4 +595,7 @@ onUnmounted(() => {
 .duan-popover.el-popover .el-popper__arrow::before {
   background: #1677ff !important;
 }
+</style>
+<style lang="scss">
+@use "@/styles/webUser.scss";
 </style>

@@ -1,4 +1,5 @@
-.web-user-layout {
+.web-user-layout,
+.web-user-platform {
   --web-page-bg: #f4f8fc;
   --web-surface: #ffffff;
   --web-line: #e6edf5;
@@ -8,7 +9,9 @@
   --web-menu-width: 204px;
   --web-header-height: 60px;
   --web-content-max-width: 1440px;
+}
 
+.web-user-layout {
   display: flex;
   min-height: 100vh;
   background: var(--web-page-bg);

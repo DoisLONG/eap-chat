@@ -1,5 +1,8 @@
 <template>
-  <div class="dashboard-container">
+  <section v-if="isWebPlatform" class="web-dashboard-container">
+    <WebUserHome />
+  </section>
+  <div v-else class="dashboard-container">
     <div class="dashboard-header">
       <div>{{ $t("dashboard.title") }}</div>
       <span class="update-time"
@@ -75,6 +78,7 @@ import announcement from "./components/announcement.vue";
 import studyTaskDashboard from "./components/studyTaskDashboard.vue";
 import resourceOverview from "./components/resourceOverview.vue";
 import startGuide from "./components/guide/guide.vue";
+import WebUserHome from "@/pages/webUser/home/index.vue";
 import { getOverview } from "@/services/dashboard.service";
 import { getConfigs } from "@/services/user.service";
 
@@ -82,6 +86,7 @@ const isOnline = ref(true); // 是否有网络
 const isChecking = ref(false); // 是否正在检查网络
 // console.log("w", (window.innerWidth - 208 - 48 - 320 - 16 - 48) / 31);
 const globalStore = useGlobalStore();
+const isWebPlatform = computed(() => globalStore.currentPlatform === "web");
 const isCollapse = computed(() => globalStore.isCollapse);
 const daysInMonth = 30; // 热力图显示30天数据
 // const heatmapAreaSize = ref(22); // 默认热力图小块大小
@@ -113,7 +118,6 @@ const getUserConfig = async () => {
     isShowGuide.value = res.data.data.dashboard_welcome_guide_pending === 0;
   }
 };
-getUserConfig();
 // 当天日期
 const todayDate = computed(() => {
   const now = new Date();
@@ -132,6 +136,12 @@ watch(
     });
   },
 );
+watch(isWebPlatform, (isWebPlatform, wasWebPlatform) => {
+  if (!isWebPlatform && wasWebPlatform) {
+    getUserConfig();
+    checkNetwork();
+  }
+});
 // 检查网络连接&获取概览
 const checkNetwork = async () => {
   if (isChecking.value) return;
@@ -159,7 +169,10 @@ const handleNetworkChange = () => {
 };
 
 onMounted(() => {
-  checkNetwork();
+  if (!isWebPlatform.value) {
+    getUserConfig();
+    checkNetwork();
+  }
   window.addEventListener("online", handleNetworkChange);
   window.addEventListener("offline", handleNetworkChange);
 });
@@ -170,6 +183,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   height: 32px;
+}
+
+.web-dashboard-container {
+  width: 100%;
 }
 
 .dashboard-header div {
