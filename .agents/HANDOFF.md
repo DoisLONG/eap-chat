@@ -51,3 +51,14 @@
 - `src/stores/modules/global.ts` 的持久化状态新增 `currentPlatform`。点击管理端或 Web 端都会进入 `/dashboard`；前者渲染原管理仪表盘，后者复用 `pages/webUser/home/index.vue`。
 - `WebUserLayout.vue` 仅复用 `LayoutVertical`，使 `/web/*` 保持兼容的同时使用相同端类型栏、BLUEDOT Logo、顶部栏和菜单样式。`LayoutVertical` 继续通过 `authStore.showMenuListGet` 渲染管理端权限菜单，Web 平台使用首页、学习、练习、考试四项静态菜单。
 - 用户需验证平台切换、刷新恢复、`/web/*` 子菜单路由与高亮、浏览器前进/后退及管理端首次引导/H5 iframe；`/dashboard` 导航历史会携带非敏感的平台状态。未运行构建、测试、服务或容器。
+
+## Web 平台顶部标题（2026-08-05）
+
+- 顶部标题实际由 `layouts/components/Header/components/Breadcrumb.vue` 输出。Web 平台在 `/dashboard` 显示当前菜单的“首页”，而不是管理端路由的“仪表盘”；Web 子路由优先显示自身 `meta.titleKey`。
+- 管理端标题和面包屑数据源不变。用户需验证 Web `/dashboard` 的“首页”、Web 子页标题以及管理端“仪表盘”和其他管理页标题；未运行构建、测试、服务或容器。
+
+## Web 平台顶部菜单图标（2026-08-05）
+
+- `LayoutVertical` 通过 `provide` 将当前 Web 菜单配置传递给 Header；`Breadcrumb.vue` 按激活路径读取同一菜单项的 `meta.icon`，无需新增图标或第二份图标映射。
+- Header 在 Web 首页显示 `House + 首页`，在学习、练习、考试页显示对应菜单图标和路由已有标题；管理端仍使用原有面包屑和图标数据源。
+- 用户需验证 Web 四个菜单页、兼容 `/web/home` 路径以及管理端顶部图标；未运行构建、测试、服务或容器。

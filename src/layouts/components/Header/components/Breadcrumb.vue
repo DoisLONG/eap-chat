@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, inject } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ArrowRight } from "@element-plus/icons-vue";
 import { useAuthStore } from "@/stores/modules/auth";
@@ -43,9 +43,35 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const globalStore = useGlobalStore();
+const webMenuList = inject("webMenuList", []);
+
+const currentWebMenu = computed(() => {
+  const activePath =
+    route.path === "/web/home"
+      ? "/dashboard"
+      : route.meta.activeMenu || route.path;
+
+  return webMenuList.find((item) => item.path === activePath);
+});
 
 const breadcrumbList = computed(() => {
-  let breadcrumbData =
+  if (globalStore.currentPlatform === "web") {
+    return [
+      {
+        path: route.path,
+        meta: {
+          icon: currentWebMenu.value?.meta.icon,
+          i18nKey:
+            route.meta.titleKey ||
+            currentWebMenu.value?.meta.i18nKey ||
+            "web.page.studyTitle",
+          title: "",
+        },
+      },
+    ];
+  }
+
+  const breadcrumbData =
     authStore.breadcrumbListGet[route.matched[route.matched.length - 1].path] ??
     [];
   return breadcrumbData;

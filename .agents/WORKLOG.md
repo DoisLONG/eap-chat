@@ -240,3 +240,14 @@
 - `global` Pinia store 新增并持久化 `currentPlatform`；端类型切换仅保存 `admin` / `web`，不保存敏感数据。
 - `LayoutVertical` 根据平台切换管理端权限菜单或 Web 的首页、学习、练习、考试菜单；Web 端按钮与管理端按钮均回到 `/dashboard`，Web 子菜单继续沿用既有 `/web/*` 路由并复用同一 Layout。
 - `/dashboard` 在 Web 平台直接复用 `pages/webUser/home/index.vue`，管理端仪表盘请求仅在管理端显示时加载；未修改接口、代理、权限、部署或路由路径，未运行构建、测试、服务或容器。
+
+## 2026-08-05 Web 平台顶部标题
+
+- `Breadcrumb.vue` 在 `currentPlatform === 'web'` 时不再读取 `/dashboard` 的管理端面包屑配置；Web 首页从当前菜单读取标题，子页面优先使用各自路由的 `meta.titleKey`。
+- 管理端继续使用原有 `authStore.breadcrumbListGet` 与路由标题逻辑；未修改路由、菜单、接口或左侧导航，未运行构建、测试、服务或容器。
+
+## 2026-08-05 Web 平台顶部菜单图标
+
+- `LayoutVertical` 向 Header 提供当前 Web 静态菜单配置；`Breadcrumb.vue` 按当前激活菜单路径复用其 `meta.icon`，并继续使用路由的 `meta.titleKey` 输出页面标题。
+- `/dashboard` 在 Web 平台显示 `House + 首页`；学习、练习、考试分别复用其菜单图标和已有“中心”标题。管理端仍使用原有 `authStore.breadcrumbListGet`，未修改路由、接口、依赖或业务页面。
+- 未运行构建、测试、服务或容器，待用户验证平台切换和各 Web 菜单标题。

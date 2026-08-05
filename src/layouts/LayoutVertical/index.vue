@@ -207,6 +207,7 @@ const webMenuList = [
   { path: "/web/practice", meta: { icon: EditPen, i18nKey: "web.nav.practice", isLink: "" } },
   { path: "/web/exam", meta: { icon: DocumentChecked, i18nKey: "web.nav.exam", isLink: "" } },
 ];
+provide("webMenuList", webMenuList);
 const menuList = computed(() =>
   isWebPlatform.value ? webMenuList : authStore.showMenuListGet,
 );
