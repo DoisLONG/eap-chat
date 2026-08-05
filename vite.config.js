@@ -23,6 +23,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/question-bank-evaluate-api/, ""),
       },
+      "/web-user-home-api": {
+        target: "http://118.196.142.69:7022",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/web-user-home-api/, ""),
+      },
       "/sop-api": {
         target: "http://118.196.142.69:16007",
         // target: "http://14.103.144.187:30114", // 四会

@@ -240,7 +240,6 @@
 
 ## 2026-08-04 Web 用户端考试第二阶段
 
-<<<<<<< HEAD
 - `src/services/webUser/study.service.js` 将资料列表现有 `file_url` 集中映射为 `fileUrl`，继续沿用 `title`、`fileType` 展示字段和原列表接口。
 - `src/pages/webUser/study/index.vue` 启用卡片“查看”，复用管理端纯展示 `officeCheck.vue` / `OfficeViewer`，按既有规则使用 `/mobileapi/${fileUrl}` 打开单个全屏预览；关闭后保留当前筛选和分页。
 - 缺少 `fileUrl` 时使用三语 Element Plus 提示，不打开空预览；不支持类型和加载失败继续由现有预览组件处理。
@@ -262,7 +261,6 @@
 - `LayoutVertical` 向 Header 提供当前 Web 静态菜单配置；`Breadcrumb.vue` 按当前激活菜单路径复用其 `meta.icon`，并继续使用路由的 `meta.titleKey` 输出页面标题。
 - `/dashboard` 在 Web 平台显示 `House + 首页`；学习、练习、考试分别复用其菜单图标和已有“中心”标题。管理端仍使用原有 `authStore.breadcrumbListGet`，未修改路由、接口、依赖或业务页面。
 - 未运行构建、测试、服务或容器，待用户验证平台切换和各 Web 菜单标题。
-=======
 - 考试卡片按后端 `can_start/can_continue` 启用开始/继续；开始经确认框调用正式 Exam API，成功进入 Web 用户端答题路由。
 - 新增答题页：恢复安全试卷、展示五类题型、自动/切题保存、进度、基于 server_now/expires_at 的倒计时及超时锁定；不使用 localStorage，不调用 ChatExam。
 - 未运行构建、服务或真实接口。
@@ -283,4 +281,21 @@
 - `ChatExam.vue` 进入页面后自动创建或恢复会话，内部发送首题请求但不渲染“开始考试”用户消息；初始化失败显示可重试入口。
 - 前端按 SSE `result`、`next_question`、`summary` 事件分别创建教练消息对象，保留 `[DONE]`、metadata 与旧文本 SSE 的兼容分支。
 - 未运行构建、测试、服务或容器操作；根目录协作规则要求由用户执行验证。
->>>>>>> origin/feature/zyh-managelxks-2026-7-27
+
+## 2026-08-04 Web 用户端首页
+
+- `src/pages/webUser/home/`：将首页占位页实现为欢迎/学习概览、最近学习、AI 推荐课程、今日学习计划、待参加考试与学习数据六个私有展示组件；页面布局使用既有 Web Layout 的 1440px 内容容器和 1199px 栅格降级规则。
+- 首页 mock 展示模型仅保留在 `pages/webUser/home/index.vue`，经用户明确授权用于无用户端接口阶段；未新增 service、Axios 实例、localStorage 数据或管理端接口调用。后续接入接口时应以用户端契约替换该展示模型。
+- 首页的“开始练习 / 继续练习”通过 `WebUserPractice` 路由进入 `/web/practice`，考试操作通过 `WebUserExam` 路由进入 `/web/exam`；顶部真实用户名继续由现有 `WebUserTopBar.vue` 的 `userInfo.name` 处理。
+- `src/languages/modules/{zh,en,th}.ts`：同步新增首页可见文案，未改导航、路由或公共 Layout。
+- 修复首页卡片重叠：移除“最近学习”卡片的百分比最小高度，令 CSS Grid 以卡片实际内容参与首行高度计算，避免其底部操作区溢出覆盖下一行。
+- 修复内容区留白：`WebPageContainer.vue` 使用 `border-box` 的 `min(100%, 1440px)` 容器宽度，保留统一 28px 内边距，使页面卡片与功能菜单之间稳定分隔。
+- 首页文案调整：推荐区标题改为“练习”，相关操作按钮改为“开始练习 / 继续练习”，并同步英文、泰文翻译。
+- 首页考试操作文案调整为“开始考试”，并同步英文、泰文翻译；跳转仍指向 `/web/exam`。
+- 已执行 `git diff --check`，无空白错误；按项目规则未运行构建、测试、服务或容器操作，需由用户验证首页视觉、跳转、登录用户名和 `npm run build`。
+
+## 2026-08-05 Web 用户端首页真实练习与考试数据接入
+
+- 首页新增 `services/webUser/home.service.js`，从专用用户端首页接口读取练习和待参加考试；移除首页的本地 mock 展示数据。开始练习始终跳转 `WebUserPractice`，开始考试跳转 `WebUserExam`。
+- 练习、考试卡片均支持加载、失败重试、真实空数据；最近学习、今日计划、整体学习进度、学习数据因当前没有用户学习/练习记录表而明确显示空状态，不伪造个人数据。
+- 增加开发代理和生产 Nginx 代理配置，生产环境需注入 `WEB_USER_HOME_API_HOST`。补齐中英泰文案；未运行构建、测试、服务、容器或数据库操作。

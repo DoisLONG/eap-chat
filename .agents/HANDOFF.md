@@ -47,7 +47,6 @@
 
 ## Web 用户端考试页（2026-08-04）
 
-<<<<<<< HEAD
 - `/web/study` 已从占位页改为学习资料浏览页，包含关键词、一级/细分方向筛选、九项分页卡片及加载、空数据、失败和重试状态；公共路由和菜单未改，公共内容容器仅补充 `border-box` 以消除内边距导致的横向溢出。
 - 顶部筛选区已对齐管理端资料管理：标题、分类行、浅灰细分方向区和 340px 名称输入框采用相同排列与尺寸；名称搜索行右侧提供带图标的“搜索 / 重置”按钮，搜索、回车、清空和重置均复用现有列表加载并重置到第一页。
 - 筛选标题、分类标签、名称标签和输入提示统一使用“学习资料”语义，并已同步中文、英文和泰文。
@@ -72,7 +71,6 @@
 - `LayoutVertical` 通过 `provide` 将当前 Web 菜单配置传递给 Header；`Breadcrumb.vue` 按激活路径读取同一菜单项的 `meta.icon`，无需新增图标或第二份图标映射。
 - Header 在 Web 首页显示 `House + 首页`，在学习、练习、考试页显示对应菜单图标和路由已有标题；管理端仍使用原有面包屑和图标数据源。
 - 用户需验证 Web 四个菜单页、兼容 `/web/home` 路径以及管理端顶部图标；未运行构建、测试、服务或容器。
-=======
 - `/web/exam`（`WebUserExam`）已从占位页调整为用户端考试筛选、分类树、状态页签、列表容器、空态、错误态、分页状态及两列响应式卡片布局；继续使用既有 `WebUserLayout` 与 `WebPageContainer`。
 - 当前没有已确认的用户端考试接口，因此页面不调用 `exam.api.js` 的管理端 CRUD；考试数组和状态统计保持空/`--`，卡片动作均禁用并提示“功能接口待确认”。
 - 分类树只读复用 `getSopCategoryTree()`，以实际返回名称渲染；未创建 `services/webUser/exam.service.js`、未使用 mock 或 localStorage。
@@ -113,4 +111,16 @@
 # 2026-08-05 智能陪练答题页
 
 - 实际页面为 `src/pages/ChatExam.vue`，已与 Smart Practice 的结构化 SSE 同步。需由用户验证首题自动展示、结果/下一题两条气泡、刷新恢复和断流提示。
->>>>>>> origin/feature/zyh-managelxks-2026-7-27
+
+## Web 用户端首页（2026-08-04）
+
+- `pages/webUser/home/index.vue` 已由占位页改为首页组合入口；页面私有卡片位于 `pages/webUser/home/components/`，不修改共享 Web Layout、路由、菜单或 service。
+- 当前使用用户明确许可的页面本地 mock 展示模型，覆盖概览、最近学习、推荐课程、今日计划、待考试和学习数据。真实用户端首页接口确认后，应在专用 `services/webUser/` 中创建 adapter，再由页面替换该模型；不得复用管理端 Dashboard、课程或考试 CRUD 接口。
+- 首页的“开始练习 / 继续练习”使用 `WebUserPractice`，考试的“查看全部 / 开始考试”使用 `WebUserExam`；顶栏用户名仍由公共壳从 `userInfo.name` 读取。
+- 已补齐中英泰首页文案；未运行构建、测试、服务或容器。需由用户验证 `/web/home` 的 1024px、1200px、1440px 布局、路由跳转、实际登录用户名及 `npm run build`。
+
+## Web 用户端首页真实数据接入（2026-08-05）
+
+- 首页已改用 `services/webUser/home.service.js` 的专用接口；练习卡片与考试卡片读取真实数据，开始练习进入 `WebUserPractice`，开始考试/查看全部进入 `WebUserExam`。
+- 后端对应组件位于 `beat-backend-github/src/comps/web_user_home/`，提供一个只读首页接口并以 token 的租户/组织信息过滤数据。部署时需按该组件的 Dockerfile 新建服务容器，并在前端 Nginx 环境提供 `WEB_USER_HOME_API_HOST`；实际 Compose 目标尚未确认，不要猜测并修改其他部署文件。
+- 当前无用户学习或练习行为表，因此最近学习、今日计划、学习数据和整体学习统计必须为空状态。后续如新增行为记录表，应扩展专用首页接口，不可重新放回 mock。

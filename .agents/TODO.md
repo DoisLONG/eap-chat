@@ -21,3 +21,9 @@
 # 2026-08-05 智能陪练待验证
 
 - [ ] 由用户在可用 Smart Practice 环境验证自动首题、刷新恢复、初始化失败重试及结构化 SSE 的独立结果/下一题气泡。
+
+- [ ] 用户执行 `npm run dev` 后验证 `/web/home`、`/web/study`、`/web/practice`、`/web/exam` 的访问、菜单高亮、管理端跳转以及 SPA 刷新。
+- [ ] 确认用户端练习列表接口的授权范围、请求字段与响应契约；接入时由 adapter 映射为页面 `PracticeViewModel`，并验证 Web 练习进入与退出 `ChatExam` 的完整链路。
+- [ ] 构建并部署 `beat-backend-github/src/comps/web_user_home/Dockerfile` 对应的用户端首页服务，注入 MySQL、账户鉴权和 `WEB_USER_HOME_SERVICE_*` 配置；前端生产 Nginx 同时注入 `WEB_USER_HOME_API_HOST`。
+- [ ] 用户分别以 superadmin 与普通用户验证 `/web/home`：练习仅显示当前租户内已完成生成且有效的内容，考试只显示已发布且符合目标人群的内容。
+- [ ] 如需要首页展示最近学习、今日计划、学习时长、练习进度或正确率，先设计并落地用户学习/练习行为记录表及写入流程，再扩展用户端首页接口。

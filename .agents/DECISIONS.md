@@ -17,14 +17,12 @@
 - 管理端与 Web 用户端同属当前 Vue Router 应用，终端切换统一使用已确认的 route name：`WebUserHome` 与 `Dashboard`；不使用完整 URL 或 `window.location`。
 - 管理端既有“用户端”仍由 `activeDuan` 与 iframe 管理，本次只新增 Web 端入口，不改变其状态、尺寸计算或 iframe 地址逻辑。
 
-<<<<<<< HEAD
 ## 2026-08-05 多端统一入口
 
 - `currentPlatform` 归属既有持久化 `global` Pinia store，默认 `admin`；刷新通过现有 localStorage 持久化恢复，而不增加新的 store 或自定义存储键。
 - `/dashboard` 是管理端与 Web 端的统一首页入口：同一路径根据平台渲染既有管理仪表盘或既有 Web 首页。Web 端类型切换不再前往 `/web/home`。
 - `/web/home`、`/web/study`、`/web/practice`、`/web/exam` 保持兼容，但其外壳改为复用 `LayoutVertical`；Web 子菜单仍使用这些既有路径，以保持与管理端菜单相同的路由切换行为和唯一导航框架。
 - Web 子路由会强制切换为 Web 平台；端类型按钮进入 `/dashboard` 时写入安全的 history state，浏览器在 Web 子页与 `/dashboard` 之间前进/后退可恢复相应的平台显示，刷新仍以持久化 Pinia 状态为准。
-=======
 ## 2026-08-03 Web 用户端练习页
 
 - 用户端练习列表的接口、权限和响应契约未确认；页面在此之前只保留空数组、页面筛选状态和不绑定接口的展示模型，不得用管理端 SOP 接口或原型数据补齐列表。
@@ -50,7 +48,6 @@
 
 - Smart Practice 的 `TrainParams` 是顶层 `session_id` 与 `messages`；ChatExam 不再发送历史的 `{ input: {...} }` 包装，也不发送后端未定义的 `source_file_name`。
 - ChatExam 在解析 SSE 前必须检查 HTTP 状态和响应体；422、500 或网络错误显示既有错误提示并记录控制台错误，不能保留空白教练气泡。
->>>>>>> origin/feature/zyh-managelxks-2026-7-27
 
 ## 2026-07-28 恢复决策
 
@@ -106,3 +103,9 @@
 
 - 陪练答题结果与下一题不再依赖模型自由文本或标题正则拆分；前端只根据后端明确的 SSE `type` 创建独立消息气泡。
 - 页面刷新优先从 sessionStorage 恢复当前 `examId` 和已显示消息，未恢复时才自动创建新会话。
+
+## 2026-08-05 Web 用户端首页数据边界
+
+- Web 首页使用专用的用户端首页接口，不复用管理端练习或考试 CRUD 接口。接口仅向已认证用户返回其租户内的可见练习和考试。
+- 可展示练习限定为已完成生成、当前有效且岗位可见的记录；可展示考试限定为已发布、未结束且符合考试目标的记录。角色 1（superadmin）在同租户内跳过岗位和考试目标过滤，其他角色按 token 中的公司、部门、岗位和用户 ID 过滤。
+- 当前数据库没有用户学习、用户练习或答题记录表，首页相关区域必须使用明确空状态；不得从管理端记录或 mock 推导个人学习进度、时长、计划或练习正确率。
