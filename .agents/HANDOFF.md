@@ -31,3 +31,16 @@
 
 - `pages/webUser/practice/index.vue` 现在只读调用 `getSopCategoryTree()` 获取分类树；一级按产品/运营/技术映射到真实节点，二级直接来自该节点 `children`。任何未来练习列表 service 都必须独立确认，不能复用 `getSops`。
 - 综合练习只保留白色视觉卡片，按钮点击提示未开放；筛选仅改变页面状态，空列表始终不发起练习列表请求。
+
+## Web 用户端首页（2026-08-04）
+
+- `pages/webUser/home/index.vue` 已由占位页改为首页组合入口；页面私有卡片位于 `pages/webUser/home/components/`，不修改共享 Web Layout、路由、菜单或 service。
+- 当前使用用户明确许可的页面本地 mock 展示模型，覆盖概览、最近学习、推荐课程、今日计划、待考试和学习数据。真实用户端首页接口确认后，应在专用 `services/webUser/` 中创建 adapter，再由页面替换该模型；不得复用管理端 Dashboard、课程或考试 CRUD 接口。
+- 首页的“开始练习 / 继续练习”使用 `WebUserPractice`，考试的“查看全部 / 开始考试”使用 `WebUserExam`；顶栏用户名仍由公共壳从 `userInfo.name` 读取。
+- 已补齐中英泰首页文案；未运行构建、测试、服务或容器。需由用户验证 `/web/home` 的 1024px、1200px、1440px 布局、路由跳转、实际登录用户名及 `npm run build`。
+
+## Web 用户端首页真实数据接入（2026-08-05）
+
+- 首页已改用 `services/webUser/home.service.js` 的专用接口；练习卡片与考试卡片读取真实数据，开始练习进入 `WebUserPractice`，开始考试/查看全部进入 `WebUserExam`。
+- 后端对应组件位于 `beat-backend-github/src/comps/web_user_home/`，提供一个只读首页接口并以 token 的租户/组织信息过滤数据。部署时需按该组件的 Dockerfile 新建服务容器，并在前端 Nginx 环境提供 `WEB_USER_HOME_API_HOST`；实际 Compose 目标尚未确认，不要猜测并修改其他部署文件。
+- 当前无用户学习或练习行为表，因此最近学习、今日计划、学习数据和整体学习统计必须为空状态。后续如新增行为记录表，应扩展专用首页接口，不可重新放回 mock。

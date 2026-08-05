@@ -8,8 +8,8 @@
 
 <style scoped lang="scss">
 .web-page-container {
-  width: 100%;
-  max-width: var(--web-content-max-width);
+  box-sizing: border-box;
+  width: min(100%, var(--web-content-max-width));
   margin: 0 auto;
   padding: 28px;
 }
