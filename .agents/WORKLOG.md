@@ -1,5 +1,25 @@
 # 本次工作记录
 
+## 2026-08-06 考试结果详情页逐题增加题型标签
+
+- 定位：`src/pages/webUser/exam/result.vue` 每题右侧仅有判题状态标签；结果接口 `getUserExamResult` 已映射 `question_type → questionType`，但页面未展示。
+- 修改（`src/pages/webUser/exam/result.vue`）：
+  - 模板 `.web-exam-result__question-status` 内，状态标签左侧新增 `.type-tag` 题型标签，展示 `questionTypeLabel(question.questionType)`；
+  - 新增 `questionTypeLabel` 映射（与 `answer.vue` 同一约定）：`single_choice/multiple_choice/true_false/fill_blank/short_answer` 及对应中文值（单选题/多选题/判断题/填空题/问答题）→ i18n 键，未知类型 fallback `web.exam.unknownQuestionType`（"其他题型"），三语键均已存在无需新增；
+  - 样式：`.web-exam-result__question-status` 加 `gap:8px` + `flex-wrap:nowrap` 保证两标签同行右对齐不换行；`.type-tag` 中性样式（浅色背景 `var(--web-line)`、深灰文字 `var(--web-text-secondary)`、999px 圆角胶囊、字重 500）与判题颜色（绿/红/蓝/橙）区分；`.status-tag` 原有颜色与 min-width 不动。
+- 未修改后端、数据库、接口或路由；未运行构建、测试或服务。需由用户 `npm run dev` 验证：结果页每题显示"题型 + 判题状态"（如"问答题 错误"、"单选题 正确"）；两标签同行不换行；题型标签灰白中性不抢判题色；未知题型显示"其他题型"；三语切换正常。
+
+## 2026-08-06 管理端考试表单"及格分数"逻辑改造
+
+- 定位：前端 60 硬编码仅在 `src/pages/examManagement/components/ExamFormDrawer.vue` 的 `emptyForm()`（`passScore: 60`）；前端无"不能低于 60 分"校验（`QuestionConfig.vue` 输入框已是 `:min="0" :max="totalScore"`），该下限校验在后端保存接口，需在后端仓库同步改为 `0 <= pass_score <= total_score` 并去掉写死 60 的兜底，否则前端放开后保存仍会被后端拒绝。
+- 修改（`src/pages/examManagement/components/ExamFormDrawer.vue`）：
+  - 删除默认值 60 → `passScore: 0`，由 `defaultPassScore = Math.round(totalScore × 0.6)`（四舍五入）接管；
+  - 新增 `passScoreTouched` 标记：用户手动输入（`@update:pass-score`）置 true，编辑场景 `reset` 时置 true（不覆盖后端原值），新建默认 false；
+  - 新增 `watch(totalScore)`：未手填 → 自动更新为新总分 60%；已手填但超过新总分 → 自动修正为新总分；已手填且未超 → 保持不变；
+  - `validateStepTwo()` 原"及格分数超总分即报错"改为自动修正为总分，其余校验（无题、无分值、时长）保留；
+  - `QuestionConfig.vue` 输入框 `:min="0" :max="totalScore"` 保持不动，`basePayload()` 提交 `pass_score: Number(form.passScore)` 不变。
+- 未修改后端、数据库、接口或路由；未运行构建、测试或服务。需由用户 `npm run dev` 验证：新建考试配置题型后及格分数自动 = 总分 60%（四舍五入）；手填任意 ≥0 值可保存；超过总分自动回落；改题数/分值后未手填跟随 60%、手填超限回落、手填未超保持；编辑已有考试及格分数不被覆盖。
+
 ## 2026-08-06 考试结果详情页显示修复（Web 用户端 `/web/exam/:id/result`）
 
 - 定位：`src/pages/webUser/exam/result.vue` 直接使用 `t("web.exam.unanswered")`，但该 key 在 zh/en/th 三份语言文件中均缺失，页面原样显示 key；未提交答案的题目后端 `result_status` 返回 `wrong`，被错误显示为"错误"；状态 `<span>` 在窄容器内换行成竖排；题目 `question_text` 自带 `【素材MA……】` 长编号前缀，标题过长。

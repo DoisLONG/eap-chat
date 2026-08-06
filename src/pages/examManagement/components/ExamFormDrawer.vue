@@ -21,7 +21,7 @@
         </template>
 
         <template v-else-if="step === 2">
-          <QuestionConfig v-model="form.questionConfigs" :duration="form.duration" :pass-score="form.passScore" :total-questions="totalQuestions" :total-score="totalScore" :rules="form.rules" :disabled="isReadonly" @update:duration="form.duration = $event" @update:pass-score="form.passScore = $event" @update:rules="form.rules = $event" />
+          <QuestionConfig v-model="form.questionConfigs" :duration="form.duration" :pass-score="form.passScore" :total-questions="totalQuestions" :total-score="totalScore" :rules="form.rules" :disabled="isReadonly" @update:duration="form.duration = $event" @update:pass-score="form.passScore = $event; passScoreTouched.value = true" @update:rules="form.rules = $event" />
         </template>
 
         <ExamPreview v-else-if="step === 3" :form="form" :questions="previewQuestions" :candidate-questions="candidateQuestions" :total-questions="totalQuestions" :total-score="totalScore" :status="status" />
@@ -69,6 +69,9 @@ const form = reactive(emptyForm());
 const mode = computed(() => form.id ? "edit" : "create");
 const totalQuestions = computed(() => form.questionConfigs.reduce((sum, item) => sum + Number(item.count || 0), 0));
 const totalScore = computed(() => form.questionConfigs.reduce((sum, item) => sum + Number(item.count || 0) * Number(item.score || 0), 0));
+const passScoreTouched = ref(false);
+const defaultPassScore = computed(() => Math.round(totalScore.value * 0.6));
+watch(totalScore, (score) => { if (!passScoreTouched.value) form.passScore = defaultPassScore.value; else if (form.passScore > score) form.passScore = score; });
 const estimatedEndAt = computed(() => calculatedEndTime(form.publish.startAt, form.duration));
 const isReadonly = computed(() => status.value === "published");
 const canEditSteps = computed(() => isEditMode.value && !detailLoading.value && ["draft", "ended"].includes(normalizeExamStatus(status.value)));
@@ -83,8 +86,8 @@ const actionLabel = computed(() => {
   return form.id ? t("examForm.saveChanges") : t("examForm.completeCreate");
 });
 
-function emptyForm() { return { id: null, type: "product", name: "", version: "", description: "", sources: [], questionConfigs: [], duration: 60, passScore: 60, rules: { randomPaper: true, randomOptions: true, showAnswer: false, allowRetake: false, maxAttempts: 2 }, publish: { status: "draft", startAt: "", endAt: "", audience: "all" } }; }
-function reset(value = null) { isEditMode.value = Boolean(value?.id); Object.assign(form, emptyForm(), value || {}); form.sources = value?.sources || []; form.questionConfigs = value?.questionConfigs || []; step.value = 1; completedStep.value = 1; previewQuestions.value = []; sourceQuestions.value = []; questionCache.clear(); Object.assign(saved, { base: "", sources: "", rules: "", targets: "" }); status.value = "draft"; }
+function emptyForm() { return { id: null, type: "product", name: "", version: "", description: "", sources: [], questionConfigs: [], duration: 60, passScore: 0, rules: { randomPaper: true, randomOptions: true, showAnswer: false, allowRetake: false, maxAttempts: 2 }, publish: { status: "draft", startAt: "", endAt: "", audience: "all" } }; }
+function reset(value = null) { isEditMode.value = Boolean(value?.id); passScoreTouched.value = Boolean(value?.id); Object.assign(form, emptyForm(), value || {}); form.sources = value?.sources || []; form.questionConfigs = value?.questionConfigs || []; step.value = 1; completedStep.value = 1; previewQuestions.value = []; sourceQuestions.value = []; questionCache.clear(); Object.assign(saved, { base: "", sources: "", rules: "", targets: "" }); status.value = "draft"; }
 let detailRequest = 0;
 watch(() => [props.modelValue, props.exam?.id], ([value]) => { if (!value) { detailRequest++; detailLoading.value = false; return; } reset(props.exam); resetScroll(); if (props.exam?.id) loadDetail(props.exam.id); else loadCategories(); }, { immediate: true });
 watch(step, resetScroll);
@@ -111,7 +114,8 @@ function validateStepOne() {
   if (form.type === "mixed" ? types.size < 2 : types.size !== 1 || !types.has(form.type)) throw new Error(form.type === "mixed" ? t("exam.mixedNeedCategories") : t("exam.sameCategoryRequired"));
 }
 function validateStepTwo() {
-  if (!totalQuestions.value || !totalScore.value || form.duration <= 0 || form.passScore > totalScore.value) throw new Error(t("exam.invalidQuestionConfig"));
+  if (form.passScore > totalScore.value) form.passScore = totalScore.value;
+  if (!totalQuestions.value || !totalScore.value || form.duration <= 0) throw new Error(t("exam.invalidQuestionConfig"));
   if (form.questionConfigs.some(item => item.count < 0 || (item.available != null && item.count > item.available) || item.score <= 0)) throw new Error(t("exam.invalidQuestionConfig"));
 }
 function validatePublish() {
