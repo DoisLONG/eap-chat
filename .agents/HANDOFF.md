@@ -1,5 +1,11 @@
 # 会话交接
 
+## 隐藏系统管理菜单（2026-08-06）
+
+- 已在 `src/stores/modules/auth.ts` 将公司管理、部门管理、岗位管理、模型配置四个菜单节点置为 `isHide: true`，并移除 getters 中失效的 superadmin 过滤分支；侧栏对所有用户不再展示这四项。
+- 路由表未改：四个页面仍可由 URL 直达，模型配置仍受原 superadmin 守卫限制。若后续要求彻底封禁访问，需修改 `router/index.js` 守卫。
+- 未运行构建、自动化测试或浏览器；未 commit、未 push。需用户 `npm run dev` 后验证侧栏与超管/普通用户两种视角。
+
 ## ChatExam 用户答案展示（2026-08-05）
 
 - 已在 `src/pages/ChatExam.vue` 修复用户消息 ID、即时持久化、结果卡 `userAnswer` 渲染及循环变量作用域；保留了临时的无内容调试日志，供浏览器确认消息未被删除。

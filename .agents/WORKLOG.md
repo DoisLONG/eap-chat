@@ -1,5 +1,12 @@
 # 本次工作记录
 
+## 2026-08-06 隐藏系统管理菜单
+
+- `src/stores/modules/auth.ts` 中“公司管理”“部门管理”“岗位管理”“模型配置”四个菜单节点置为 `isHide: true`，侧栏对所有用户（含 superadmin）均不再展示，与代码库既有隐藏路由机制一致。
+- 同步移除三个 getter（`showMenuListGet` / `flatMenuListGet` / `breadcrumbListGet`）中已失效的“非 superadmin 过滤模型配置”逻辑及 `useUserStore` 导入；隐藏统一由 `isHide` 承担。
+- 路由表 `router/index.js` 未改：四个页面仍可通过 URL 直达（模型配置仍受原 superadmin 守卫限制），本任务只隐藏菜单入口。
+- 未修改后端、接口、数据库或 Docker；未运行构建、测试或服务。需由用户启动 `npm run dev` 验证：所有角色登录后侧栏“设置中心”下仅剩“权限管理→用户管理”，模型配置及公司/部门/岗位管理不再出现。
+
 ## 2026-08-05 ChatExam 用户答案展示
 
 - 用户提交时先以唯一消息 ID 写入并立即持久化；结构化 `result` 消息保存本次本地 `userAnswer`，结果卡固定显示该字段。

@@ -4,7 +4,6 @@ import {
   getShowMenuList,
   getAllBreadcrumbList,
 } from "@/utils";
-import { useUserStore } from "./user";
 
 export const useAuthStore = defineStore("sopai-auth", {
   state: () => ({
@@ -161,7 +160,7 @@ export const useAuthStore = defineStore("sopai-auth", {
                   title: "公司管理",
                   i18nKey: "menu.companyManagement",
                   isLink: "",
-                  isHide: false,
+                  isHide: true,
                   isFull: false,
                   isAffix: false,
                   isKeepAlive: false,
@@ -175,7 +174,7 @@ export const useAuthStore = defineStore("sopai-auth", {
                   title: "部门管理",
                   i18nKey: "menu.deptment",
                   isLink: "",
-                  isHide: false,
+                  isHide: true,
                   isFull: false,
                   isAffix: false,
                   isKeepAlive: false,
@@ -189,7 +188,7 @@ export const useAuthStore = defineStore("sopai-auth", {
                   title: "岗位管理",
                   i18nKey: "menu.position",
                   isLink: "",
-                  isHide: false,
+                  isHide: true,
                   isFull: false,
                   isAffix: false,
                   isKeepAlive: false,
@@ -204,7 +203,7 @@ export const useAuthStore = defineStore("sopai-auth", {
               title: "模型配置",
               i18nKey: "menu.modelManagement",
               isLink: "",
-              isHide: false,
+              isHide: true,
               isFull: false,
               isAffix: false,
               isKeepAlive: false,
@@ -261,65 +260,12 @@ export const useAuthStore = defineStore("sopai-auth", {
   getters: {
     // 菜单权限列表 ==> 这里的菜单没有经过任何处理
     authMenuListGet: (state) => state.authMenuList,
-    // 菜单权限列表 ==> 左侧菜单栏渲染，需要剔除 isHide == true，并且只有 superadmin 才能看到模型配置
-    showMenuListGet: (state) => {
-      const userStore = useUserStore();
-      const isSuperAdmin = userStore.userInfo.name === "superadmin";
-      const menuList = JSON.parse(JSON.stringify(state.authMenuList));
-
-      if (!isSuperAdmin) {
-        // 过滤掉模型配置菜单
-        menuList.forEach((menu) => {
-          if (menu.path === "/system") {
-            menu.children = menu.children.filter(
-              (child) => child.path !== "/system/modelSetting",
-            );
-          }
-        });
-      }
-
-      return getShowMenuList(menuList);
-    },
-    // 菜单权限列表 ==> 扁平化之后的一维数组菜单，主要用来添加动态路由，并且只有 superadmin 才能看到模型配置
-    flatMenuListGet: (state) => {
-      const userStore = useUserStore();
-      const isSuperAdmin = userStore.userInfo.name === "superadmin";
-
-      // 深拷贝菜单列表，避免修改原始数据
-      const menuList = JSON.parse(JSON.stringify(state.authMenuList));
-
-      if (!isSuperAdmin) {
-        // 过滤掉模型配置菜单
-        menuList.forEach((menu) => {
-          if (menu.path === "/system") {
-            menu.children = menu.children.filter(
-              (child) => child.path !== "/system/modelSetting",
-            );
-          }
-        });
-      }
-
-      return getFlatMenuList(menuList);
-    },
-    // 递归处理后的所有面包屑导航列表，并且只有 superadmin 才能看到模型配置
-    breadcrumbListGet: (state) => {
-      const userStore = useUserStore();
-      const isSuperAdmin = userStore.userInfo.name === "superadmin";
-      const menuList = JSON.parse(JSON.stringify(state.authMenuList));
-
-      if (!isSuperAdmin) {
-        // 过滤掉模型配置菜单
-        menuList.forEach((menu) => {
-          if (menu.path === "/system") {
-            menu.children = menu.children.filter(
-              (child) => child.path !== "/system/modelSetting",
-            );
-          }
-        });
-      }
-
-      return getAllBreadcrumbList(menuList);
-    },
+    // 菜单权限列表 ==> 左侧菜单栏渲染，需要剔除 isHide == true
+    showMenuListGet: (state) => getShowMenuList(state.authMenuList),
+    // 菜单权限列表 ==> 扁平化之后的一维数组菜单，主要用来添加动态路由
+    flatMenuListGet: (state) => getFlatMenuList(state.authMenuList),
+    // 递归处理后的所有面包屑导航列表
+    breadcrumbListGet: (state) => getAllBreadcrumbList(state.authMenuList),
   },
   actions: {},
 });
