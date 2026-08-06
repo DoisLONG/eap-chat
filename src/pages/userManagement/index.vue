@@ -26,15 +26,6 @@
           {{ $t("common.batchDelete") }}
         </el-button>
       </template>
-      <template #role="scope">
-        <span>{{ scope.row.role.name }}</span>
-      </template>
-      <template #department="scope">
-        <span>{{ scope.row.department?.department_name || "--" }}</span>
-      </template>
-      <template #position="scope">
-        <span>{{ scope.row.position?.position_name || "--" }}</span>
-      </template>
       <!-- 表格操作 -->
       <template #operation="scope">
         <el-button
@@ -105,7 +96,7 @@ const columns = reactive<ColumnProps[]>([
     prop: "name",
     label: "用户名称",
     i18nKey: "userManagement.name",
-    minWidth: 120,
+    minWidth: 160,
     search: {
       el: "input",
       props: {
@@ -118,33 +109,20 @@ const columns = reactive<ColumnProps[]>([
     prop: "email",
     label: "邮箱",
     i18nKey: "userManagement.email",
-    minWidth: 200,
+    minWidth: 240,
   },
   {
     prop: "telephone",
     label: "手机号",
     i18nKey: "userManagement.phone",
-    minWidth: 120,
-  },
-  {
-    prop: "department",
-    label: "部门",
-    i18nKey: "companyManagement.deptment",
-    minWidth: 120,
-  },
-  { prop: "role", label: "角色", i18nKey: "userManagement.role", width: 120 },
-  {
-    prop: "position",
-    label: "岗位",
-    i18nKey: "companyManagement.position",
-    width: 120,
+    minWidth: 140,
   },
   {
     prop: "operation",
     label: "操作",
     i18nKey: "common.operate",
     fixed: "right",
-    width: 280,
+    width: 220,
   },
 ]);
 

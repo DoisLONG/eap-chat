@@ -1,5 +1,17 @@
 # 本次工作记录
 
+## 2026-08-06 用户管理列表精简
+
+- `src/pages/userManagement/index.vue`：columns 移除部门、角色、岗位三列及对应模板插槽；保留用户名称（minWidth 160，含名称搜索）、邮箱（minWidth 240）、手机号（minWidth 140）、操作（fixed right，宽度由 280 收敛为 220）。
+- 表格内容居中沿用 ProTable 默认 `align: center`；查看/编辑/删除按钮保持图标+文字、删除为 danger 链接样式，间距为 el-button 统一 12px。
+- 接口请求（`getUserList`）、数据结构（`dataCallback`）不变；未修改后端、数据库、路由或 Docker；未运行构建、测试或服务。需由用户 `npm run dev` 验证列表展示、搜索、操作与新增/编辑/删除流程。
+
+## 2026-08-06 新增用户表单精简
+
+- `src/pages/userManagement/components/UserDrawer.vue`：移除公司、部门、岗位三个表单项及相关校验规则、数据加载（`getCompanyList`/`getDeptList`/`getPostList`）、联动逻辑（`changeCompany`/`changeDept`）和未再使用的导入；保留用户名称、邮箱、角色、密码、确认密码五个必填字段，手机号保留为非必填（仅格式校验）。
+- 提交时对已移除的组织字段补默认空值占位（`company_id`/`department_id`/`position_id` 为空字符串），保留 `createUser`/`updateUser` 接口调用与参数结构；弹窗高度随内容自动收紧。
+- 未修改后端、接口、数据库、路由或 Docker；未运行构建、测试或服务。需由用户 `npm run dev` 验证新增/编辑/查看三种方式的字段显示、手机号可留空、提交与校验行为。
+
 ## 2026-08-06 新增用户弹窗 UI 改造
 
 - `src/pages/userManagement/components/UserDrawer.vue`：右侧 `el-drawer`（500px）改为居中 `el-dialog`（560px，`align-center`），保留全部表单字段、校验规则、公司/部门/岗位联动与接口调用，组件名、props、事件名不变。

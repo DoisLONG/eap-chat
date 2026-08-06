@@ -1,5 +1,16 @@
 # 会话交接
 
+## 用户管理列表精简（2026-08-06）
+
+- 已在 `src/pages/userManagement/index.vue` 移除部门/角色/岗位三列及模板插槽，重排用户名称/邮箱/手机号列宽（minWidth 160/240/140），操作列固定右侧（220px）；内容居中沿用 ProTable 默认对齐，操作按钮（图标+文字、删除 danger）未变。
+- 已知遗留：后端强绑定组织字段导致新增用户提交失败，前端已用空字符串占位，待后续后端解除绑定后重新验证新增流程。
+- 未运行构建、自动化测试或浏览器；未 commit、未 push。
+
+## 新增用户表单精简（2026-08-06）
+
+- 已在 `src/pages/userManagement/components/UserDrawer.vue` 移除公司/部门/岗位字段及全部联动逻辑，表单保留：用户名称、邮箱、角色、密码、确认密码（必填）+ 手机号（非必填，仅格式校验）；提交时组织字段补空字符串占位，接口调用不变。
+- 未运行构建、自动化测试或浏览器；未 commit、未 push。需用户 `npm run dev` 后验证新增/编辑/查看三种方式、手机号可留空、密码一致性校验及提交结果。
+
 ## 新增用户弹窗 UI 改造（2026-08-06）
 
 - 已将 `src/pages/userManagement/components/UserDrawer.vue` 由右侧 Drawer 改为居中 Dialog（560px、`align-center`、四周 24px 间距、12px 圆角、header/footer 固定 + body 滚动）；表单逻辑、校验、接口调用全部保留，组件对外接口（props/事件/挂载方式）未变。

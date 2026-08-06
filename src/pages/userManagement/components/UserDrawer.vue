@@ -40,53 +40,6 @@
           clearable
         ></el-input>
       </el-form-item>
-      <el-form-item :label="$t('companyManagement.company')" prop="company_id">
-        <el-select
-          v-model="userInfo!.company_id"
-          :placeholder="$t('companyManagement.companyPlaceholder')"
-          @change="changeCompany"
-        >
-          <el-option
-            v-for="oitem in companyList"
-            :key="oitem.value"
-            :label="oitem.label"
-            :value="oitem.value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item
-        :label="$t('companyManagement.deptment')"
-        prop="department_id"
-      >
-        <el-select
-          v-model="userInfo!.department_id"
-          :placeholder="$t('companyManagement.deptmentPlaceholder')"
-          @change="changeDept"
-        >
-          <el-option
-            v-for="oitem in deptList"
-            :key="oitem.value"
-            :label="oitem.label"
-            :value="oitem.value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item
-        :label="$t('companyManagement.position')"
-        prop="position_id"
-      >
-        <el-select
-          v-model="userInfo!.position_id"
-          :placeholder="$t('companyManagement.positionPlaceholder')"
-        >
-          <el-option
-            v-for="oitem in postList"
-            :key="oitem.value"
-            :label="oitem.label"
-            :value="oitem.value"
-          />
-        </el-select>
-      </el-form-item>
       <el-form-item :label="$t('userManagement.role')" prop="role_id">
         <el-select
           v-model="userInfo!.role_id"
@@ -140,11 +93,6 @@
 <script setup lang="ts" name="UserDrawer">
 import { ref, reactive, toRefs, computed } from "vue";
 import { ElMessage, FormInstance } from "element-plus";
-import {
-  getCompanyList,
-  getPostList,
-  getDeptList,
-} from "@/services/company.service";
 import { getRoleList } from "@/services/user.service";
 import { updateUser, createUser } from "@/services/user.service";
 import { useI18n } from "vue-i18n";
@@ -158,9 +106,6 @@ const emits = defineEmits(["close", "refresh"]);
 
 const rules = reactive({
   name: [{ required: true, message: t("userManagement.namePlaceholder") }],
-  company_id: [
-    { required: true, message: t("companyManagement.companyPlaceholder") },
-  ],
   telephone: [
     { required: false, message: t("userManagement.phonePlaceholder") },
     {
@@ -176,12 +121,6 @@ const rules = reactive({
       message: t("userManagement.emailcorrect"),
       trigger: "blur",
     },
-  ],
-  department_id: [
-    { required: true, message: t("companyManagement.deptmentPlaceholder") },
-  ],
-  position_id: [
-    { required: true, message: t("companyManagement.positionPlaceholder") },
   ],
   role_id: [{ required: true, message: t("userManagement.rolePlaceholder") }],
   password: [
@@ -223,56 +162,8 @@ const drawerProps = ref<DrawerProps>({
   isView: type.value === "check",
 });
 
-// 公司部门岗位
-const companyList = ref<{ label: string; value: string }[]>([]);
-const deptList = ref<{ label: string; value: string }[]>([]);
-const postList = ref<{ label: string; value: string }[]>([]);
+// 角色
 const roleList = ref<{ label: string; value: string }[]>([]);
-
-const queryCompany = () => {
-  const params: any = {};
-  getCompanyList(params).then((res) => {
-    const data = res.data.results || [];
-    companyList.value = data.map((item: any) => ({
-      label: item.company_name,
-      value: item.company_id,
-    }));
-  });
-};
-queryCompany();
-
-const queryDept = () => {
-  const params: any = {};
-  if (userInfo.value?.company_id) {
-    params.company_id = userInfo.value.company_id;
-  }
-  getDeptList(params).then((res) => {
-    const data = res.data.results || [];
-    deptList.value = data.map((item: any) => ({
-      label: item.department_name,
-      value: item.department_id,
-    }));
-  });
-};
-queryDept();
-
-const queryPost = () => {
-  const params: any = {};
-  if (userInfo.value?.company_id) {
-    params.company_id = userInfo.value.company_id;
-  }
-  if (userInfo.value?.department_id) {
-    params.department_id = userInfo.value.department_id;
-  }
-  getPostList(params).then((res) => {
-    const data = res.data.results || [];
-    postList.value = data.map((item: any) => ({
-      label: item.position_name,
-      value: Number(item.position_id) || item.position_id,
-    }));
-  });
-};
-queryPost();
 
 const queryRole = () => {
   getRoleList({}).then((res) => {
@@ -284,18 +175,6 @@ const queryRole = () => {
   });
 };
 queryRole();
-
-const changeCompany = () => {
-  queryDept();
-  postList.value = [];
-  userInfo.value.department_id = "";
-  userInfo.value.position_id = "";
-};
-
-const changeDept = () => {
-  queryPost();
-  userInfo.value.position_id = "";
-};
 
 // 提交数据（新增/编辑）
 const ruleFormRef = ref<FormInstance>();
@@ -314,7 +193,14 @@ const handleSubmit = () => {
           : type.value === "update"
             ? updateUser
             : undefined;
-      const res = await api!(userInfo.value);
+      // 公司/部门/岗位已从表单移除，接口仍可能接收这些字段，提交时补默认占位
+      const payload = {
+        ...userInfo.value,
+        company_id: userInfo.value.company_id || "",
+        department_id: userInfo.value.department_id || "",
+        position_id: userInfo.value.position_id || "",
+      };
+      const res = await api!(payload);
       if (res.data.status !== 200) {
         ElMessage.error({
           message: res.data.message || t("common.operateError"),
