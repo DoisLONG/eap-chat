@@ -591,6 +591,8 @@ export default {
     add: "新增用户",
     name: "用户名称",
     namePlaceholder: "请输入用户名称",
+    fullName: "姓名",
+    fullNamePlaceholder: "请输入姓名",
     email: "邮箱",
     emailPlaceholder: "请输入用户邮箱",
     emailcorrect: "请输入正确的邮箱地址",

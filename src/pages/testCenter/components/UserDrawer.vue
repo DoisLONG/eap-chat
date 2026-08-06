@@ -15,14 +15,23 @@
       :model="userInfo"
       :hide-required-asterisk="drawerProps.isView"
     >
-      <el-form-item label="用户名称" prop="name">
-        <el-input
-          v-model="userInfo!.name"
-          :disabled="type !== 'create'"
-          placeholder="请填写用户名称"
-          clearable
-        ></el-input>
-      </el-form-item>
+      <div class="user-form-row">
+        <el-form-item label="用户名称" prop="name">
+          <el-input
+            v-model="userInfo!.name"
+            :disabled="type !== 'create'"
+            placeholder="请填写用户名称"
+            clearable
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="姓名" prop="full_name">
+          <el-input
+            v-model="userInfo!.full_name"
+            placeholder="请填写姓名"
+            clearable
+          ></el-input>
+        </el-form-item>
+      </div>
       <el-form-item label="邮箱" prop="email">
         <el-input
           v-model="userInfo!.email"
@@ -280,3 +289,8 @@ const handleSubmit = () => {
   });
 };
 </script>
+
+<style scoped lang="scss">
+// 用户名称与姓名同行：各占一半宽度，姓名位于用户名称右侧
+.user-form-row{display:flex;gap:12px}.user-form-row .el-form-item{flex:1;min-width:0}
+</style>

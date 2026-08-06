@@ -1,5 +1,15 @@
 # 本次工作记录
 
+## 2026-08-06 新增用户表单补充"姓名"（full_name）字段
+
+- 背景：评价管理（`question_bank_evaluate`）员工姓名取 `sp_user` 的 `COALESCE(NULLIF(full_name,''), name)`，但管理端建用户表单无姓名字段，`full_name` 恒为 NULL，评价管理只能回退显示登录用户名。后端 `CreateUserPayload`/`UpdateUserPayload` 与 `create_user` 早已支持 `full_name`，且用户列表接口经 `dict(user.__dict__)` 透传该字段（编辑回显可用），故本次为纯前端改动。
+- 修改：
+  - `src/pages/userManagement/components/UserDrawer.vue`：新增"姓名"表单项（i18n `userManagement.fullName`），与"用户名称"同处一行（flex 各占一半，姓名在右）；**选填**（无校验规则）；编辑模式不禁用（可补全存量用户姓名）；新增 `.user-form-row` 布局样式。
+  - `src/pages/testCenter/components/UserDrawer.vue`：同上（该文件沿用硬编码中文标签"姓名/请填写姓名"），新增 scoped 样式区。
+  - `src/pages/userManagement/index.vue`：列表表格"用户名称"列右侧新增"姓名"列（`prop: full_name`，i18n 复用 `userManagement.fullName`，`formatter` 空值显示 `--`）；后端列表接口已透传 `full_name`，无需后端改动。
+  - `src/languages/modules/{zh,en,th}.ts`：`userManagement` 模块新增 `fullName`、`fullNamePlaceholder` 三语键（姓名/Full Name/ชื่อ-นามสกุล）。
+- 未修改后端、数据库、接口或路由；未运行构建、测试或服务。需由用户 `npm run dev` 验证：新增用户时"用户名称"右侧出现"姓名"选填框，提交后 `sp_user.full_name` 落库；编辑用户可修改/补全姓名；评价管理页员工姓名显示为该姓名（有考试记录的用户）；三语切换正常；存量编辑不受影响（姓名空时保持原值）。另外提醒：`sp_user` 中 superadmin 的 `full_name` 是历史双编码乱码，可在编辑用户界面重新填写修复，无需 SQL。
+
 ## 2026-08-06 考试结果详情页逐题增加题型标签
 
 - 定位：`src/pages/webUser/exam/result.vue` 每题右侧仅有判题状态标签；结果接口 `getUserExamResult` 已映射 `question_type → questionType`，但页面未展示。

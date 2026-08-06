@@ -604,6 +604,8 @@ export default {
     add: "Add User",
     name: "User Name",
     namePlaceholder: "Please enter user name",
+    fullName: "Full Name",
+    fullNamePlaceholder: "Please enter full name",
     email: "Email",
     emailPlaceholder: "Please enter user email",
     emailcorrect: "Please enter a valid email address",

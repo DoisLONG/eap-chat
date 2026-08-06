@@ -106,6 +106,13 @@ const columns = reactive<ColumnProps[]>([
     },
   },
   {
+    prop: "full_name",
+    label: "姓名",
+    i18nKey: "userManagement.fullName",
+    minWidth: 140,
+    formatter: (row: any) => row.full_name || "--",
+  },
+  {
     prop: "email",
     label: "邮箱",
     i18nKey: "userManagement.email",

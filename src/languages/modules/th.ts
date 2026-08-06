@@ -600,6 +600,8 @@ export default {
     add: "เพิ่มผู้ใช้ใหม่",
     name: "ชื่อผู้ใช้",
     namePlaceholder: "กรุณากรอกชื่อผู้ใช้",
+    fullName: "ชื่อ-นามสกุล",
+    fullNamePlaceholder: "กรุณากรอกชื่อ-นามสกุล",
     email: "อีเมล",
     emailPlaceholder: "กรุณากรอกอีเมลผู้ใช้",
     emailcorrect: "กรุณากรอกที่อยู่อีเมลให้ถูกต้อง",

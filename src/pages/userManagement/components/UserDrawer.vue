@@ -17,14 +17,23 @@
       :model="userInfo"
       :hide-required-asterisk="drawerProps.isView"
     >
-      <el-form-item :label="$t('userManagement.name')" prop="name">
-        <el-input
-          v-model="userInfo!.name"
-          :disabled="type !== 'create'"
-          :placeholder="$t('userManagement.namePlaceholder')"
-          clearable
-        ></el-input>
-      </el-form-item>
+      <div class="user-form-row">
+        <el-form-item :label="$t('userManagement.name')" prop="name">
+          <el-input
+            v-model="userInfo!.name"
+            :disabled="type !== 'create'"
+            :placeholder="$t('userManagement.namePlaceholder')"
+            clearable
+          ></el-input>
+        </el-form-item>
+        <el-form-item :label="$t('userManagement.fullName')" prop="full_name">
+          <el-input
+            v-model="userInfo!.full_name"
+            :placeholder="$t('userManagement.fullNamePlaceholder')"
+            clearable
+          ></el-input>
+        </el-form-item>
+      </div>
       <el-form-item :label="$t('userManagement.email')" prop="email">
         <el-input
           v-model="userInfo!.email"
@@ -223,6 +232,9 @@ const handleSubmit = () => {
 </script>
 
 <style scoped lang="scss">
+// 用户名称与姓名同行：各占一半宽度，姓名位于用户名称右侧
+.user-form-row{display:flex;gap:12px}.user-form-row .el-form-item{flex:1;min-width:0}
+
 // 新增/编辑/查看用户弹窗：水平垂直居中，与浏览器四周保留间距，内容超高时仅 body 滚动
 :global(.user-dialog) {
   max-width: calc(100vw - 48px);
