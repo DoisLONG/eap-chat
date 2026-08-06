@@ -1,5 +1,16 @@
 # 本次工作记录
 
+## 2026-08-06 考试结果详情页显示修复（Web 用户端 `/web/exam/:id/result`）
+
+- 定位：`src/pages/webUser/exam/result.vue` 直接使用 `t("web.exam.unanswered")`，但该 key 在 zh/en/th 三份语言文件中均缺失，页面原样显示 key；未提交答案的题目后端 `result_status` 返回 `wrong`，被错误显示为"错误"；状态 `<span>` 在窄容器内换行成竖排；题目 `question_text` 自带 `【素材MA……】` 长编号前缀，标题过长。
+- 修复：
+  - 语言文件补 key：zh `unanswered: "未答题数"`、en `Unanswered`、th `ยังไม่ตอบ`（顺带修复 `answer.vue` 交卷确认框里同 key 的原样显示）；新增每题状态 key `notSubmitted`/`notSubmittedAnswer`（未提交/未提交答案）。
+  - `result.vue` 状态判断改为 `questionStatus(question)`：无 `userAnswer`（或 `result_status === "unanswered"`）→ 蓝色"未提交"；已作答按 `result_status` 显示正确（绿）/错误（红）/部分得分/正在评分；用户答案对未提交题显示"未提交答案"。
+  - 每题改为左右布局：左侧 `__question-main`（题目、用户答案、本题得分、正确答案/解析），右侧固定宽度 `status-tag` 状态组件；`.status-tag` 设 `white-space: nowrap` + `min-width: 76px` 保证横向显示不竖排。
+  - 新增 `cleanQuestionText()` 剥离题首素材来源前缀，只展示真实题目内容；沿用原 `answerLabel` 并加 fallback 参数。真实数据格式为 `[material-<uuid>--<时间戳>_<文件名>] 题目`，正则 `^\s*(?:[\[【]\s*(?:material-|素材)[\s\S]*?[\]】]\s*)+` 同时兼容 `[]`/`【】` 两种括号及连续多个前缀块，且不误删 `[判断题]` 之类正文括号；经 node 以真实样例验证。
+  - 卡片左边框色随新状态（`is-unsubmitted` 蓝色替代原 `is-unanswered`）。
+- 未修改后端、数据库、接口（`getUserExamResult` 映射不变）或路由；未运行构建、测试或服务。需由用户 `npm run dev` 验证：结果页汇总"未答题数"正常显示；未作答题显示蓝色"未提交"、用户答案显示"未提交答案"；已作答正确/错误红绿区分；状态标签横向不换行；题目标题无 `[material-…]` / `【素材…】` 前缀；三语切换正常。
+
 ## 2026-08-06 考试抽题配置题型显示修复
 
 - 定位：`new_px_management_practice_question.question_type` 存中文值，`/sop-api/v1/dataprep/qa/list` 原样返回；`ExamFormDrawer.vue` 的 `normalizedType` 只识别英文枚举，中文题型 label 全部 fallback 到 `exam.types.other`，问答题/填空题被合并显示。
