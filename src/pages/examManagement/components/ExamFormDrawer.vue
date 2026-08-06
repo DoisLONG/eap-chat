@@ -62,6 +62,8 @@ const questionCache = new Map();
 const saved = reactive({ base: "", sources: "", rules: "", targets: "" });
 const stepItems = [{ title: "exam.basicInfo" }, { title: "exam.questionConfig" }, { title: "exam.preview" }, { title: "exam.publishSettings" }];
 const examTypes = [{ value: "product", icon: Collection }, { value: "technical", icon: Setting }, { value: "operation", icon: Operation }, { value: "mixed", icon: Connection }];
+// 题型别名映射：数据库/接口可能返回中文题型（如“问答题”“填空题”），统一归一为标准英文枚举
+const typeAliasMap = { "问答题": "short_answer", "填空题": "fill_blank", "单选题": "single_choice", "多选题": "multiple_choice", "判断题": "true_false" };
 const typeLabels = { fill_blank: "fillBlank", short_answer: "qa", single_choice: "singleChoice", multiple_choice: "multipleChoice", true_false: "judgement" };
 const form = reactive(emptyForm());
 const mode = computed(() => form.id ? "edit" : "create");
@@ -89,12 +91,13 @@ watch(step, resetScroll);
 
 function resetScroll() { nextTick(() => scrollContent.value?.scrollTo({ top: 0 })); }
 
-function normalizedType(type) { return typeLabels[type] || "other"; }
+function canonicalType(type) { const key = String(type || "").trim(); return typeAliasMap[key] || key; }
+function normalizedType(type) { return typeLabels[canonicalType(type)] || "other"; }
 function normalizeExamStatus(value) { return ({ draft: "draft", "草稿": "draft", ended: "ended", "已结束": "ended", published: "published", "已发布": "published" })[String(value || "").trim().toLowerCase()] || ""; }
 function parseDateTime(value) { const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/); if (!match) return null; const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]), Number(match[6])); return Number.isNaN(date.getTime()) ? null : date; }
 function formatDateTime(date) { const pad = value => String(value).padStart(2, "0"); return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`; }
 function calculatedEndTime(startAt, duration) { const start = parseDateTime(startAt), minutes = Number(duration); if (!start || !Number.isFinite(minutes) || minutes <= 0) return ""; return formatDateTime(new Date(start.getTime() + minutes * 60 * 1000)); }
-function isAuto(type) { return type !== "short_answer"; }
+function isAuto(type) { return canonicalType(type) !== "short_answer"; }
 function practiceId(item) { return Number(item.id ?? item.practice_id ?? item.sop_id ?? item.source_ref_id); }
 function categoryType(categoryId) { const primary = categories.value.find(item => String(item.id) === String(categoryId) || item.children?.some(child => String(child.id) === String(categoryId))); const name = primary?.name || ""; if (name.includes("技术")) return "technical"; if (name.includes("运营")) return "operation"; return "product"; }
 function sourceType(source) { return source.primary_category_name ? (source.primary_category_name.includes("技术") ? "technical" : source.primary_category_name.includes("运营") ? "operation" : "product") : categoryType(source.category_id); }

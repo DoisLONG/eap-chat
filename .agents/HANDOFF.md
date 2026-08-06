@@ -1,5 +1,10 @@
 # 会话交接
 
+## 考试抽题配置题型显示修复（2026-08-06）
+
+- 已在 `src/pages/examManagement/components/ExamFormDrawer.vue` 修复中文题型（问答题/填空题等）fallback 为"其他题型"的问题：新增 `typeAliasMap` 中英别名映射与 `canonicalType` 归一化（66/94-95 行），`isAuto` 同步归一化（100 行）；显示经 `exam.types.*` i18n，保存仍提交原始中文值，抽题规则保存逻辑未改。
+- 未运行构建、自动化测试或浏览器；未 commit、未 push。需用户 `npm run dev` 验证新建考试的抽题配置页（第二步）各题型分别显示、编辑回显、保存后重新打开正常。
+
 ## 用户管理列表精简（2026-08-06）
 
 - 已在 `src/pages/userManagement/index.vue` 移除部门/角色/岗位三列及模板插槽，重排用户名称/邮箱/手机号列宽（minWidth 160/240/140），操作列固定右侧（220px）；内容居中沿用 ProTable 默认对齐，操作按钮（图标+文字、删除 danger）未变。

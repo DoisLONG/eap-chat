@@ -1,5 +1,15 @@
 # 本次工作记录
 
+## 2026-08-06 考试抽题配置题型显示修复
+
+- 定位：`new_px_management_practice_question.question_type` 存中文值，`/sop-api/v1/dataprep/qa/list` 原样返回；`ExamFormDrawer.vue` 的 `normalizedType` 只识别英文枚举，中文题型 label 全部 fallback 到 `exam.types.other`，问答题/填空题被合并显示。
+- 修复（`src/pages/examManagement/components/ExamFormDrawer.vue`）：
+  - 66 行新增 `typeAliasMap` 中英文题型别名映射（问答题/填空题/单选题/多选题/判断题 → 标准英文枚举）；
+  - 94-95 行新增 `canonicalType` 归一化函数，`normalizedType` 先归一化再查 `typeLabels`，中文题型不再 fallback 为 other，问答题/填空题分别展示；
+  - 100 行 `isAuto` 改用 `canonicalType` 判断，中文“问答题”正确默认人工阅卷（manual）。
+- 保存逻辑（129 行 `rulesPayload`）未改：`question_type` 提交 `item.type` 原始值（即后端 qa/list 返回的中文），与数据库/接口契约一致，不会被提交为 other；`saveExamRules` 为纯透传。
+- 未修改后端、数据库、接口或发布逻辑；未运行构建、测试或服务。需由用户 `npm run dev` 验证：新建考试第二步抽题配置中问答题、填空题等题型分别显示、数量/分值/阅卷方式正常；编辑已有考试回显正确；保存后重新打开仍正常。
+
 ## 2026-08-06 用户管理列表精简
 
 - `src/pages/userManagement/index.vue`：columns 移除部门、角色、岗位三列及对应模板插槽；保留用户名称（minWidth 160，含名称搜索）、邮箱（minWidth 240）、手机号（minWidth 140）、操作（fixed right，宽度由 280 收敛为 220）。
