@@ -1,8 +1,10 @@
 <template>
-  <el-drawer
+  <el-dialog
     v-model="drawerVisible"
+    class="user-dialog"
     :destroy-on-close="true"
-    size="500px"
+    width="560px"
+    align-center
     :title="title"
     @close="emits('close')"
   >
@@ -132,7 +134,7 @@
         >{{ $t("common.confirm") }}</el-button
       >
     </template>
-  </el-drawer>
+  </el-dialog>
 </template>
 
 <script setup lang="ts" name="UserDrawer">
@@ -333,3 +335,35 @@ const handleSubmit = () => {
   });
 };
 </script>
+
+<style scoped lang="scss">
+// 新增/编辑/查看用户弹窗：水平垂直居中，与浏览器四周保留间距，内容超高时仅 body 滚动
+:global(.user-dialog) {
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 18%);
+}
+
+:global(.user-dialog .el-dialog__header) {
+  flex-shrink: 0;
+  padding: 18px 24px 16px;
+  margin-right: 0;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+:global(.user-dialog .el-dialog__body) {
+  flex: 1;
+  padding: 24px 24px 8px;
+  overflow-y: auto;
+}
+
+:global(.user-dialog .el-dialog__footer) {
+  flex-shrink: 0;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+</style>

@@ -1,5 +1,11 @@
 # 本次工作记录
 
+## 2026-08-06 新增用户弹窗 UI 改造
+
+- `src/pages/userManagement/components/UserDrawer.vue`：右侧 `el-drawer`（500px）改为居中 `el-dialog`（560px，`align-center`），保留全部表单字段、校验规则、公司/部门/岗位联动与接口调用，组件名、props、事件名不变。
+- 新增 scoped 样式（`:global(.user-dialog)` 精确匹配，沿用资料弹窗的 Teleport 样式写法）：`max-width/max-height: calc(100vw - 48px / 100vh - 48px)` 保证四周间距、12px 圆角、flex 纵向布局使 header/footer 固定、body 超高时内部滚动、header/footer 上下分隔线。
+- 未修改后端、接口、数据库、路由或 Docker；未运行构建、测试或服务。需由用户 `npm run dev` 验证新增/编辑/查看三种打开方式的居中显示、三语布局与提交。
+
 ## 2026-08-06 隐藏系统管理菜单
 
 - `src/stores/modules/auth.ts` 中“公司管理”“部门管理”“岗位管理”“模型配置”四个菜单节点置为 `isHide: true`，侧栏对所有用户（含 superadmin）均不再展示，与代码库既有隐藏路由机制一致。

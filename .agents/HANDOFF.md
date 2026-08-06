@@ -1,5 +1,10 @@
 # 会话交接
 
+## 新增用户弹窗 UI 改造（2026-08-06）
+
+- 已将 `src/pages/userManagement/components/UserDrawer.vue` 由右侧 Drawer 改为居中 Dialog（560px、`align-center`、四周 24px 间距、12px 圆角、header/footer 固定 + body 滚动）；表单逻辑、校验、接口调用全部保留，组件对外接口（props/事件/挂载方式）未变。
+- 未运行构建、自动化测试或浏览器；未 commit、未 push。需用户 `npm run dev` 后验证三种打开方式（新增/编辑/查看）的居中显示、小屏适配、三语布局与提交/校验行为。
+
 ## 隐藏系统管理菜单（2026-08-06）
 
 - 已在 `src/stores/modules/auth.ts` 将公司管理、部门管理、岗位管理、模型配置四个菜单节点置为 `isHide: true`，并移除 getters 中失效的 superadmin 过滤分支；侧栏对所有用户不再展示这四项。
