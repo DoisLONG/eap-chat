@@ -29,10 +29,15 @@
         <template v-else>
           <section class="section-card">
             <div class="publish-complete"><el-icon><CircleCheck /></el-icon><h3>{{ t('examForm.configurationComplete') }}</h3><p>{{ t('examForm.configurationCompleteDesc') }}</p></div>
-            <div class="publish-grid"><el-form-item :label="t('exam.publishStatus')" required><el-radio-group v-model="form.publish.status"><el-radio value="draft">{{ t('examForm.saveDraft') }}</el-radio><el-radio value="publish">{{ t('exam.publishNow') }}</el-radio></el-radio-group></el-form-item><el-form-item :label="t('exam.audience')" required><el-input :model-value="t('exam.allUsers')" disabled /></el-form-item><el-form-item :label="t('exam.startTime')"><el-date-picker v-model="form.publish.startAt" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" /></el-form-item><el-form-item :label="t('examForm.estimatedEndTime')"><el-date-picker :model-value="estimatedEndAt" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" disabled /></el-form-item></div>
+            <div class="publish-grid"><el-form-item :label="t('exam.publishStatus')" required><el-radio-group v-model="form.publish.status"><el-radio value="draft">{{ t('examForm.saveDraft') }}</el-radio><el-radio value="publish">{{ t('exam.publishNow') }}</el-radio></el-radio-group></el-form-item><el-form-item :label="t('exam.audience')" required><el-radio-group v-model="form.publish.audience"><el-radio value="all">{{ t('exam.allUsers') }}</el-radio><el-radio value="manual">{{ t('exam.manualUsers') }}</el-radio></el-radio-group></el-form-item><el-form-item :label="t('exam.startTime')"><el-date-picker v-model="form.publish.startAt" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" /></el-form-item><el-form-item :label="t('examForm.estimatedEndTime')"><el-date-picker :model-value="estimatedEndAt" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" disabled /></el-form-item></div>
+            <div v-if="form.publish.audience === 'manual'" class="publish-users">
+              <div class="publish-users-head"><span>{{ t('examForm.selectedUsersCount', { count: form.publish.selectedUsers.length }) }}</span><el-button size="small" :icon="User" @click="userDialogVisible = true">{{ t('examForm.selectUsers') }}</el-button></div>
+              <div v-if="form.publish.selectedUsers.length" class="publish-users-tags"><el-tag v-for="user in form.publish.selectedUsers" :key="user.id" closable :disable-transitions="true" @close="removeSelectedUser(user.id)">{{ userName(user) }}</el-tag></div>
+              <p v-else class="publish-users-empty">{{ t('examForm.manualUsersHint') }}</p>
+            </div>
             <p class="publish-time-hint">{{ t('examForm.endTimeCalculated') }}</p>
-            <el-alert :title="t('examForm.allAudienceOnly')" type="info" :closable="false" show-icon />
           </section>
+          <UserSelectDialog v-model="userDialogVisible" :selected="form.publish.selectedUsers" @confirm="onUsersConfirm" />
         </template>
       </el-form>
     </div>
@@ -42,7 +47,7 @@
 
 <script setup>
 import { computed, nextTick, reactive, ref, watch } from "vue";
-import { CircleCheck, Collection, Connection, Operation, Setting } from "@element-plus/icons-vue";
+import { CircleCheck, Collection, Connection, Operation, Setting, User } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useI18n } from "vue-i18n";
 import { createExam, getExamDetail, getSopCategoryTree, publishExam, saveExamRules, saveExamSources, saveExamTargets, updateExam } from "@/services/exam.api";
@@ -50,12 +55,13 @@ import { getQaList } from "@/services/sop.api";
 import PracticeSelector from "./PracticeSelector.vue";
 import QuestionConfig from "./QuestionConfig.vue";
 import ExamPreview from "./ExamPreview.vue";
+import UserSelectDialog from "./UserSelectDialog.vue";
 
 const props = defineProps({ modelValue: Boolean, exam: { type: Object, default: null } });
 const emit = defineEmits(["update:modelValue", "saved"]);
 const { t } = useI18n();
 const visible = computed({ get: () => props.modelValue, set: value => emit("update:modelValue", value) });
-const formRef = ref(), scrollContent = ref(), step = ref(1), completedStep = ref(1), saving = ref(false), detailLoading = ref(false), status = ref("draft");
+const formRef = ref(), scrollContent = ref(), step = ref(1), completedStep = ref(1), saving = ref(false), detailLoading = ref(false), status = ref("draft"), userDialogVisible = ref(false);
 const categories = ref([]), previewQuestions = ref([]), sourceQuestions = ref([]);
 const isEditMode = ref(false);
 const questionCache = new Map();
@@ -86,7 +92,7 @@ const actionLabel = computed(() => {
   return form.id ? t("examForm.saveChanges") : t("examForm.completeCreate");
 });
 
-function emptyForm() { return { id: null, type: "product", name: "", version: "", description: "", sources: [], questionConfigs: [], duration: 60, passScore: 0, rules: { randomPaper: true, randomOptions: true, showAnswer: false, allowRetake: false, maxAttempts: 2 }, publish: { status: "draft", startAt: "", endAt: "", audience: "all" } }; }
+function emptyForm() { return { id: null, type: "product", name: "", version: "", description: "", sources: [], questionConfigs: [], duration: 60, passScore: 0, rules: { randomPaper: true, randomOptions: true, showAnswer: false, allowRetake: false, maxAttempts: 2 }, publish: { status: "draft", startAt: "", endAt: "", audience: "all", selectedUsers: [] } }; }
 function reset(value = null) { isEditMode.value = Boolean(value?.id); passScoreTouched.value = Boolean(value?.id); Object.assign(form, emptyForm(), value || {}); form.sources = value?.sources || []; form.questionConfigs = value?.questionConfigs || []; step.value = 1; completedStep.value = 1; previewQuestions.value = []; sourceQuestions.value = []; questionCache.clear(); Object.assign(saved, { base: "", sources: "", rules: "", targets: "" }); status.value = "draft"; }
 let detailRequest = 0;
 watch(() => [props.modelValue, props.exam?.id], ([value]) => { if (!value) { detailRequest++; detailLoading.value = false; return; } reset(props.exam); resetScroll(); if (props.exam?.id) loadDetail(props.exam.id); else loadCategories(); }, { immediate: true });
@@ -118,9 +124,13 @@ function validateStepTwo() {
   if (!totalQuestions.value || !totalScore.value || form.duration <= 0) throw new Error(t("exam.invalidQuestionConfig"));
   if (form.questionConfigs.some(item => item.count < 0 || (item.available != null && item.count > item.available) || item.score <= 0)) throw new Error(t("exam.invalidQuestionConfig"));
 }
+function userName(user) { return user.full_name || user.name || `#${user.id}`; }
+function onUsersConfirm(users) { form.publish.selectedUsers = users; }
+function removeSelectedUser(id) { form.publish.selectedUsers = form.publish.selectedUsers.filter(user => Number(user.id) !== Number(id)); }
+
 function validatePublish() {
-  const { status: publishStatus, startAt, audience } = form.publish;
-  if (audience !== "all") throw new Error(t("examForm.onlyAllAudience"));
+  const { status: publishStatus, startAt, audience, selectedUsers } = form.publish;
+  if (audience === "manual" && !selectedUsers.length) throw new Error(t("examForm.manualUsersRequired"));
   if (publishStatus === "scheduled") throw new Error(t("examForm.scheduledUnavailable"));
   if (publishStatus !== "publish") return;
   const start = parseDateTime(startAt);
@@ -128,13 +138,22 @@ function validatePublish() {
   if (start.getTime() < Date.now() - 60 * 1000) throw new Error(t("examForm.startTimePast"));
   if (!estimatedEndAt.value) throw new Error(t("examForm.durationInvalid"));
 }
-function basePayload() { return { name: form.name, version: form.version || null, description: form.description || null, exam_type: form.type === "mixed" ? "mixed" : "normal", category_id: form.sources[0]?.category_id || null, duration: Number(form.duration), pass_score: Number(form.passScore), participant_scope: "all", random_paper: form.rules.randomPaper, randomOptions: form.rules.randomOptions, showAnswer: form.rules.showAnswer, allowRetake: form.rules.allowRetake, max_attempts: Number(form.rules.maxAttempts || 1), start_time: form.publish.startAt || null }; }
+function basePayload() { return { name: form.name, version: form.version || null, description: form.description || null, exam_type: form.type === "mixed" ? "mixed" : "normal", category_id: form.sources[0]?.category_id || null, duration: Number(form.duration), pass_score: Number(form.passScore), participant_scope: form.publish.audience === "manual" ? "manual" : "all", random_paper: form.rules.randomPaper, randomOptions: form.rules.randomOptions, showAnswer: form.rules.showAnswer, allowRetake: form.rules.allowRetake, max_attempts: Number(form.rules.maxAttempts || 1), start_time: form.publish.startAt || null }; }
 function sourcesPayload() { return { sources: form.sources.map((source, index) => ({ source_type: "practice", source_ref_id: String(practiceId(source)), category_id: source.category_id || null, sort_order: index })) }; }
 function rulesPayload() { return { rules: form.questionConfigs.map(item => ({ question_type: item.type, draw_mode: "random", grading_mode: item.grading_mode || (item.auto ? "auto" : "manual"), question_count: Number(item.count), score_per_question: Number(item.score), difficulty_min: item.difficulty_min ?? null, difficulty_max: item.difficulty_max ?? null })) }; }
 async function saveBaseIfChanged() { const payload = basePayload(), fingerprint = JSON.stringify(payload); if (form.id && saved.base === fingerprint) return; if (form.id) await updateExam(form.id, payload); else { const detail = await createExam(payload); form.id = detail.id; status.value = detail.status; } saved.base = fingerprint; }
 async function saveSourcesIfChanged() { const payload = sourcesPayload(), fingerprint = JSON.stringify(payload); if (saved.sources === fingerprint) return; await saveExamSources(form.id, payload); saved.sources = fingerprint; }
 async function saveRulesIfChanged() { const payload = rulesPayload(), fingerprint = JSON.stringify(payload); if (saved.rules === fingerprint) return; await saveExamRules(form.id, payload); saved.rules = fingerprint; }
-async function saveTargetsIfChanged() { const payload = { targets: [{ target_type: "all", target_ref_id: "ALL" }] }, fingerprint = JSON.stringify(payload); if (saved.targets === fingerprint) return; await saveExamTargets(form.id, payload); saved.targets = fingerprint; }
+async function saveTargetsIfChanged() {
+  // 名单以提交为准：range 切换用 replace 语义清理/重建关联（后端 DELETE + INSERT）
+  const targets = form.publish.audience === "manual"
+    ? form.publish.selectedUsers.map(user => ({ target_type: "user", target_ref_id: String(user.id) }))
+    : [{ target_type: "all", target_ref_id: "ALL" }];
+  const payload = { targets }, fingerprint = JSON.stringify(payload);
+  if (saved.targets === fingerprint) return;
+  await saveExamTargets(form.id, payload);
+  saved.targets = fingerprint;
+}
 async function saveDraft() { await saveBaseIfChanged(); await saveSourcesIfChanged(); await saveRulesIfChanged(); await saveTargetsIfChanged(); }
 async function loadSourceQuestions() {
   const results = await Promise.allSettled(form.sources.map(async source => {
@@ -160,7 +179,7 @@ async function loadSourceQuestions() {
 }
 function hydrate(detail) {
   const sourceRows = (detail.sources || []).map(source => ({ ...source, id: Number(source.source_ref_id) }));
-  Object.assign(form, { id: detail.id, type: detail.exam_type === "mixed" ? "mixed" : categoryType(detail.category_id), name: detail.name || "", version: detail.version || "", description: detail.description || "", sources: sourceRows, questionConfigs: (detail.question_configs || []).map(item => ({ type: item.question_type, label: t(`exam.types.${normalizedType(item.question_type)}`), available: null, count: Number(item.question_count), score: Number(item.score_per_question), auto: item.grading_mode === "auto", grading_mode: item.grading_mode, difficulty_min: item.difficulty_min == null ? null : Number(item.difficulty_min), difficulty_max: item.difficulty_max == null ? null : Number(item.difficulty_max) })), duration: detail.duration, passScore: Number(detail.pass_score || 0), rules: { ...emptyForm().rules, ...(detail.rules || {}) }, publish: { status: ["published", "ended"].includes(detail.status) ? "publish" : "draft", startAt: detail.start_time || "", endAt: detail.end_time || "", audience: detail.targets?.[0]?.target_type || "all" } });
+  Object.assign(form, { id: detail.id, type: detail.exam_type === "mixed" ? "mixed" : categoryType(detail.category_id), name: detail.name || "", version: detail.version || "", description: detail.description || "", sources: sourceRows, questionConfigs: (detail.question_configs || []).map(item => ({ type: item.question_type, label: t(`exam.types.${normalizedType(item.question_type)}`), available: null, count: Number(item.question_count), score: Number(item.score_per_question), auto: item.grading_mode === "auto", grading_mode: item.grading_mode, difficulty_min: item.difficulty_min == null ? null : Number(item.difficulty_min), difficulty_max: item.difficulty_max == null ? null : Number(item.difficulty_max) })), duration: detail.duration, passScore: Number(detail.pass_score || 0), rules: { ...emptyForm().rules, ...(detail.rules || {}) }, publish: { status: ["published", "ended"].includes(detail.status) ? "publish" : "draft", startAt: detail.start_time || "", endAt: detail.end_time || "", audience: detail.targets?.some(target => target.target_type === "all") ? "all" : "manual", selectedUsers: (detail.targets || []).filter(target => target.target_type === "user").map(target => ({ id: Number(target.target_ref_id), ...(target.user || {}) })) } });
   status.value = detail.status; previewQuestions.value = detail.preview_questions || []; if (status.value === "published") { step.value = 3; completedStep.value = 4; }
 }
 async function loadCategories() { try { const response = await getSopCategoryTree(); categories.value = response.data?.results || []; } catch { categories.value = []; } }
@@ -182,7 +201,7 @@ async function requestClose(done) { if (hasUnsavedChanges.value && visible.value
 </script>
 
 <style scoped>
-.publish-time-hint { max-width: 720px; margin: 0 auto 18px; color: var(--el-text-color-secondary); font-size: 12px; }
+.publish-time-hint { max-width: 720px; margin: 0 auto 18px; color: var(--el-text-color-secondary); font-size: 12px; }.publish-users { max-width: 720px; margin: 0 auto 18px; padding: 14px; border: 1px solid var(--el-border-color); border-radius: 8px; background: var(--el-bg-color); }.publish-users-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }.publish-users-head span { color: var(--el-text-color-secondary); font-size: 13px; }.publish-users-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }.publish-users-empty { margin: 12px 0 0; color: var(--el-text-color-secondary); font-size: 12px; }
 :global(.exam-form-dialog) { display: flex; flex-direction: column; width: min(1060px, calc(100vw - 48px)) !important; max-width: calc(100vw - 48px); height: min(720px, calc(100vh - 48px)); max-height: calc(100vh - 48px); margin: auto !important; overflow: hidden; border-radius: 10px; }:global(.exam-form-dialog .el-dialog__header) { flex: 0 0 auto; margin-right: 0; padding: 20px 24px; border-bottom: 1px solid var(--el-border-color-lighter); }:global(.exam-form-dialog .el-dialog__title) { font-size: 18px; font-weight: 700; }:global(.exam-form-dialog .el-dialog__body) { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; padding: 0; overflow: hidden; background: var(--el-fill-color-extra-light); }:global(.exam-form-dialog .el-dialog__footer) { flex: 0 0 auto; padding: 14px 24px; border-top: 1px solid var(--el-border-color-lighter); }.dialog-scroll { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; padding: 0 26px 28px; }.dialog-footer { display: flex; justify-content: flex-end; gap: 10px; }.stepper { display: grid; flex: 0 0 auto; grid-template-columns: repeat(4, 1fr); position: relative; width: min(100%, 860px); margin: 0 auto; padding: 20px 0 18px; }.step-line, .step-progress { position: absolute; top: 36px; left: 12.5%; height: 2px; }.step-line { right: 12.5%; background: var(--el-border-color); }.step-progress { background: var(--el-color-primary); transition: width .2s; }.step-button { z-index: 1; display: grid; justify-items: center; gap: 7px; border: 0; color: var(--el-text-color-secondary); background: transparent; font-size: 14px; }.step-button:not(:disabled) { cursor: pointer; }.step-circle { display: grid; width: 32px; height: 32px; place-items: center; border: 2px solid var(--el-fill-color); border-radius: 50%; color: var(--el-text-color-secondary); background: var(--el-fill-color); font-weight: 700; }.step-button.active { color: var(--el-color-primary); font-weight: 700; }.step-button.active .step-circle { border-color: var(--el-color-primary); color: #fff; background: var(--el-color-primary); }.step-button.done { color: var(--el-color-success); }.step-button.done .step-circle { border-color: var(--el-color-success-light-5); color: var(--el-color-success); background: var(--el-color-success-light-9); }.section-card { margin-bottom: 14px; padding: 18px; border: 1px solid var(--el-border-color); border-radius: 9px; background: var(--el-bg-color); }.section-heading { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }.section-heading h3 { margin: 0; font-size: 16px; }.section-heading p, .sources-heading span { margin: 4px 0 0; color: var(--el-text-color-secondary); font-size: 13px; }.sources-heading span { margin-left: auto; }.category-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; width: 100%; }.category-card { display: flex; gap: 12px; min-height: 72px; padding: 13px; border: 1px solid var(--el-border-color); border-radius: 8px; background: var(--el-bg-color); color: var(--el-text-color-primary); text-align: left; cursor: pointer; }.category-card.selected { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); box-shadow: inset 0 0 0 1px var(--el-color-primary-light-8); }.category-card:disabled { cursor: default; }.category-icon { display: grid; flex: none; width: 36px; height: 36px; place-items: center; border-radius: 9px; color: var(--el-color-primary); background: var(--el-color-primary-light-9); }.category-card strong, .category-card small { display: block; }.category-card small { margin-top: 4px; color: var(--el-text-color-secondary); font-size: 12px; line-height: 1.4; }.form-grid, .publish-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }.form-grid .full { grid-column: 1 / -1; }.exam-form :deep(.el-form-item__label) { font-weight: 600; }.exam-form :deep(.el-input__wrapper), .exam-form :deep(.el-textarea__inner), .publish-grid :deep(.el-date-editor) { min-height: 38px; }.publish-complete { max-width: 680px; margin: 0 auto 22px; padding: 8px 0; text-align: center; }.publish-complete .el-icon { width: 64px; height: 64px; margin-bottom: 10px; padding: 14px; border-radius: 50%; color: var(--el-color-success); background: var(--el-color-success-light-9); }.publish-complete h3 { margin: 0 0 8px; font-size: 20px; }.publish-complete p { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; line-height: 1.7; }.publish-grid { max-width: 720px; margin: 0 auto 18px; }.publish-grid :deep(.el-date-editor) { width: 100%; } @media (max-width: 900px) { :global(.exam-form-dialog) { width: min(1060px, calc(100vw - 24px)) !important; max-width: calc(100vw - 24px); height: min(720px, calc(100vh - 24px)); max-height: calc(100vh - 24px); }.category-grid, .form-grid, .publish-grid { grid-template-columns: 1fr; }.dialog-scroll { padding: 0 18px 18px; } } @media (max-width: 620px) { .stepper { font-size: 12px; }.step-button { font-size: 12px; }.section-card { padding: 14px; }.sources-heading { align-items: flex-start; flex-direction: column; }.sources-heading span { margin-left: 0; } }
 
 @supports (height: 100dvh) { :global(.exam-form-dialog) { height: min(720px, calc(100dvh - 48px)); max-height: calc(100dvh - 48px); } @media (max-width: 900px) { :global(.exam-form-dialog) { height: min(720px, calc(100dvh - 24px)); max-height: calc(100dvh - 24px); } } }
