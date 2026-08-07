@@ -67,11 +67,12 @@
                   <template v-else>
                     <div v-if="!m.done" class="streaming-text">{{ m.raw }}</div>
                     <NextQuestionCard v-else-if="isNextQuestionMessage(m)" :content="m.content" />
+                    <AnswerResultCard
+                      v-else-if="isResultMessage(m)"
+                      :content="m.content"
+                      :kind="resultKind(m)"
+                    />
                     <MarkdownRenderer v-else :content="m.content" />
-                    <div v-if="m.type === 'result' && m.userAnswer != null" class="submitted-answer">
-                      <span class="submitted-answer-label">用户答案</span>
-                      <span class="submitted-answer-value">{{ m.userAnswer }}</span>
-                    </div>
                   </template>
                 </div>
               </div>
@@ -298,6 +299,7 @@ import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { endExamSession } from "@/services/chat.service";
 import MarkdownRenderer from "@/components/MarkdownRenderer.vue";
+import AnswerResultCard from "@/components/chat/AnswerResultCard.vue";
 import { useUserStore } from "@/stores/modules/user";
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
@@ -1078,6 +1080,16 @@ function messageVisualKind(message) {
   return "";
 }
 
+// 沿用 messageVisualKind 的既有判定（字符串匹配 content），仅映射为组件 kind prop，不重新判断对错
+function resultKind(message) {
+  if (isResultMessage(message)) {
+    const content = String(message.content || "");
+    if (content.includes("部分正确")) return "partial";
+    if (content.includes("回答正确")) return "correct";
+  }
+  return "error";
+}
+
 onUnmounted(() => {
   stopAudio();
 
@@ -1338,140 +1350,6 @@ onUnmounted(() => {
   border-top-left-radius: 10px;
 }
 
-/* Fixed Smart Practice result Markdown only. Other coach Markdown keeps its existing appearance. */
-.bubble.answer-result-card {
-  width: fit-content;
-  min-width: 480px;
-  max-width: 620px;
-  padding: 18px;
-  border: 1px solid #e8edf5;
-  border-top-left-radius: 16px;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(31, 50, 81, 0.08);
-}
-
-:deep(.answer-result-card .markdown-body) {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px 16px;
-  color: #334155;
-  line-height: 1.7;
-  white-space: normal;
-}
-
-:deep(.answer-result-card .markdown-body > h2) {
-  grid-column: 1;
-  margin: 0;
-  color: #172033;
-  font-size: 18px;
-  line-height: 1.3;
-}
-
-:deep(.answer-result-card .markdown-body > h2::after) {
-  content: "本题判定已完成";
-  display: block;
-  margin-top: 4px;
-  color: #94a3b8;
-  font-size: 12px;
-  font-weight: 400;
-}
-
-:deep(.answer-result-card .markdown-body > blockquote) {
-  margin: 0;
-  border: 0;
-}
-
-:deep(.answer-result-card .markdown-body > blockquote:first-of-type) {
-  grid-column: 2;
-  display: grid;
-  justify-items: end;
-  gap: 7px;
-}
-
-:deep(.answer-result-card .markdown-body > blockquote:first-of-type h3) {
-  margin: 0;
-  padding: 7px 12px;
-  border: 1px solid #fecdd3;
-  border-radius: 999px;
-  background: #fff1f2;
-  color: #be123c;
-  font-size: 13px;
-  line-height: 1.2;
-}
-
-:deep(.answer-result-card .markdown-body > blockquote:first-of-type p) {
-  margin: 0;
-  color: #64748b;
-  font-size: 12px;
-  text-align: right;
-}
-
-:deep(.answer-result-card .markdown-body > blockquote:first-of-type strong) {
-  display: block;
-  font-weight: 500;
-}
-
-:deep(.answer-result-card .markdown-body > blockquote:first-of-type code) {
-  display: block;
-  margin-top: 1px;
-  padding: 0;
-  background: transparent;
-  color: #172033;
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.15;
-}
-
-.bubble.answer-result-card.result-correct :deep(.markdown-body > blockquote:first-of-type h3) {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-  color: #15803d;
-}
-
-.bubble.answer-result-card.result-partial :deep(.markdown-body > blockquote:first-of-type h3) {
-  border-color: #fed7aa;
-  background: #fff7ed;
-  color: #c2410c;
-}
-
-:deep(.answer-result-card .markdown-body > hr) {
-  grid-column: 1 / -1;
-  width: 100%;
-  height: 1px;
-  margin: 1px 0 0;
-  border: 0;
-  background: #edf1f6;
-}
-
-:deep(.answer-result-card .markdown-body > h3) {
-  grid-column: 1 / -1;
-  margin: 1px 0 -5px;
-  color: #1e293b;
-  font-size: 15px;
-  line-height: 1.35;
-}
-
-:deep(.answer-result-card .markdown-body > blockquote:nth-of-type(2)) {
-  grid-column: 1 / -1;
-  padding: 9px 12px;
-  border-radius: 9px;
-  background: #eff6ff;
-  color: #164e9b;
-  font-weight: 600;
-  word-break: break-word;
-}
-
-:deep(.answer-result-card .markdown-body > blockquote:nth-of-type(2) p),
-:deep(.answer-result-card .markdown-body > p) {
-  margin: 0;
-}
-
-:deep(.answer-result-card .markdown-body > p) {
-  grid-column: 1 / -1;
-  color: #475569;
-  word-break: break-word;
-}
-
 .bubble.next-question-card {
   width: fit-content;
   max-width: 620px;
@@ -1645,34 +1523,11 @@ onUnmounted(() => {
     border-radius: 18px;
   }
 
-  .bubble.answer-result-card,
   .bubble.next-question-card {
     width: 100%;
     min-width: 0;
     max-width: 100%;
     box-sizing: border-box;
-  }
-
-  .bubble.answer-result-card {
-    padding: 15px;
-  }
-
-  :deep(.answer-result-card .markdown-body) {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  :deep(.answer-result-card .markdown-body > h2),
-  :deep(.answer-result-card .markdown-body > blockquote:first-of-type) {
-    grid-column: 1;
-  }
-
-  :deep(.answer-result-card .markdown-body > blockquote:first-of-type) {
-    justify-items: start;
-  }
-
-  :deep(.answer-result-card .markdown-body > blockquote:first-of-type p) {
-    text-align: left;
   }
 
   .chat-input {
@@ -2042,28 +1897,16 @@ onUnmounted(() => {
 .msg-row { gap: 11px; margin-bottom: 16px; }
 .msg-content { max-width: min(790px, calc(100% - 56px)); }
 .msg-row.user .msg-content { max-width: min(360px, calc(100% - 56px)); }
-.msg-content.answer-result-card { width: min(760px, calc(100vw - 160px)); max-width: min(760px, calc(100vw - 160px)); }
+.msg-content.answer-result-card { width: min(1100px, calc(100% - 56px)); max-width: min(1100px, calc(100% - 56px)); }
 .nick { margin: 0 0 6px 3px; color: #8b95a7; }
 .msg-row.user .nick { margin-right: 3px; }
 .bubble { padding: 0; border-radius: 14px; font-size: 15px; line-height: 1.7; }
 .bubble.assistant { border: 1px solid #e7ebf2; border-top-left-radius: 14px; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05); }
 .bubble.next-question-card { padding: 17px 18px; border-color: #e7ebf2; border-radius: 14px; }
 .bubble.user { padding: 11px 16px; border-radius: 14px 14px 4px 14px; }
-.bubble.answer-result-card { width: 100%; min-width: 0; max-width: none; padding: 0; overflow: hidden; border-radius: 14px; }
+/* 结果卡片自带边框/圆角/阴影，气泡只做容器：去边框、去阴影，圆角交给卡片自身 */
+.bubble.answer-result-card { width: 100%; min-width: 0; max-width: none; padding: 0; border: 0; box-shadow: none; border-radius: 20px; }
 .next-tip { margin: -2px 0 16px 45px; padding: 11px 14px; color: #475569; background: #f8fafc; border: 1px dashed #dbe2ea; border-radius: 11px; font-size: 13px; line-height: 1.6; }
-.submitted-answer { margin-top: 12px; padding: 9px 12px; border-radius: 9px; background: #f7f9fc; color: #475569; word-break: break-word; }
-.submitted-answer-label { display: block; margin-bottom: 4px; color: #1e293b; font-size: 13px; font-weight: 600; }
-.submitted-answer-value { white-space: pre-wrap; }
-
-/* Result content follows the prototype's label/value rows instead of a vertical stack. */
-:deep(.answer-result-card .markdown-body) { grid-template-columns: 104px minmax(0, 1fr); gap: 14px 16px; }
-:deep(.answer-result-card .markdown-body > h2) { grid-column: 1; align-self: center; }
-:deep(.answer-result-card .markdown-body > blockquote:first-of-type) { grid-column: 2; align-self: center; }
-:deep(.answer-result-card .markdown-body > hr) { margin: 2px 0; }
-:deep(.answer-result-card .markdown-body > h3) { grid-column: 1; align-self: start; margin: 4px 0 0; color: #475569; font-size: 13px; }
-:deep(.answer-result-card .markdown-body > h3::before) { margin-right: 6px; color: #3b82f6; content: "◆"; font-size: 10px; }
-:deep(.answer-result-card .markdown-body > blockquote:nth-of-type(2)) { grid-column: 2; min-height: 38px; padding: 9px 12px; }
-:deep(.answer-result-card .markdown-body > p) { grid-column: 2; min-height: 38px; padding: 9px 12px; border-radius: 9px; background: #f7f9fc; line-height: 1.65; }
 
 .chat-input {
   position: fixed;
@@ -2099,13 +1942,6 @@ onUnmounted(() => {
   .msg-content, .msg-row.user .msg-content { max-width: calc(100% - 45px); }
   .msg-content.answer-result-card { width: calc(100% - 45px); max-width: calc(100% - 45px); }
   .bubble.answer-result-card { width: 100%; min-width: 0; }
-  :deep(.answer-result-card .markdown-body) { grid-template-columns: 1fr; gap: 10px; }
-  :deep(.answer-result-card .markdown-body > h2),
-  :deep(.answer-result-card .markdown-body > blockquote:first-of-type),
-  :deep(.answer-result-card .markdown-body > h3),
-  :deep(.answer-result-card .markdown-body > blockquote:nth-of-type(2)),
-  :deep(.answer-result-card .markdown-body > p) { grid-column: 1; }
-  :deep(.answer-result-card .markdown-body > p) { min-height: 0; }
   .next-tip { margin-left: 0; }
   .chat-input { padding: 8px 12px calc(10px + env(safe-area-inset-bottom)); }
 }
