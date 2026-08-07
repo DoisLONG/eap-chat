@@ -18,7 +18,8 @@ const routes = [
     component: () => import("@/pages/SopPicker.vue"),
   },
   {
-    path: "/chat/exam",
+    // 用户端练习/考试答题页：必须挂在 /web 前缀下，否则被端权限隔离守卫拦回 /web/home（普通用户 role_id=3）
+    path: "/web/chat/exam",
     name: "ChatExam",
     component: () => import("@/pages/ChatExam.vue"),
   },
