@@ -1,0 +1,42 @@
+{
+  "name": "dap-license-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "@vue-office/docx": "^1.6.3",
+    "@vue-office/excel": "^1.7.14",
+    "@vue-office/pdf": "^2.0.10",
+    "@vue-office/pptx": "^1.0.1",
+    "@vueuse/core": "^14.0.0",
+    "axios": "^1.11.0",
+    "crypto-js": "^4.2.0",
+    "echarts": "^6.0.0",
+    "element-plus": "^2.10.4",
+    "highlight.js": "^11.11.1",
+    "marked": "^16.2.1",
+    "nprogress": "^0.2.0",
+    "pinia": "^3.0.3",
+    "pinia-plugin-persistedstate": "^4.7.1",
+    "screenfull": "^6.0.2",
+    "vue": "^3.5.17",
+    "vue-demi": "^0.14.6",
+    "vue-i18n": "^11.2.2",
+    "vue-router": "^4.5.1",
+    "vuedraggable": "^2.24.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.0",
+    "@vitejs/plugin-vue-jsx": "^5.1.1",
+    "sass-embedded": "^1.93.3",
+    "typescript": "^5.9.3",
+    "vite": "^7.0.4",
+    "vue-tsc": "^3.1.3"
+  }
+}
