@@ -731,6 +731,7 @@ export default {
     filterAllTechnology: "All Technology",
     filterK8s: "K8s",
     subCategory: "Subcategory",
+    requiredSubCategory: "Please select subcategory",
     unselected: "Not selected",
     type: "Material Type",
     size: "Size",

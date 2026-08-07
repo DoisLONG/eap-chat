@@ -44,7 +44,7 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item :label="$t('materialLibrary.subCategory')">
+      <el-form-item :label="$t('materialLibrary.subCategory')" prop="category_id">
         <el-select
           v-model="operateInfo.category_id"
           :placeholder="$t('materialLibrary.unselected')"
@@ -234,6 +234,17 @@ const rules = computed(() => ({
       trigger: "change",
     },
   ],
+  // 选了所属类别后，细分方向（二级分类）必选
+  category_id:
+    operateInfo.value.category
+      ? [
+          {
+            required: true,
+            message: t("materialLibrary.requiredSubCategory"),
+            trigger: "change",
+          },
+        ]
+      : [],
   files:
     type.value === "create"
       ? [
@@ -248,6 +259,8 @@ const rules = computed(() => ({
 
 const handleCategoryChange = () => {
   operateInfo.value.category_id = "";
+  // 切换类别后细分方向必选，立即校验提示
+  ruleFormRef.value?.validateField("category_id");
 };
 
 const isAllowedFile = (fileName: string) => {

@@ -727,6 +727,7 @@ export default {
     filterAllTechnology: "เทคโนโลยีทั้งหมด",
     filterK8s: "K8s",
     subCategory: "ทิศทางย่อย",
+    requiredSubCategory: "กรุณาเลือกทิศทางย่อย",
     unselected: "ยังไม่ได้เลือก",
     type: "ประเภทสื่อการเรียนรู้",
     size: "ขนาด",

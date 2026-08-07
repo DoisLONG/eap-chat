@@ -717,6 +717,7 @@ export default {
     filterAllTechnology: "全部技术",
     filterK8s: "K8s",
     subCategory: "细分方向",
+    requiredSubCategory: "请选择细分方向",
     unselected: "未选择",
     type: "资料类型",
     size: "大小",
