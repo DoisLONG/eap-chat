@@ -135,8 +135,9 @@ const onLogin = async () => {
           const token = res.data.data.token;
           localStorage.setItem("token", token);
           userStore.setUserInfo(res.data.data.data);
-          // 2) 支持 redirect 回跳
-          const redirect = (route.query.redirect as string) || "/license/admin";
+          // 支持 redirect 回跳；普通用户（role_id 3）默认进入 Web端首页，其余保持原默认逻辑
+          const userRoleId = Number(res.data.data.data?.role_id);
+          const redirect = (route.query.redirect as string) || (userRoleId === 3 ? "/web/home" : "/license/admin");
           router.replace(redirect);
 
           ElMessage.success(t("header.loginSuccess"));
