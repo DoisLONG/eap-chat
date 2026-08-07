@@ -5,7 +5,7 @@ import { $t } from "@/languages/index.js";
 
 export const sopApi = axios.create({
   baseURL: "/sop-api",
-  timeout: 60000,
+  timeout: 600000, // 生成练习等异步接口同步阶段（下载+解析）可能较慢，放宽到 10 分钟
 });
 
 // 请求拦截器，添加token

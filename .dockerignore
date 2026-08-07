@@ -1,0 +1,6 @@
+demo-portal/
+Dockerfile.demo
+node_modules/
+dist/
+.git/
+*.log

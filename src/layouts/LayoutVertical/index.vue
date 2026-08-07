@@ -6,6 +6,7 @@
       <el-aside>
         <div class="aside-box-duan">
           <div
+            v-if="!isNormalUser"
             class="duan-item"
             :class="{ active: activeDuan === 'user' }"
             @click="changeDuan('user')"
@@ -29,6 +30,7 @@
             </div>
           </div>
           <div
+            v-if="!isNormalUser"
             class="duan-item"
             :class="{
               active: activeDuan === 'admin' && !isWebPlatform,
@@ -185,6 +187,7 @@ import { Collection, DocumentChecked, EditPen, House } from "@element-plus/icons
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/modules/auth";
 import { useGlobalStore } from "@/stores/modules/global";
+import { useUserStore } from "@/stores/modules/user";
 import Main from "@/layouts/components/Main/index.vue";
 import Setting from "@/layouts/components/Header/components/Setting.vue";
 import { onMounted, onUnmounted, watch } from "vue";
@@ -197,6 +200,9 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const globalStore = useGlobalStore();
+const userStore = useUserStore();
+// 普通用户仅 Web端：role_id 3（1=超级管理员 2=管理员 3=普通用户，与后端 UserRole 一致）
+const isNormalUser = computed(() => Number(userStore.userInfo?.role_id) === 3);
 const accordion = computed(() => globalStore.accordion);
 const language = computed(() => globalStore.language);
 const isCollapse = computed(() => globalStore.isCollapse);
@@ -217,7 +223,8 @@ const activeMenu = computed(() => {
 });
 
 const isFirst = ref(false);
-const activeDuan = ref(localStorage.getItem("activeDuan") || "user");
+// 普通用户不可用用户端 iframe，默认落在 admin 容器（Web端平台即复用该容器）
+const activeDuan = ref(localStorage.getItem("activeDuan") || (isNormalUser.value ? "admin" : "user"));
 const userUrl = ref("");
 const h5Size = ref({
   width: 0,
@@ -242,6 +249,8 @@ const setFirst = () => {
 provide("activeDuan", activeDuan);
 
 const changeDuan = (val) => {
+  // 普通用户仅 Web端，入口已隐藏，此处兜底禁止切换到用户端/管理端
+  if (isNormalUser.value) return;
   if (isFirst.value && val === "admin") return;
   activeDuan.value = val;
   localStorage.setItem("activeDuan", val);

@@ -395,6 +395,13 @@ router.beforeEach((to, from, next) => {
     return next({ path: "/dashboard" });
   }
 
+  // 端权限隔离：普通用户（role_id 3，1=超管 2=管理员 3=普通用户）仅可访问 Web端（/web/*），
+  // 手工输入管理端/其他 URL 一律重定向到 Web端首页 /web/home
+  const isNormalUser = Number(userStore.userInfo?.role_id) === 3;
+  if (isNormalUser && !to.path.startsWith("/web")) {
+    return next({ path: "/web/home", replace: true });
+  }
+
   next();
 });
 /**
