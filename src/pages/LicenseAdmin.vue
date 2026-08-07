@@ -37,7 +37,7 @@
               {{ row.title }}
             </div>
             <div class="sub ellipsis" :title="row.fileName">
-              {{ row.filename || "-" }}
+              {{ row.fileName || "-" }}
             </div>
           </div>
         </div>
@@ -224,7 +224,7 @@ import { useRouter } from "vue-router";
 import searchForm from "./components/licenseAdmin/searchForm.vue";
 // import editDialog from "./components/licenseAdmin/editDialog.vue";
 import editDrawer from "./components/licenseAdmin/editDrawer.vue";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage, ElMessageBox, ElProgress, ElTag } from "element-plus";
 import ProTable from "@/components/ProTable/index.vue";
 import { ProTableInstance, ColumnProps } from "@/components/ProTable/interface";
 import { CirclePlus, Delete, EditPen } from "@element-plus/icons-vue";
@@ -260,7 +260,9 @@ const handleSearch = (params: any) => {
 const dataCallback = (data: any) => {
   const arr = Array.isArray(data?.results?.records) ? data.results.records : [];
   const list = arr.map((item) => {
-    const fileName = item.filename || "";
+    const rawFileName = item.filename || "";
+    // 去掉内部存储前缀 material-<uuid>--，只展示原始文件名（DB 值不可改，下载依赖它定位存储路径）
+    const fileName = rawFileName.replace(/^material-[a-f0-9]+--/, "") || rawFileName;
     const title = item.title || fileName.replace(/\.[^.]+$/, "");
     return {
       ...item,
@@ -322,17 +324,36 @@ const columns = computed<ColumnProps[]>(() => {
       prop: "version",
       label: "版本号",
       i18nKey: "licenseAdmin.version",
-      width: 100,
+      width: 220,
+      render: (scope) => {
+        const row = scope.row;
+        // 生成中：版本号位置显示进度条（无百分比时用流动动画），生成完成/失败才显示版本号
+        if (taskState(row) === "PENDING") {
+          return (
+            <div class="version-progress">
+              <ElProgress
+                percentage={taskPercent(row)}
+                indeterminate={!hasTaskPercent(row)}
+                showText={hasTaskPercent(row)}
+              />
+            </div>
+          );
+        }
+        if (taskState(row) === "FAILURE") {
+          return <ElTag type={taskTagType(row)} effect="plain">{taskLabel(row)}</ElTag>;
+        }
+        return <span>{row.version || "-"}</span>;
+      },
     },
     {
       prop: "created_at",
       label: "创建时间",
-      minWidth: 170,
+      minWidth: 130,
     },
     {
       prop: "updated_at",
       label: "更新时间",
-      minWidth: 170,
+      minWidth: 130,
     },
     {
       prop: "operation",
@@ -380,14 +401,19 @@ async function openReview(row) {
 
 const taskState = (row) => String(row.task_status || "").toUpperCase();
 const isTaskReady = (row) =>
-  taskState(row) === "SUCCESS" || Number(row.percent) >= 100;
+  taskState(row) === "SUCCESS" || parseIntPercent(row) >= 100;
 const hasTaskPercent = (row) =>
   row.percent !== null &&
   row.percent !== undefined &&
   row.percent !== "" &&
-  Number.isFinite(Number(row.percent));
+  Number.isFinite(parseIntPercent(row));
 const taskPercent = (row) =>
-  Math.min(100, Math.max(0, Number(row.percent) || 0));
+  Math.min(100, Math.max(0, parseIntPercent(row)));
+// 后端 percent 列为 varchar（如 '45%'），统一解析为数字
+const parseIntPercent = (row) => {
+  const n = parseInt(String(row.percent || ""), 10);
+  return Number.isFinite(n) ? n : 0;
+};
 const taskLabel = (row) => {
   const state = taskState(row);
   if (state === "PENDING") return "生成中";
@@ -608,6 +634,12 @@ onUnmounted(() => {
 });
 </script>
 <style scoped>
+.version-progress {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0 2px;
+}
 .doc-cell {
   display: flex;
   align-items: center;
