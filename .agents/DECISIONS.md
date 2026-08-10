@@ -125,3 +125,7 @@
 - Web 首页使用专用的用户端首页接口，不复用管理端练习或考试 CRUD 接口。接口仅向已认证用户返回其租户内的可见练习和考试。
 - 可展示练习限定为已完成生成、当前有效且岗位可见的记录；可展示考试限定为已发布、未结束且符合考试目标的记录。角色 1（superadmin）在同租户内跳过岗位和考试目标过滤，其他角色按 token 中的公司、部门、岗位和用户 ID 过滤。
 - 当前数据库没有用户学习、用户练习或答题记录表，首页相关区域必须使用明确空状态；不得从管理端记录或 mock 推导个人学习进度、时长、计划或练习正确率。
+## 2026-08-10 PPT/PPTX preview transport
+
+- Keep the original PPT/PPTX `file_type` in the UI, but render its existing file URL with the PDF viewer. This relies on the Learn file-access endpoint returning the cached PDF for presentation URIs.
+- Do not add a second preview API, a file-type mapping service, or a new viewer dependency.

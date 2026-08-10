@@ -375,3 +375,8 @@
 - 首页新增 `services/webUser/home.service.js`，从专用用户端首页接口读取练习和待参加考试；移除首页的本地 mock 展示数据。开始练习始终跳转 `WebUserPractice`，开始考试跳转 `WebUserExam`。
 - 练习、考试卡片均支持加载、失败重试、真实空数据；最近学习、今日计划、整体学习进度、学习数据因当前没有用户学习/练习记录表而明确显示空状态，不伪造个人数据。
 - 增加开发代理和生产 Nginx 代理配置，生产环境需注入 `WEB_USER_HOME_API_HOST`。补齐中英泰文案；未运行构建、测试、服务、容器或数据库操作。
+## 2026-08-10 PPT/PPTX PDF preview
+
+- `OfficeViewer` now uses the existing PDF viewer for `ppt` and `pptx`; it no longer invokes the browser-side `@vue-office/pptx` renderer.
+- Material list labels and request URLs remain unchanged. The Learn backend resolves presentation URLs to cached PDFs.
+- No build, browser, API, service, container, or database operation was run.

@@ -151,3 +151,8 @@
 - 首页已改用 `services/webUser/home.service.js` 的专用接口；练习卡片与考试卡片读取真实数据，开始练习进入 `WebUserPractice`，开始考试/查看全部进入 `WebUserExam`。
 - 后端对应组件位于 `beat-backend-github/src/comps/web_user_home/`，提供一个只读首页接口并以 token 的租户/组织信息过滤数据。部署时需按该组件的 Dockerfile 新建服务容器，并在前端 Nginx 环境提供 `WEB_USER_HOME_API_HOST`；实际 Compose 目标尚未确认，不要猜测并修改其他部署文件。
 - 当前无用户学习或练习行为表，因此最近学习、今日计划、学习数据和整体学习统计必须为空状态。后续如新增行为记录表，应扩展专用首页接口，不可重新放回 mock。
+## 2026-08-10 PPT/PPTX PDF preview handoff
+
+- Modified `src/components/OfficeViewer/index.vue`, the shared viewer used by the material library and Web study page.
+- PPT/PPTX now selects `VueOfficePdf`; browser-side `VueOfficePptx` parsing, options, callbacks, and reset handling were removed. File type labels and `/mobileapi` URLs are unchanged.
+- Requires the Learn `/api/v1/files/access` implementation that maps an original PPT/PPTX URI to its generated PDF cache. User must run the browser and build verification.

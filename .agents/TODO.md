@@ -27,3 +27,6 @@
 - [ ] 构建并部署 `beat-backend-github/src/comps/web_user_home/Dockerfile` 对应的用户端首页服务，注入 MySQL、账户鉴权和 `WEB_USER_HOME_SERVICE_*` 配置；前端生产 Nginx 同时注入 `WEB_USER_HOME_API_HOST`。
 - [ ] 用户分别以 superadmin 与普通用户验证 `/web/home`：练习仅显示当前租户内已完成生成且有效的内容，考试只显示已发布且符合目标人群的内容。
 - [ ] 如需要首页展示最近学习、今日计划、学习时长、练习进度或正确率，先设计并落地用户学习/练习行为记录表及写入流程，再扩展用户端首页接口。
+## PPT/PPTX preview validation
+
+- [ ] After deploying the updated Learn backend, verify that material-library and Web-study PPT/PPTX previews render as PDFs, while PDF, Word, Excel, image, and video previews keep their existing behavior.

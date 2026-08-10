@@ -15,7 +15,7 @@
   >
     <!-- PDF预览 -->
     <VueOfficePdf
-      v-if="trimmedType === 'pdf'"
+      v-if="trimmedType === 'pdf' || trimmedType === 'ppt' || trimmedType === 'pptx'"
       ref="pdfViewer"
       :src="encodedSrc"
       :style="{
@@ -59,21 +59,6 @@
     />
 
     <!-- PPT预览 -->
-    <VueOfficePptx
-      v-else-if="trimmedType === 'ppt' || trimmedType === 'pptx'"
-      ref="pptxViewer"
-      :src="encodedSrc"
-      :options="pptxOptions"
-      :style="{
-        height: height,
-        width: width,
-        transform: `scale(${zoomLevel}) translate(${dragOffset.x}px, ${dragOffset.y}px)`,
-        transformOrigin: 'center center',
-      }"
-      @rendered="onPptxRendered"
-      @error="onPptxError"
-    />
-
     <!-- 不支持的文件类型 -->
     <div v-else class="unsupported-type">
       <div class="error-message">
@@ -113,7 +98,6 @@ import VueOfficeDocx from "@vue-office/docx/lib/v3/index.js";
 import "@vue-office/docx/lib/v3/index.css";
 import VueOfficeExcel from "@vue-office/excel/lib/v3/index.js";
 import "@vue-office/excel/lib/v3/index.css";
-import VueOfficePptx from "@vue-office/pptx";
 
 const { t } = useI18n();
 
@@ -151,7 +135,6 @@ const viewerContainer = ref(null);
 const pdfViewer = ref(null);
 const docxViewer = ref(null);
 const excelViewer = ref(null);
-const pptxViewer = ref(null);
 let zoomTipTimer = null;
 
 // 拖拽相关状态
@@ -165,17 +148,6 @@ const isMobile = window.innerWidth < 500;
 const supportedTypes = ["pdf", "docx", "doc", "xlsx", "xls", "ppt", "pptx"];
 
 // PPTX配置选项
-const pptxOptions = ref({
-  // 启用图片渲染
-  enableImages: true,
-  // 设置渲染模式
-  renderMode: "canvas",
-  // 缩放比例
-  scale: 1,
-  // 启用调试模式
-  debug: true,
-});
-
 // 处理去除空格的文件类型
 const trimmedType = computed(() => {
   return props.type.trim().toLowerCase();
@@ -202,25 +174,6 @@ const onError = (err) => {
   loading.value = false;
   error.value = true;
   errorMessage.value = err.message || "文档加载失败";
-  emit("error", err);
-};
-
-const onPptxRendered = () => {
-  console.log("PPTX文档渲染完成");
-  console.log("当前src:", encodedSrc.value);
-  console.log("文档类型:", trimmedType.value);
-  loading.value = false;
-  error.value = false;
-  emit("rendered");
-};
-
-const onPptxError = (err) => {
-  console.error("PPTX文档渲染失败:", err);
-  console.log("失败时的src:", encodedSrc.value);
-  console.log("失败时的文档类型:", trimmedType.value);
-  loading.value = false;
-  error.value = true;
-  errorMessage.value = err.message || "PPTX文档加载失败";
   emit("error", err);
 };
 
@@ -315,14 +268,6 @@ const resetOfficeViewerScroll = () => {
     }
 
     // 重置PPT组件滚动位置
-    if (pptxViewer.value && pptxViewer.value.$el) {
-      const pptxContainer =
-        pptxViewer.value.$el.querySelector(".pptx-viewer") ||
-        pptxViewer.value.$el;
-      if (pptxContainer) {
-        pptxContainer.scrollTop = 0;
-      }
-    }
   });
 };
 
@@ -414,9 +359,6 @@ defineExpose({
   handleMouseMove,
   handleMouseUp,
   handleMouseLeave,
-  onPptxRendered,
-  onPptxError,
-  pptxOptions,
 });
 </script>
 
