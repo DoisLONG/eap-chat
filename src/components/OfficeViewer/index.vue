@@ -21,7 +21,7 @@
       :style="{
         height: height,
         width: width,
-        transform: `scale(${zoomLevel}) translate(${dragOffset.x}px, ${dragOffset.y}px)`,
+        transform: viewerTransform,
         transformOrigin: 'center center',
       }"
       @rendered="onRendered"
@@ -36,7 +36,7 @@
       :style="{
         height: height,
         width: width,
-        transform: `scale(${zoomLevel}) translate(${dragOffset.x}px, ${dragOffset.y}px)`,
+        transform: viewerTransform,
         transformOrigin: 'center center',
       }"
       @rendered="onRendered"
@@ -51,7 +51,7 @@
       :style="{
         height: height,
         width: width,
-        transform: `scale(${zoomLevel}) translate(${dragOffset.x}px, ${dragOffset.y}px)`,
+        transform: viewerTransform,
         transformOrigin: 'center center',
       }"
       @rendered="onRendered"
@@ -151,6 +151,13 @@ const supportedTypes = ["pdf", "docx", "doc", "xlsx", "xls", "ppt", "pptx"];
 // 处理去除空格的文件类型
 const trimmedType = computed(() => {
   return props.type.trim().toLowerCase();
+});
+
+const viewerTransform = computed(() => {
+  const { x, y } = dragOffset.value;
+  return zoomLevel.value === 1 && x === 0 && y === 0
+    ? "none"
+    : `scale(${zoomLevel.value}) translate(${x}px, ${y}px)`;
 });
 
 // 检查文件类型是否支持

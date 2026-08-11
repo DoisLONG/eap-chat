@@ -22,7 +22,13 @@ const questionText = computed(() => questionParts.value.text);
 </script>
 
 <style scoped>
-.next-question-content { display: flex; align-items: flex-start; gap: 12px; line-height: 1.7; }
-.question-number { flex: none; padding: 6px 10px; border-radius: 8px; background: #eaf3ff; color: #2368c4; font-size: 13px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
-.question-text { min-width: 0; color: #1f2937; font-weight: 600; word-break: break-word; }
+.next-question-content { display: flex; align-items: flex-start; gap: 10px; line-height: 1.6; }
+.question-number { flex: none; padding: 5px 8px; border-radius: 8px; background: #eaf3ff; color: #2368c4; font-size: 12px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
+.question-text { min-width: 0; color: #1f2937; font-size: 15px; font-weight: 600; word-break: break-word; }
+
+@media (max-width: 900px) {
+  .next-question-content { gap: 8px; line-height: 1.55; }
+  .question-number { padding: 4px 7px; border-radius: 7px; font-size: 11px; }
+  .question-text { font-size: 15px; line-height: 1.55; }
+}
 </style>

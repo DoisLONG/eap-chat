@@ -92,11 +92,11 @@ const analysis = computed(() => {
 .result-card {
   position: relative;
   box-sizing: border-box;
-  padding: 24px 28px;
-  border-radius: 20px;
+  padding: 14px 18px;
+  border-radius: 16px;
   background: #ffffff;
   border: 1px solid #e5eaf2;
-  box-shadow: 0 8px 24px rgba(31, 50, 81, 0.08);
+  box-shadow: 0 4px 14px rgba(31, 50, 81, 0.06);
 }
 
 /* 左侧竖向状态条（错误红 / 正确绿 / 部分橙） */
@@ -104,10 +104,10 @@ const analysis = computed(() => {
   content: "";
   position: absolute;
   left: 0;
-  top: 22px;
-  bottom: 22px;
-  width: 6px;
-  border-radius: 0 3px 3px 0;
+  top: 16px;
+  bottom: 16px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
   background: #e11d48;
 }
 .result-card.status-correct::before {
@@ -120,39 +120,41 @@ const analysis = computed(() => {
 /* ===== 顶部 ===== */
 .result-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 12px 20px;
+  gap: 8px 10px;
 }
 
+.result-title-area { display: contents; }
 .result-title {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.3;
   color: #172033;
 }
 .result-subtitle {
-  margin-top: 3px;
-  font-size: 14px;
+  margin: 0;
+  font-size: 13px;
   color: #8b95a7;
 }
 
 .result-status {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   align-self: center;
-  padding: 6px 14px;
+  padding: 5px 10px;
   border-radius: 999px;
   border: 1px solid #fecdd3;
   background: #fff1f2;
   color: #be123c;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
+  margin-left: auto;
 }
 .status-mark {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1;
 }
@@ -170,16 +172,16 @@ const analysis = computed(() => {
 .result-score {
   display: flex;
   align-items: baseline;
-  gap: 6px;
-  margin-left: auto;
+  gap: 4px;
+  margin-left: 0;
 }
 .score-label,
 .score-unit {
-  font-size: 14px;
+  font-size: 13px;
   color: #64748b;
 }
 .score-value {
-  font-size: 44px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1;
   color: #172033;
@@ -187,7 +189,7 @@ const analysis = computed(() => {
 
 /* ===== 分割线 ===== */
 .result-divider {
-  margin: 16px 0 18px;
+  margin: 12px 0;
   border-top: 1px solid #e5eaf2;
 }
 
@@ -195,13 +197,13 @@ const analysis = computed(() => {
 .result-detail {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .info-row {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -225,19 +227,23 @@ const analysis = computed(() => {
 
 .info-label {
   flex: none;
-  width: 72px;
-  padding-top: 9px;
+  width: 64px;
+  padding-top: 0;
   font-size: 14px;
   font-weight: 600;
   color: #1e293b;
 }
 
 .info-content {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
-  padding: 14px 16px;
-  border-radius: 12px;
-  line-height: 1.7;
+  max-width: calc(100% - 120px);
+  height: auto;
+  min-height: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.6;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
@@ -252,6 +258,14 @@ const analysis = computed(() => {
 }
 .analysis-content :deep(.markdown-body) {
   color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+.analysis-content :deep(.markdown-body > :first-child) {
+  margin-top: 0;
+}
+.analysis-content :deep(.markdown-body > :last-child) {
+  margin-bottom: 0;
 }
 
 .dashed-divider {
@@ -261,39 +275,69 @@ const analysis = computed(() => {
 /* ===== 响应式 ===== */
 @media (max-width: 900px) {
   .result-card {
-    padding: 18px 16px;
-    border-radius: 16px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+  .result-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 8px;
   }
   .result-title {
     font-size: 20px;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .result-subtitle {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    font-size: 13px;
   }
   .result-status {
     font-size: 13px;
-    padding: 5px 12px;
+    padding: 4px 9px;
+    grid-column: 2;
+    grid-row: 1;
+    margin-left: 0;
   }
   .result-score {
-    width: 100%;
+    grid-column: 1 / -1;
+    grid-row: 3;
+    justify-content: flex-start;
     margin-left: 0;
   }
   .score-value {
-    font-size: 32px;
+    font-size: 20px;
   }
   .result-divider {
-    margin: 14px 0 16px;
+    margin: 10px 0;
   }
   .result-detail {
-    gap: 14px;
+    gap: 8px;
   }
   .info-row {
-    flex-wrap: wrap;
-    gap: 8px 12px;
+    display: grid;
+    grid-template-columns: 34px 64px minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+  }
+  .info-icon {
+    width: 34px;
+    height: 34px;
+    margin-top: 0;
   }
   .info-label {
-    width: auto;
-    padding-top: 2px;
+    width: 64px;
+    padding-top: 8px;
+    font-size: 14px;
   }
   .info-content {
-    flex-basis: 100%;
+    grid-column: 3;
+    min-width: 0;
+    max-width: none;
+    padding: 8px 12px;
+    font-size: 13px;
+    line-height: 1.55;
   }
 }
 </style>

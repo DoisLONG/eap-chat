@@ -30,3 +30,31 @@
 ## PPT/PPTX preview validation
 
 - [ ] After deploying the updated Learn backend, verify that material-library and Web-study PPT/PPTX previews render as PDFs, while PDF, Word, Excel, image, and video previews keep their existing behavior.
+
+## 2026-08-11 智能陪练答题 UI 验证
+
+- [ ] 用户在桌面端和手机端验证 ChatExam 的 AI 教练消息与答题结果卡：普通消息宽度、结果卡紧凑程度、短答案/解析的自适应高度，以及长文本不产生横向滚动。
+
+## 2026-08-11 本地用户端 iframe 验证
+
+- [ ] 用户在 Vite 开发环境刷新后进入“用户端”，确认 iframe 加载 `http://localhost:5173/eap/index.html#/`，不再请求远程 H5 地址。
+
+## 2026-08-11 用户端 SOP 练习跳转验证
+
+- [ ] 用户在已登录环境从单个 SOP 的“开始练习”和“混合出题”确认进入 `/web/chat/exam`，确认 URL 查询参数、首题加载和返回行为正常。
+
+## 2026-08-11 端类型高亮验证
+
+- [ ] 用户从 Web 端切换到用户端，确认仅用户端高亮；再切回 Web 端及管理端，确认三种端类型高亮状态正确。
+
+## 2026-08-11 智能陪练移动端 UI 验证
+
+- [ ] 用户在 360px、390px 和 430px 宽度验证：结果卡顶部三行信息、短答案/长解析的自然换行、下一题提示框对齐、输入区不遮挡消息，且无横向滚动。
+
+## 2026-08-11 SOP 练习移动端分页验证
+
+- [ ] 用户在 360px、390px 和 430px 宽度验证 SOP 列表的上一页/页码/下一页、跳页、总条数及底部提示均不重叠，且底部导航不会遮挡最后一项内容。
+
+## 2026-08-11 资料预览渲染验证
+
+- [ ] 用户验证 PDF、DOC/DOCX、XLS/XLSX 与 PPT/PPTX 首次打开时页面保持正常直立、无渲染动画；并确认 Ctrl 滚轮缩放及放大后的拖动仍可用。

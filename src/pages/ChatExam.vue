@@ -1895,18 +1895,18 @@ onUnmounted(() => {
 }
 
 .msg-row { gap: 11px; margin-bottom: 16px; }
-.msg-content { max-width: min(790px, calc(100% - 56px)); }
+.msg-content { max-width: min(680px, 58%); }
 .msg-row.user .msg-content { max-width: min(360px, calc(100% - 56px)); }
-.msg-content.answer-result-card { width: min(1100px, calc(100% - 56px)); max-width: min(1100px, calc(100% - 56px)); }
+.msg-content.answer-result-card { width: min(70%, 780px); max-width: calc(100% - 56px); }
 .nick { margin: 0 0 6px 3px; color: #8b95a7; }
 .msg-row.user .nick { margin-right: 3px; }
-.bubble { padding: 0; border-radius: 14px; font-size: 15px; line-height: 1.7; }
-.bubble.assistant { border: 1px solid #e7ebf2; border-top-left-radius: 14px; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05); }
-.bubble.next-question-card { padding: 17px 18px; border-color: #e7ebf2; border-radius: 14px; }
+.bubble { padding: 0; border-radius: 14px; font-size: 14px; line-height: 1.65; }
+.bubble.assistant { padding: 10px 14px; border: 1px solid #e7ebf2; border-top-left-radius: 14px; box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04); }
+.bubble.next-question-card { padding: 12px 14px; border-color: #e7ebf2; border-radius: 14px; }
 .bubble.user { padding: 11px 16px; border-radius: 14px 14px 4px 14px; }
 /* 结果卡片自带边框/圆角/阴影，气泡只做容器：去边框、去阴影，圆角交给卡片自身 */
 .bubble.answer-result-card { width: 100%; min-width: 0; max-width: none; padding: 0; border: 0; box-shadow: none; border-radius: 20px; }
-.next-tip { margin: -2px 0 16px 45px; padding: 11px 14px; color: #475569; background: #f8fafc; border: 1px dashed #dbe2ea; border-radius: 11px; font-size: 13px; line-height: 1.6; }
+.next-tip { width: min(70%, 780px); box-sizing: border-box; margin: -2px 0 16px 49px; padding: 11px 14px; color: #475569; background: #f8fafc; border: 1px dashed #dbe2ea; border-radius: 11px; font-size: 13px; line-height: 1.6; }
 
 .chat-input {
   position: fixed;
@@ -1935,14 +1935,26 @@ onUnmounted(() => {
 @media (max-width: 900px) {
   .chat-header { height: 62px; padding: 0 12px; }
   .back-top-btn { display: none; }
-  .content { padding: 76px 12px 114px; }
+  .content { padding: 76px 12px 102px; }
   .chat-main { width: 100%; height: calc(100vh - 190px); }
   .session-head { padding: 15px; margin-bottom: 14px; }
   .session-meta { font-size: 12px; }
   .msg-content, .msg-row.user .msg-content { max-width: calc(100% - 45px); }
-  .msg-content.answer-result-card { width: calc(100% - 45px); max-width: calc(100% - 45px); }
+  .msg-row.user .msg-content { max-width: 70%; }
+  .msg-content.answer-result-card { width: calc(100% - 64px); max-width: calc(100% - 64px); }
+  .bubble.assistant { padding: 10px 12px; font-size: 15px; line-height: 1.55; }
+  .bubble.next-question-card { padding: 10px 12px; }
+  .bubble.user { padding: 10px 14px; font-size: 15px; line-height: 1.55; }
   .bubble.answer-result-card { width: 100%; min-width: 0; }
-  .next-tip { margin-left: 0; }
-  .chat-input { padding: 8px 12px calc(10px + env(safe-area-inset-bottom)); }
+  .next-tip { width: calc(100% - 64px); margin-left: 45px; }
+  .chat-input { padding: 6px 12px calc(8px + env(safe-area-inset-bottom)); }
+  .composer-card { padding: 8px; border-radius: 14px; }
+  .mobile-tools { gap: 6px; margin-bottom: 6px; }
+  .mobile-mini-btn { height: 36px; font-size: 13px; }
+  .mobile-text-entry { gap: 8px; }
+  .mobile-chat-input :deep(.el-textarea__inner) { min-height: 44px !important; padding: 10px 12px; border-radius: 14px; font-size: 14px; }
+  .mode-icon-btn { width: 44px; height: 44px; }
+  .mode-icon { width: 22px; height: 22px; }
+  .mobile-send-btn { height: 40px; margin-top: 8px; border-radius: 12px; font-size: 14px; }
 }
 </style>
