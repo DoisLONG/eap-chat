@@ -292,7 +292,7 @@ function handleNextClick(page) {
 
 function goChat(row) {
   router.push({
-    path: "/chat/exam",
+    path: "/web/chat/exam",
     query: {
       sopId: row.id,
       sopName: row.fileName,
@@ -310,7 +310,7 @@ const toMixTest = () => {
 };
 const handleConfirmMix = (position_id) => {
   router.push({
-    path: "/chat/exam",
+    path: "/web/chat/exam",
     query: {
       position_id,
     },
@@ -492,7 +492,7 @@ const handleConfirmMix = (position_id) => {
 /* 移动端布局调整 */
 @media (max-width: 767px) {
   .sop-picker {
-    padding: 16px 12px;
+    padding: 16px 12px 88px;
   }
 
   .bar {
@@ -534,12 +534,80 @@ const handleConfirmMix = (position_id) => {
   }
 
   .pager {
-    margin: 16px 0;
+    margin: 14px 0 8px;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .pager :deep(.el-pagination) {
+    display: grid;
+    grid-template-columns: 32px auto 32px;
+    grid-template-areas:
+      "prev pager next"
+      "jump jump total";
+    justify-content: center;
+    align-items: center;
+    gap: 10px 8px;
+    width: 100%;
+  }
+
+  .pager :deep(.btn-prev) {
+    grid-area: prev;
+    min-width: 32px;
+    height: 32px;
+    margin: 0;
+  }
+
+  .pager :deep(.el-pager) {
+    grid-area: pager;
+    margin: 0;
+  }
+
+  .pager :deep(.btn-next) {
+    grid-area: next;
+    min-width: 32px;
+    height: 32px;
+    margin: 0;
+  }
+
+  .pager :deep(.el-pager li) {
+    min-width: 32px;
+    height: 32px;
+    margin: 0;
+    line-height: 32px;
+  }
+
+  .pager :deep(.el-pagination__jump) {
+    grid-area: jump;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    font-size: 13px;
+    justify-self: end;
+  }
+
+  .pager :deep(.el-pagination__editor.el-input) {
+    width: 44px;
+  }
+
+  .pager :deep(.el-pagination__editor .el-input__wrapper) {
+    min-height: 32px;
+    padding: 0 8px;
+  }
+
+  .pager :deep(.el-pagination__total) {
+    grid-area: total;
+    margin: 0;
+    font-size: 13px;
+    white-space: nowrap;
+    justify-self: start;
   }
 
   .tips {
     font-size: 13px;
-    margin: 8px 0 20px;
+    margin: 8px 0 0;
+    line-height: 1.6;
   }
 }
 

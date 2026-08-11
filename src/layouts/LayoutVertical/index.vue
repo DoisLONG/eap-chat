@@ -259,6 +259,7 @@ const changeDuan = (val) => {
     router.push({ path: "/dashboard", state: { platform: "admin" } });
   }
   if (val === "user") {
+    globalStore.setPlatform("admin");
     nextTick(() => {
       calculateH5Size();
     });
@@ -340,12 +341,8 @@ watch(
 
 const setIframeUrl = () => {
   const token = localStorage.getItem("token");
-  const origin =
-    window.location.hostname === "localhost"
-      ? "https://14.103.144.187:30111"
-      : window.location.origin;
-  userUrl.value = `${origin}/eap/#/?token=${token}&lang=${language.value}`;
-  // userUrl.value = `http://localhost:8888/eap/#/?token=${token}&lang=${language.value}`;
+  const h5Path = import.meta.env.DEV ? "/eap/index.html#/" : "/eap/#/";
+  userUrl.value = `${window.location.origin}${h5Path}?token=${token}&lang=${language.value}`;
   // console.log("userUrl.value", userUrl.value);
 };
 // 监听窗口大小变化

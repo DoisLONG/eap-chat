@@ -380,3 +380,56 @@
 - `OfficeViewer` now uses the existing PDF viewer for `ppt` and `pptx`; it no longer invokes the browser-side `@vue-office/pptx` renderer.
 - Material list labels and request URLs remain unchanged. The Learn backend resolves presentation URLs to cached PDFs.
 - No build, browser, API, service, container, or database operation was run.
+
+## 2026-08-11 Web 用户端智能陪练答题 UI 收紧
+
+- `src/pages/ChatExam.vue` 仅调整 AI 消息和结果消息容器样式：普通教练消息最大宽度收紧为聊天区域的 62% 且不超过 760px；答题结果卡在桌面端限制为 78% 且不超过 900px，移动端额外保留卡片右侧空间。
+- `src/components/chat/AnswerResultCard.vue` 缩小结果卡、标题、得分、状态标签、分隔与内容区内边距；标准答案和结果解析按内容自然撑开，去除多余视觉留白，保留现有蓝/紫/红绿橙状态体系。
+- `src/components/chat/NextQuestionCard.vue` 同步缩小题号标签与间距，题目保持 15px 可读字号。未修改 API、SSE、消息结构、评分、下一题、路由或语音逻辑；未运行构建、测试、浏览器、服务或容器操作。
+
+## 2026-08-11 智能陪练结果卡标题区微调
+
+- `ChatExam.vue` 继续收紧普通 AI 消息至 60% / 最大 720px，结果卡至 74% / 最大 840px；移动端结果卡改为 `calc(100% - 60px)`，在头像与页面边距之外额外保留空间。
+- `AnswerResultCard.vue` 保留原信息和颜色体系，使用现有 Flex/Grid 样式将“本题判定已完成”放在“答题结果”右侧，并将状态标签置于得分左侧；外层 padding 调整为 `16px 20px`。未修改任何业务逻辑或接口处理。
+
+## 2026-08-11 智能陪练结果卡再次收紧
+
+- `ChatExam.vue` 将普通 AI 消息收紧为 58% / 最大 680px，结果卡收紧为 70% / 最大 780px；移动端结果卡调整为 `calc(100% - 64px)`。
+- `AnswerResultCard.vue` 外层 padding 调整为 `14px 18px`，得分数字调整为桌面端 26px、移动端 24px。未修改任何业务逻辑或接口处理。
+
+## 2026-08-11 智能陪练得分与提示框对齐
+
+- `AnswerResultCard.vue` 将得分数字进一步缩小为桌面端 `22px`、移动端 `20px`，降低其视觉权重。
+- `ChatExam.vue` 将结果卡下方的下一题提示框与结果卡统一为桌面端 `70%`、最大 `780px`；移动端统一为 `calc(100% - 64px)`，并与卡片左边缘对齐。
+- 仅调整样式与布局，未修改答题、评分、流式消息或下一题业务逻辑。
+
+## 2026-08-11 本地用户端 iframe 地址修复
+
+- `src/layouts/LayoutVertical/index.vue` 在 Vite 开发环境改为加载当前站点的 `/eap/index.html#/`，不再请求写死的远程 H5 地址；生产环境仍使用 `/eap/#/`。
+- 未修改 H5 编译产物、接口或路由；未运行构建、测试或浏览器验证。
+
+## 2026-08-11 用户端 SOP 开始练习路由修复
+
+- `src/pages/SopPicker.vue` 的单个 SOP 和混合出题确认入口均改为跳转已注册的 `/web/chat/exam`，原有 SOP 与岗位查询参数保持不变。
+- 未修改答题页、路由表、接口或数据契约；未运行构建、测试或浏览器验证。
+
+## 2026-08-11 用户端切换清除 Web 高亮
+
+- 从 Web 端切换到 iframe 用户端时，同步将 `globalStore.currentPlatform` 设为 `admin`；用户端保持激活，Web 端不再保留激活样式。
+- 未修改路由、iframe 地址、接口或数据契约；未运行构建、测试或浏览器验证。
+
+## 2026-08-11 智能陪练移动端反馈卡收紧
+
+- `AnswerResultCard.vue` 仅在移动端把结果标题、状态、副标题和得分调整为三行布局；答案/解析行改为图标、标题、内容同排，内容按文本自然换行，减少短文本造成的卡片高度。
+- `ChatExam.vue` 仅在移动端收紧普通 AI 气泡、用户气泡和底部输入区；结果卡与下一题提示框继续共用现有宽度规则，桌面端布局不变。
+- `NextQuestionCard.vue` 仅缩小手机端题号标签及间距。未改动 API、SSE、消息结构、评分、下一题、路由或语音业务逻辑。
+
+## 2026-08-11 SOP 练习移动端分页排版
+
+- `SopPicker.vue` 仅调整手机端样式：保留上一页、页码、下一页、跳页和总条数，改为两行分页网格；同时为固定底部导航预留内容底部空间。
+- 未修改 SOP 查询、分页参数、跳转或任何业务逻辑。
+
+## 2026-08-11 资料预览默认渲染修复
+
+- `OfficeViewer.vue` 在默认缩放和未拖动时不再向 PDF、Word、Excel 渲染器传递 CSS `transform`；用户主动缩放或拖动时仍保留既有缩放与平移行为。
+- 移除 H5 与资料库预览外层对所有子元素的 `transition: all`，避免文档渲染尺寸变化被动画干扰。未修改文件地址、类型判断或预览接口。
