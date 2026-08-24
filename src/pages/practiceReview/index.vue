@@ -127,3 +127,67 @@ onBeforeUnmount(clearSourceUrl);
 <style scoped>
 .practice-review { display:flex; flex-direction:column; height:calc(100vh - 112px); min-height:620px; background:#f4f6f9; }.topbar,.pane-head,.topbar-main,.topbar-actions,.pane-actions,.viewer-tools,.summary,.pagination,.question-card header,.question-card footer { display:flex; align-items:center; }.topbar { min-height:64px; justify-content:space-between; gap:12px; padding:10px 16px; background:#fff; border-bottom:1px solid #e5eaf0; }.topbar-main,.topbar-actions { gap:10px; min-width:0; }.title-block h2 { margin:0; font-size:17px; }.title-block p,.pane-head small { display:block; margin:3px 0 0; color:#7f8a99; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }.workspace { display:grid; grid-template-columns:minmax(0,46fr) minmax(0,54fr); gap:14px; flex:1; min-height:0; padding:14px; }.pane { display:flex; flex-direction:column; min-width:0; min-height:0; overflow:hidden; background:#fff; border:1px solid #e5eaf0; border-radius:8px; }.pane-head { min-height:56px; justify-content:space-between; gap:10px; padding:10px 14px; border-bottom:1px solid #e5eaf0; }.pane-actions { gap:8px; white-space:nowrap; }.source-body,.question-list { flex:1; min-height:0; overflow:auto; }.source-body { padding:14px; background:#eef1f5; }.pdf-viewer { width:100%; height:100%; min-height:500px; border:0; background:#fff; }.viewer-tools { gap:8px; min-height:34px; margin-bottom:10px; }.source-text { min-height:100%; margin:0; padding:24px; white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.75; background:#fff; box-shadow:0 2px 10px #d9dee6; }.source-fragment { margin-top:10px; padding:10px; color:#7a5610; background:#fff5cf; border:1px solid #f5d66f; }.review-pane { background:#f8fafc; }.review-tools { display:grid; grid-template-columns:1fr 150px auto; gap:10px; padding:12px 14px; background:#fff; border-bottom:1px solid #e5eaf0; }.summary { justify-content:space-between; padding:9px 14px; color:#506071; background:#f3f8ff; border-bottom:1px solid #dcecff; }.summary span { color:#e6a23c; }.question-list { padding:14px; }.question-card { margin-bottom:12px; overflow:hidden; background:#fff; border:1px solid #e5eaf0; border-radius:8px; cursor:pointer; }.question-card.active { border-color:#72afff; box-shadow:0 0 0 3px rgba(22,119,255,.08); }.question-card header,.question-card footer { justify-content:space-between; gap:8px; padding:10px 14px; background:#fbfcfe; border-bottom:1px solid #edf0f4; }.question-card header > div { display:flex; align-items:center; gap:8px; }.question-card footer { border-top:1px solid #edf0f4; border-bottom:0; color:#8a95a3; font-size:12px; }.question-body { padding:14px; }.question-body label { display:block; margin-bottom:12px; color:#5a6675; font-size:12px; font-weight:600; }.question-body label :deep(.el-select),.question-body label :deep(.el-textarea) { display:block; width:100%; margin-top:6px; }.pagination { min-height:54px; justify-content:space-between; padding:0 14px; background:#fff; border-top:1px solid #e5eaf0; }.save-status { min-height:38px; padding:10px 16px; color:#7b8794; font-size:12px; background:#fff; border-top:1px solid #e5eaf0; } :deep(.source-hit) { padding:1px 2px; background:#fff5cf; outline:2px solid #f5d66f; } @media (max-width:1050px) { .practice-review { height:auto; min-height:0; }.topbar { align-items:flex-start; flex-direction:column; }.workspace { grid-template-columns:1fr; overflow:visible; }.pane { min-height:620px; }.review-tools { grid-template-columns:1fr; } }
 </style>
+
+<style scoped>
+.practice-review {
+  container-type: inline-size;
+}
+
+@container (max-width: 1180px) {
+  .practice-review {
+    height: auto;
+    min-height: calc(100vh - 112px);
+  }
+
+  .topbar,
+  .topbar-main,
+  .topbar-actions,
+  .pane-head,
+  .pagination {
+    flex-wrap: wrap;
+  }
+
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+    overflow: visible;
+  }
+
+  .pane {
+    min-height: 560px;
+  }
+
+  .source-pane {
+    min-height: min(640px, calc(100vh - 170px));
+  }
+}
+
+@container (max-width: 1760px) {
+  .source-pane :deep(.vue-office-docx .docx-wrapper) {
+    padding: 8px;
+  }
+
+  .source-pane :deep(.vue-office-docx .docx-wrapper > section.docx) {
+    box-sizing: border-box;
+    width: 100% !important;
+    padding: 10px !important;
+  }
+}
+
+@container (max-width: 820px) {
+  .source-body {
+    padding: 8px;
+  }
+}
+
+@container (max-width: 640px) {
+  .review-tools {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pagination {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 10px 14px;
+  }
+}
+</style>

@@ -129,3 +129,8 @@
 
 - Keep the original PPT/PPTX `file_type` in the UI, but render its existing file URL with the PDF viewer. This relies on the Learn file-access endpoint returning the cached PDF for presentation URIs.
 - Do not add a second preview API, a file-type mapping service, or a new viewer dependency.
+
+## 2026-08-19 练习题目复核响应式布局
+
+- 题目复核页的双栏/单栏切换以页面实际可用内容宽度为依据，而非浏览器整体宽度；这样侧栏展开、折叠和不同显示缩放不会让原文件预览被压窄裁切。
+- 宽度充足时保持现有原文件与题目复核双栏；不足时改为上下单栏。双栏时只要原文件栏不足以容纳 DOCX 纸张宽度，DOCX 页面即占满栏宽，优先保证内容完整可读，不变更预览接口或资料格式。
