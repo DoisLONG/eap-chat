@@ -31,7 +31,7 @@
 
 - `sop.api.js`：SOP 列表、分类树、QA 生成/轮询/复核/保存、SOP 更新和删除。
 - `exam.api.js`：考试列表、详情、题目分页、创建/更新、来源/规则/对象保存、发布/撤回和删除；接口根路径为 `/api/v1/exams`，由 `/exam-api` 代理。
-- `chat.service.js`：用户答题会话，不等同于考试管理。
+- `chat.service.js`：用户答题会话，不等同于考试管理；综合练习启动使用 `/chatapi/v1/exams/comprehensive/start`，后续首题与答题仍使用 `/chatapi/v1/exams/answer`。
 - `services/webUser/exam.service.js`：Web 用户端正式考试列表、开始、恢复、单题保存、交卷与结果，经 `/exam-api`，不调用 `/chatapi`。
 - `company.service.js`、`user.service.js`、`mobile.service.js`、`dashboard.service.js`：分别服务组织/模型配置、认证/用户、课程/素材和仪表盘。
 

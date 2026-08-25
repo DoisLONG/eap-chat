@@ -7,11 +7,7 @@
           <img src="/logo1.png" class="logo" />
           <div class="meta">
             <div class="title ell">
-              {{
-                position_id
-                  ? $t("SopPicker.mixMode")
-                  : sopName || $t("ChatExam.noSelectSop")
-              }}
+              {{ practiceTitle }}
             </div>
             <div class="sub-title">AI Coach Exam Session</div>
           </div>
@@ -36,16 +32,26 @@
       <main class="chat-main" ref="scrollBox">
         <section class="session-head" aria-label="练习进度">
           <div class="session-row">
-            <div class="session-title"><span class="session-dot"></span>知识问答练习</div>
+            <div class="session-title"><span class="session-dot"></span>{{ practiceSessionTitle }}</div>
             <div class="session-meta">{{ practiceProgressLabel }}</div>
           </div>
           <div class="session-progress"><span :style="{ width: `${practiceProgress}%` }"></span></div>
         </section>
         <div class="chat-panel">
-          <template
-            v-for="(m, messageIndex) in messages"
-            :key="m.id"
+          <el-result
+            v-if="comprehensiveSessionUnavailable"
+            icon="info"
+            :title="$t('ChatExam.comprehensiveSessionUnavailable')"
+            :sub-title="$t('ChatExam.comprehensiveSessionUnavailableDescription')"
           >
+            <template #extra>
+              <el-button type="primary" @click="router.replace(getPracticeReturnTarget())">
+                {{ $t('ChatExam.returnToPractice') }}
+              </el-button>
+            </template>
+          </el-result>
+          <template v-else>
+            <template v-for="(m, messageIndex) in messages" :key="m.id">
           <div
             class="msg-row"
             :class="m.role"
@@ -81,9 +87,14 @@
           <div v-if="isResultMessage(m) && isNextQuestionMessage(messages[messageIndex + 1])" class="next-tip">
             已自动进入下一题，请直接在下方输入答案。
           </div>
+            </template>
           </template>
           <div v-if="autoStartFailed" class="retry-start">
-            <el-button type="primary" :loading="initializing" @click="startExam">
+            <el-button
+              type="primary"
+              :loading="initializing"
+              @click="isComprehensivePractice ? startComprehensiveExam() : startExam()"
+            >
               重新尝试加载第一题
             </el-button>
           </div>
@@ -101,6 +112,7 @@
               size="small"
               round
               :loading="ttsLoading"
+              :disabled="inputDisabled || !latestAssistantText"
               @click="playAssistantAudio"
             >
               <!-- 播放当前题目/回复 -->
@@ -110,7 +122,7 @@
             <el-button
               size="small"
               round
-              :disabled="!audioPlaying"
+              :disabled="inputDisabled || !audioPlaying"
               @click="stopAudio"
             >
               {{ $t("ChatExam.stopPlay") }}
@@ -147,6 +159,7 @@
               type="textarea"
               :autosize="{ minRows: 1, maxRows: 5 }"
               :placeholder="$t('ChatExam.tip')"
+              :disabled="inputDisabled"
               @keydown.enter.prevent="onEnter"
               @keydown.shift.enter.stop
             />
@@ -155,7 +168,7 @@
               type="primary"
               round
               :loading="sending"
-              :disabled="!input.trim()"
+              :disabled="inputDisabled || !input.trim()"
               @click="send"
             >
               {{ $t("ChatExam.send") }}
@@ -170,6 +183,7 @@
               class="mobile-mini-btn"
               round
               :loading="ttsLoading"
+              :disabled="inputDisabled || !latestAssistantText"
               @click="playAssistantAudio"
             >
               {{ $t("ChatExam.playQuestion") }}
@@ -178,7 +192,7 @@
             <el-button
               class="mobile-mini-btn"
               round
-              :disabled="!audioPlaying"
+              :disabled="inputDisabled || !audioPlaying"
               @click="stopAudio"
             >
               {{ $t("ChatExam.stopPlay") }}
@@ -205,12 +219,14 @@
               type="textarea"
               :autosize="{ minRows: 1, maxRows: 4 }"
               :placeholder="$t('ChatExam.tip')"
+              :disabled="inputDisabled"
               @keydown.enter.prevent="onEnter"
               @keydown.shift.enter.stop
             />
             <button
               class="mode-icon-btn"
               type="button"
+              :disabled="inputDisabled"
               @click="switchToVoiceMode"
               aria-label="切换为语音输入"
             >
@@ -228,7 +244,7 @@
             type="primary"
             round
             :loading="sending"
-            :disabled="!input.trim()"
+            :disabled="inputDisabled || !input.trim()"
             @click="send"
           >
             {{ $t("ChatExam.send") }}
@@ -276,6 +292,7 @@
             <button
               class="mode-icon-btn keyboard"
               type="button"
+              :disabled="inputDisabled"
               @click="switchToTextMode"
               aria-label="切换为键盘输入"
             >
@@ -318,7 +335,19 @@ const router = useRouter();
 const sopName = route.query.sopName || "";
 const sopId = route.query.sopId || "";
 const position_id = route.query.position_id || "";
+const comprehensiveExamId = String(route.query.examsId || "").trim();
 const routeQuestionTotal = Number(route.query.totalQuestions || route.query.questionCount || 0);
+const isComprehensivePractice = computed(() => route.query.mode === "comprehensive");
+const comprehensiveSessionUnavailable = computed(
+  () => isComprehensivePractice.value && !comprehensiveExamId,
+);
+const practiceTitle = computed(() => {
+  if (isComprehensivePractice.value) return t("ChatExam.comprehensiveTitle");
+  return position_id ? t("SopPicker.mixMode") : sopName || t("ChatExam.noSelectSop");
+});
+const practiceSessionTitle = computed(() =>
+  isComprehensivePractice.value ? t("ChatExam.comprehensiveTitle") : "知识问答练习",
+);
 
 const getPracticeReturnTarget = () => {
   if (route.query.entry === "web-practice") {
@@ -336,9 +365,12 @@ const isMobile = ref(window.innerWidth <= 900);
 const sessionId = ref("");
 const examId = ref("");
 const messages = reactive([]);
-const activeSessionKey = `chat_exam_active_v2_${position_id || sopId || "default"}`;
+const activeSessionKey = `chat_exam_active_v2_${comprehensiveExamId || position_id || sopId || "default"}`;
 const initializing = ref(false);
 const autoStartFailed = ref(false);
+const inputDisabled = computed(
+  () => comprehensiveSessionUnavailable.value || (isComprehensivePractice.value && initializing.value),
+);
 
 const createMessageId = (prefix = "message") =>
   `${prefix}-${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`}`;
@@ -349,7 +381,7 @@ const logMessageState = (label) => {
 const userAvatar = "/logo2.png";
 const botAvatar = "/logo1.png";
 
-if (!sopId && !position_id) router.replace(getPracticeReturnTarget());
+if (!isComprehensivePractice.value && !sopId && !position_id) router.replace(getPracticeReturnTarget());
 
 // ========== 语音状态 ==========
 const mobileInputMode = ref("text"); // text | voice
@@ -415,7 +447,9 @@ const practiceProgress = computed(() => {
 });
 const practiceProgressLabel = computed(() => practiceQuestionTotal.value
   ? `第 ${currentQuestionNumber.value} / ${practiceQuestionTotal.value} 题 · 已完成 ${practiceProgress.value}%`
-  : `第 ${currentQuestionNumber.value} 题 · 练习进行中`);
+  : isComprehensivePractice.value
+    ? t("ChatExam.comprehensivePending")
+    : `第 ${currentQuestionNumber.value} 题 · 练习进行中`);
 
 // 滚动到底
 function scrollBottom() {
@@ -438,6 +472,7 @@ function updateViewport() {
 
 // 保留当前会话，供刷新页面后继续答题；不再显示历史会话列表。
 function persist() {
+  if (isComprehensivePractice.value) return;
   if (examId.value) {
     sessionStorage.setItem(activeSessionKey, JSON.stringify({
       sessionId: sessionId.value,
@@ -449,7 +484,7 @@ function persist() {
 
 // 创建考试会话；第一题通过内部请求获取，不创建“开始考试”用户气泡。
 async function startExam() {
-  if (initializing.value || sending.value) return;
+  if (isComprehensivePractice.value || initializing.value || sending.value) return;
   initializing.value = true;
   autoStartFailed.value = false;
   sessionId.value = String(Date.now());
@@ -498,6 +533,31 @@ async function startExam() {
     messages.splice(0, messages.length, {
       id: createMessageId("start-error"), role: "assistant", done: true,
       content: "加载第一题失败，请重新尝试。",
+    });
+    ElMessage.error(t("ChatExam.startError"));
+  } finally {
+    initializing.value = false;
+  }
+}
+
+async function startComprehensiveExam() {
+  if (comprehensiveSessionUnavailable.value || initializing.value || sending.value) return;
+  initializing.value = true;
+  autoStartFailed.value = false;
+  sessionId.value = String(Date.now());
+  examId.value = comprehensiveExamId;
+  messages.splice(0, messages.length);
+
+  try {
+    if (!(await send(true))) throw new Error("Smart Practice first question request failed");
+  } catch (error) {
+    console.error("Comprehensive Practice start failed", error);
+    autoStartFailed.value = true;
+    messages.splice(0, messages.length, {
+      id: createMessageId("start-error"),
+      role: "assistant",
+      done: true,
+      content: t("ChatExam.errorTip"),
     });
     ElMessage.error(t("ChatExam.startError"));
   } finally {
@@ -829,6 +889,7 @@ function playAssistantAudio() {
 
 // ========== 答题 ==========
 async function send(isAutomatic = false) {
+  if (comprehensiveSessionUnavailable.value) return false;
   isAutomatic = isAutomatic === true;
   const rawText = input.value.trim();
   const text = rawText;
@@ -1046,17 +1107,21 @@ async function endExam() {
 
 onMounted(() => {
   updateViewport();
-  try {
-    const saved = JSON.parse(sessionStorage.getItem(activeSessionKey) || "null");
-    if (saved?.examId && Array.isArray(saved.messages) && saved.messages.length) {
-      sessionId.value = saved.sessionId || String(Date.now());
-      examId.value = saved.examId;
-      messages.splice(0, messages.length, ...saved.messages);
-    } else {
+  if (isComprehensivePractice.value) {
+    startComprehensiveExam();
+  } else {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(activeSessionKey) || "null");
+      if (saved?.examId && Array.isArray(saved.messages) && saved.messages.length) {
+        sessionId.value = saved.sessionId || String(Date.now());
+        examId.value = saved.examId;
+        messages.splice(0, messages.length, ...saved.messages);
+      } else {
+        startExam();
+      }
+    } catch {
       startExam();
     }
-  } catch {
-    startExam();
   }
   window.addEventListener("resize", updateViewport, { passive: true });
 });
