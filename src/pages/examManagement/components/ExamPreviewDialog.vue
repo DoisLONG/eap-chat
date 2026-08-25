@@ -38,7 +38,7 @@ const sourceNames = computed(() => props.exam?.source_names?.join("、") || deta
 const categoryText = computed(() => props.exam?.exam_type === "mixed" ? t("exam.types.mixed") : [props.exam?.primary_category_name, props.exam?.category_name].filter(Boolean).join(" / ") || "-");
 
 function reset() { requestId++; detail.value = null; error.value = ""; Object.assign(questions, { items: [], total: 0, page: 1, page_size: 10, is_snapshot: false }); }
-function questionType(type) { return t(`exam.types.${{ fill_blank: "fillBlank", short_answer: "qa", single_choice: "singleChoice", multiple_choice: "multipleChoice", true_false: "judgement" }[type] || "other"}`); }
+function questionType(type) { return t(`exam.types.${{ fill_blank: "fillBlank", short_answer: "qa", single_choice: "singleChoice", multiple_choice: "multipleChoice", true_false: "judgement", 填空题: "fillBlank", 问答题: "qa", 单选题: "singleChoice", 多选题: "multipleChoice", 判断题: "judgement" }[type] || "other"}`); }
 function options(value) { try { const parsed = typeof value === "string" ? JSON.parse(value) : value; return Array.isArray(parsed) ? parsed : parsed?.options || []; } catch { return []; } }
 function optionText(option, index) { return `${option?.key || String.fromCharCode(65 + index)}. ${option?.text || option?.content || option}`; }
 async function loadQuestions() {
