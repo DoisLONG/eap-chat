@@ -46,6 +46,10 @@ export function startExamSession({ user_id, file_name }) {
   return chatApi.post("/v1/exams/start", { user_id, file_name });
 }
 
+export function startComprehensiveExamSession(sources) {
+  return chatApi.post("/v1/exams/comprehensive/start", { sources });
+}
+
 // 流式答题接口
 export async function streamExamAnswer(body, onChunk) {
   const ctrl = new AbortController();
