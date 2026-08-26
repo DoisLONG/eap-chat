@@ -133,6 +133,10 @@ onBeforeUnmount(clearSourceUrl);
   container-type: inline-size;
 }
 
+.source-pane {
+  container-type: inline-size;
+}
+
 @container (max-width: 1180px) {
   .practice-review {
     height: auto;
@@ -161,9 +165,9 @@ onBeforeUnmount(clearSourceUrl);
   }
 }
 
-@container (max-width: 1760px) {
+@container (max-width: 960px) {
   .source-pane :deep(.vue-office-docx .docx-wrapper) {
-    padding: 8px 20px;
+    padding: 8px 48px;
   }
 
   .source-pane :deep(.vue-office-docx .docx-wrapper > section.docx) {
