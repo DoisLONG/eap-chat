@@ -475,3 +475,13 @@
 - `src/pages/webUser/practice/index.vue` 通过 `chat.service.js` 调用 `POST /chatapi/v1/exams/comprehensive/start`，仅提交已选资料的 `sopId`、`fillBlankCount`、`answerCount`；成功后以 `mode=comprehensive`、`entry=web-practice`、`examsId` 和实际 `totalQuestions` 进入既有 `ChatExam`。
 - `ChatExam.vue` 在综合模式直接用后端创建的会话加载首题并复用答题、SSE、进度和结束流程；标题保持“综合练习”，缺少会话 ID 时提供可返回的错误状态。综合模式不使用 sessionStorage 保存题目、答案或资料选择，普通单项练习的恢复与启动流程不变。
 - 同步补充中英泰错误和会话缺失文案；未运行构建、自动化测试、浏览器或接口联调。
+# 2026-08-26 复核页 DOCX 窄屏预览修复
+
+- `src/pages/practiceReview/index.vue`：移除窄容器下将 DOCX 页面强制设为 `width: 100%` 及附加内边距的规则。该规则会使表格与段落重排，并导致按原始页面坐标定位的图片在右侧裁剪。
+- 预览恢复原始页宽，沿用现有滚动容器查看超出区域；未修改接口、数据结构、路由、部署或依赖。
+- 未运行构建、自动化测试、浏览器或容器操作，按项目约定由用户验证。
+# 2026-08-26 复核页 DOCX 整页自适应
+
+- `src/pages/practiceReview/index.vue`：DOCX 预览在文档渲染完成及预览区宽度变化后，按原始页面宽度计算等比缩放；缩放整个页面，不重排文档内容。
+- 锁定渲染器生成的页面宽度和页边距，并移除窄屏库默认的包装内边距，避免其 `width: 100%` 媒体样式改变文字换行或裁剪图片。
+- 未修改接口、路由、数据结构、依赖、Docker 或部署；未运行构建、测试、浏览器或容器操作，待用户验收。
