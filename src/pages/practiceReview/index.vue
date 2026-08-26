@@ -163,7 +163,7 @@ onBeforeUnmount(clearSourceUrl);
 
 @container (max-width: 1760px) {
   .source-pane :deep(.vue-office-docx .docx-wrapper) {
-    padding: 8px;
+    padding: 8px 20px;
   }
 
   .source-pane :deep(.vue-office-docx .docx-wrapper > section.docx) {
