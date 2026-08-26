@@ -20,14 +20,14 @@
     <main class="workspace">
       <section ref="sourcePane" class="pane source-pane">
         <div class="pane-head"><div><strong>原始文件</strong><small>点击右侧题目，可定位到对应原文</small></div><div class="pane-actions"><el-button link :disabled="!source.file_name" @click="downloadSource">下载原文件</el-button><el-button link :disabled="!source.file_name" @click="openSource">新窗口打开</el-button><el-button link @click="toggleFullscreen">全屏</el-button></div></div>
-        <div class="source-body" :style="{ fontSize: `${zoom}%` }">
+        <div ref="sourceBody" class="source-body" :style="{ fontSize: `${zoom}%` }">
           <el-skeleton v-if="sourceLoading" :rows="8" animated />
           <el-alert v-else-if="sourceError" type="warning" :title="sourceError" :closable="false" />
           <template v-else-if="source.preview_type === 'pdf' && sourceUrl">
             <iframe class="pdf-viewer" :src="sourceUrl" title="原始 PDF 文件" />
             <div v-if="activeQuestion?.content" class="source-fragment">当前题目关联片段：{{ activeQuestion.content }}</div>
           </template>
-          <template v-else-if="source.preview_type === 'docx' && sourceData"><VueOfficeDocx :src="sourceData" /><div v-if="activeQuestion?.content" class="source-fragment">当前题目关联片段：{{ activeQuestion.content }}</div></template>
+          <template v-else-if="source.preview_type === 'docx' && sourceData"><div class="docx-fit" :style="{ zoom: docxZoom }"><VueOfficeDocx :src="sourceData" @rendered="fitDocxToPane" /></div><div v-if="activeQuestion?.content" class="source-fragment">当前题目关联片段：{{ activeQuestion.content }}</div></template>
           <template v-else-if="source.preview_type === 'xlsx' && sourceData"><VueOfficeExcel :src="sourceData" /><div v-if="activeQuestion?.content" class="source-fragment">当前题目关联片段：{{ activeQuestion.content }}</div></template>
           <template v-else-if="source.preview_type === 'text'">
             <div class="viewer-tools"><span>文本预览</span><el-button link @click="zoom = Math.max(85, zoom - 10)">－</el-button><span>{{ zoom }}%</span><el-button link @click="zoom = Math.min(130, zoom + 10)">＋</el-button></div>
@@ -63,7 +63,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 import { ArrowLeft, Plus } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -75,8 +75,10 @@ import { getPracticeReviewSource, getPracticeSourceFile, getQaList, saveQaList }
 const route = useRoute();
 const router = useRouter();
 const sourcePane = ref();
+const sourceBody = ref();
 const sourceLoading = ref(false), sourceError = ref(""), questionsLoading = ref(false), questionsError = ref(""), saving = ref(false);
-const questions = ref([]), keyword = ref(""), typeFilter = ref(""), page = ref(1), pageSize = ref(10), dirty = ref(false), zoom = ref(100), sourceUrl = ref(""), sourceData = ref(null), activeQuestion = ref(null);
+const questions = ref([]), keyword = ref(""), typeFilter = ref(""), page = ref(1), pageSize = ref(10), dirty = ref(false), zoom = ref(100), sourceUrl = ref(""), sourceData = ref(null), activeQuestion = ref(null), docxZoom = ref(1);
+let sourceBodyResizeObserver;
 const source = reactive({ title: "", file_name: "", version: "", primary_category_name: "", secondary_category_name: "", preview_type: "unsupported", source_text: "" });
 const typeOptions = computed(() => [...new Set([...questions.value.map(item => item.type).filter(Boolean), "问答题", "填空题"])]);
 const filteredQuestions = computed(() => questions.value.filter(item => {
@@ -92,7 +94,23 @@ const sourceHtml = computed(() => {
   if (index < 0) return escapeHtml(text);
   return `${escapeHtml(text.slice(0, index))}<mark class="source-hit">${escapeHtml(text.slice(index, index + fragment.length))}</mark>${escapeHtml(text.slice(index + fragment.length))}`;
 });
-function clearSourceUrl() { if (sourceUrl.value) URL.revokeObjectURL(sourceUrl.value); sourceUrl.value = ""; sourceData.value = null; }
+function clearSourceUrl() { if (sourceUrl.value) URL.revokeObjectURL(sourceUrl.value); sourceUrl.value = ""; sourceData.value = null; docxZoom.value = 1; }
+async function fitDocxToPane() {
+  if (source.preview_type !== "docx") return;
+  docxZoom.value = 1;
+  await nextTick();
+  const viewport = sourceBody.value;
+  const pages = [...(viewport?.querySelectorAll(".vue-office-docx .docx-wrapper > section.docx") || [])];
+  if (!viewport || !pages.length) return;
+  pages.forEach(page => ["width", "padding"].forEach(property => {
+    const value = page.style.getPropertyValue(property);
+    if (value) page.style.setProperty(property, value, "important");
+  }));
+  const style = getComputedStyle(viewport);
+  const availableWidth = viewport.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+  const contentWidth = Math.max(...pages.map(page => page.getBoundingClientRect().width));
+  docxZoom.value = Math.min(1, availableWidth / contentWidth);
+}
 function normalizeQuestion(item, index) { return { ...item, _key: crypto.randomUUID?.() || `${Date.now()}-${index}`, row: item.row ?? null, position: item.position ?? null, position_id: item.position_id ?? null, question: item.question ?? "", answer: String(item.answer ?? ""), content: item.content ?? "", type: item.type ?? "问答题", difficulty_factor: item.difficulty_factor ?? 0 }; }
 async function loadReview(sopId) {
   clearSourceUrl(); Object.assign(source, { title: "", file_name: "", version: "", primary_category_name: "", secondary_category_name: "", preview_type: "unsupported", source_text: "" }); questions.value = []; activeQuestion.value = null; dirty.value = false; page.value = 1;
@@ -121,7 +139,8 @@ async function openSource() { try { const response = await getPracticeSourceFile
 function toggleFullscreen() { sourcePane.value?.requestFullscreen?.(); }
 watch(() => route.params.sopId, value => { if (value) loadReview(value); }, { immediate: true });
 onBeforeRouteLeave(() => confirmLeave());
-onBeforeUnmount(clearSourceUrl);
+onMounted(() => { sourceBodyResizeObserver = new ResizeObserver(fitDocxToPane); sourceBodyResizeObserver.observe(sourceBody.value); });
+onBeforeUnmount(() => { sourceBodyResizeObserver?.disconnect(); clearSourceUrl(); });
 </script>
 
 <style scoped>
@@ -133,8 +152,8 @@ onBeforeUnmount(clearSourceUrl);
   container-type: inline-size;
 }
 
-.source-pane {
-  container-type: inline-size;
+.docx-fit :deep(.vue-office-docx .docx-wrapper) {
+  padding: 0 !important;
 }
 
 @container (max-width: 1180px) {
@@ -162,17 +181,6 @@ onBeforeUnmount(clearSourceUrl);
 
   .source-pane {
     min-height: min(640px, calc(100vh - 170px));
-  }
-}
-
-@container (max-width: 960px) {
-  .source-pane :deep(.vue-office-docx .docx-wrapper) {
-    padding: 8px 48px;
-  }
-
-  .source-pane :deep(.vue-office-docx .docx-wrapper > section.docx) {
-    box-sizing: border-box;
-    width: 100% !important;
   }
 }
 
