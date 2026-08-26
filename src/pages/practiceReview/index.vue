@@ -169,7 +169,6 @@ onBeforeUnmount(clearSourceUrl);
   .source-pane :deep(.vue-office-docx .docx-wrapper > section.docx) {
     box-sizing: border-box;
     width: 100% !important;
-    padding: 10px !important;
   }
 }
 
