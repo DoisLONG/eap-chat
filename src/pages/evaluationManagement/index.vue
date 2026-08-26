@@ -57,6 +57,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
+import { useI18n } from "vue-i18n";
 import {
   deleteEvaluationItems,
   getEvaluationCategories,
@@ -66,6 +67,7 @@ import {
 } from "@/services/evaluation.service";
 
 const pageSize = 8;
+const { t } = useI18n();
 const records = ref([]);
 const total = ref(0);
 const page = ref(1);
@@ -86,7 +88,11 @@ const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 const allSelected = computed(() => records.value.length > 0 && records.value.every((item) => selectedIds.value.has(item.id)));
 const partiallySelected = computed(() => !allSelected.value && records.value.some((item) => selectedIds.value.has(item.id)));
 
-const typeText = (type) => (type === "choice" ? "选择题" : "问答题");
+const typeText = (type) => t(`exam.types.${{
+  single_choice: "singleChoice", multiple_choice: "multipleChoice", true_false: "judgement",
+  fill_blank: "fillBlank", short_answer: "qa", choice: "choice", qa: "qa", essay: "qa",
+  单选题: "singleChoice", 多选题: "multipleChoice", 判断题: "judgement", 填空题: "fillBlank", 问答题: "qa",
+}[String(type ?? "").trim()] || "other"}`);
 const statusText = (status) => (status === "completed" ? "已完成" : "未完成");
 const categoryText = (record) => [record.primaryCategoryName, record.secondaryCategoryName].filter(Boolean).join(" / ") || "--";
 
