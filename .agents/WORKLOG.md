@@ -386,6 +386,11 @@
 - Updated ExamPreviewDialog.vue to map the Chinese aliases for fill-blank, QA, single-choice, multiple-choice, and true-false questions to the existing exam.types.* i18n keys; existing English enum mappings are unchanged.
 - No API, data model, route, or unrelated page was modified. Build and tests were not run; user verification is required in the Exam Preview dialog.
 
+## 2026-08-26 Evaluation detail question types
+
+- Updated evaluation-management detail labels to map the five canonical question types, Chinese historical aliases, and legacy `choice` / `qa` / `essay` values through the existing `exam.types.*` i18n keys. Unknown, blank, and absent values now display the existing “other” type instead of being incorrectly labeled as Q&A.
+- No API, score, answer, grading, database, route, or deployment behavior changed. No build, automated test, service, Docker, database, migration, or API integration was run; user verification is required.
+
 ## 2026-08-10 PPT/PPTX PDF preview
 
 - `OfficeViewer` now uses the existing PDF viewer for `ppt` and `pptx`; it no longer invokes the browser-side `@vue-office/pptx` renderer.
