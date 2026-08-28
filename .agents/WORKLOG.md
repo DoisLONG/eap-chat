@@ -1,5 +1,10 @@
 # 本次工作记录
 
+## 2026-08-28 练习复核页视频预览
+
+- `practiceReview/index.vue` 对 `preview_type=video` 使用原生 `<video controls preload="metadata">` 播放已有 Blob URL；复用既有源文件下载接口和 URL 回收，不新增播放器依赖。视频题目定位仅提示暂不支持按时间段定位。
+- 未修改路由、接口路径、鉴权、数据库或部署；未运行构建、测试、浏览器或服务。
+
 ## 2026-08-19 练习题目复核页面自适应
 
 - 定位：`practiceReview/index.vue` 原先只通过全局视口 `@media (max-width: 1050px)` 切换单栏；侧栏占用宽度、显示缩放或中等显示器会令页面实际内容区已不足，但仍维持双栏，DOCX 固定版心因此被裁切。
