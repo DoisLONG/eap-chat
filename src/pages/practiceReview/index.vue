@@ -27,6 +27,10 @@
             <iframe class="pdf-viewer" :src="sourceUrl" title="原始 PDF 文件" />
             <div v-if="activeQuestion?.content" class="source-fragment">当前题目关联片段：{{ activeQuestion.content }}</div>
           </template>
+          <template v-else-if="source.preview_type === 'video' && sourceUrl">
+            <video class="video-viewer" :src="sourceUrl" controls preload="metadata">当前浏览器不支持视频播放。</video>
+            <div v-if="activeQuestion?.content" class="source-fragment">当前题目关联片段：{{ activeQuestion.content }}</div>
+          </template>
           <template v-else-if="source.preview_type === 'docx' && sourceData"><div class="docx-fit" :style="{ zoom: docxZoom }"><VueOfficeDocx :src="sourceData" @rendered="fitDocxToPane" /></div><div v-if="activeQuestion?.content" class="source-fragment">当前题目关联片段：{{ activeQuestion.content }}</div></template>
           <template v-else-if="source.preview_type === 'xlsx' && sourceData"><VueOfficeExcel :src="sourceData" /><div v-if="activeQuestion?.content" class="source-fragment">当前题目关联片段：{{ activeQuestion.content }}</div></template>
           <template v-else-if="source.preview_type === 'text'">
@@ -118,7 +122,7 @@ async function loadReview(sopId) {
   const [sourceResult, questionsResult] = await Promise.allSettled([getPracticeReviewSource(sopId), getQaList({ id: Number(sopId) })]);
   if (sourceResult.status === "fulfilled") {
     Object.assign(source, sourceResult.value.data?.results || {});
-    if (["pdf", "docx", "xlsx"].includes(source.preview_type)) try { const response = await getPracticeSourceFile(sopId); if (source.preview_type === "pdf") sourceUrl.value = URL.createObjectURL(response.data); else sourceData.value = await response.data.arrayBuffer(); } catch (error) { sourceError.value = error?.response?.data?.detail || "原始文件加载失败"; }
+    if (["pdf", "docx", "xlsx", "video"].includes(source.preview_type)) try { const response = await getPracticeSourceFile(sopId); if (["pdf", "video"].includes(source.preview_type)) sourceUrl.value = URL.createObjectURL(response.data); else sourceData.value = await response.data.arrayBuffer(); } catch (error) { sourceError.value = error?.response?.data?.detail || "原始文件加载失败"; }
   } else sourceError.value = sourceResult.reason?.response?.data?.detail || sourceResult.reason?.message || "原文件加载失败";
   if (questionsResult.status === "fulfilled") questions.value = (questionsResult.value.data?.results || []).map(normalizeQuestion);
   else questionsError.value = questionsResult.reason?.response?.data?.detail || questionsResult.reason?.message || "题目加载失败";
@@ -128,7 +132,7 @@ function markDirty() { dirty.value = true; }
 function resetFilters() { keyword.value = ""; typeFilter.value = ""; page.value = 1; }
 function addQuestion() { questions.value.unshift(normalizeQuestion({ type: "问答题", question: "", answer: "", content: "", position_id: questions.value[0]?.position_id ?? null }, questions.value.length)); markDirty(); page.value = 1; }
 async function removeQuestion(question) { try { await ElMessageBox.confirm("删除后需保存才会生效，确定删除吗？", "温馨提示", { type: "warning" }); questions.value.splice(questions.value.indexOf(question), 1); if (page.value > Math.max(1, Math.ceil(filteredQuestions.value.length / pageSize.value))) page.value--; markDirty(); } catch {} }
-async function locate(question) { activeQuestion.value = question; const fragment = question.content?.trim(); await nextTick(); if (source.preview_type === "text" && fragment && source.source_text.includes(fragment)) document.querySelector(".source-hit")?.scrollIntoView({ behavior: "smooth", block: "center" }); else if (["pdf", "docx", "xlsx"].includes(source.preview_type)) ElMessage.info("当前预览不支持稳定文字高亮，已显示题目关联片段。"); else ElMessage.warning("未找到对应原文片段"); }
+async function locate(question) { activeQuestion.value = question; const fragment = question.content?.trim(); await nextTick(); if (source.preview_type === "text" && fragment && source.source_text.includes(fragment)) document.querySelector(".source-hit")?.scrollIntoView({ behavior: "smooth", block: "center" }); else if (["pdf", "docx", "xlsx"].includes(source.preview_type)) ElMessage.info("当前预览不支持稳定文字高亮，已显示题目关联片段。"); else if (source.preview_type === "video") ElMessage.info("视频预览暂不支持定位到对应时间段。"); else ElMessage.warning("未找到对应原文片段"); }
 function payload() { const missing = questions.value.findIndex(item => !item.type?.trim() || !item.question?.trim() || !item.answer?.trim() || !item.content?.trim()); if (missing >= 0) throw new Error(`请完整填写第 ${missing + 1} 题的题型、题目、答案和解析`); return { sop_info_id: Number(route.params.sopId), file_name: source.file_name, records: questions.value.map(({ id, question_code, row, position, position_id, question, answer, content, type, options, difficulty_factor }) => ({ id, question_code, row, position, position_id, question: question.trim(), answer: String(answer).trim(), content: content.trim(), type, options, difficulty_factor })) }; }
 async function save() { if (saving.value) return false; try { saving.value = true; await saveQaList(payload()); dirty.value = false; ElMessage.success("所有修改已保存"); return true; } catch (error) { ElMessage.error(error?.response?.data?.detail || error.message || "保存失败"); return false; } finally { saving.value = false; } }
 async function saveAndBack() { if (await save()) router.push({ name: "PracticeManagement" }); }
@@ -150,6 +154,13 @@ onBeforeUnmount(() => { sourceBodyResizeObserver?.disconnect(); clearSourceUrl()
 <style scoped>
 .practice-review {
   container-type: inline-size;
+}
+
+.video-viewer {
+  width: 100%;
+  min-height: 360px;
+  max-height: 100%;
+  background: #000;
 }
 
 .docx-fit :deep(.vue-office-docx .docx-wrapper) {
