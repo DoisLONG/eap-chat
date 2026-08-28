@@ -1,5 +1,9 @@
 # 本次工作记录
 
+## 2026-08-28 登录页品牌信息
+
+- 登录页底部由“© 年份 全局管理系统”调整为“智能陪练 Enterprise Edition v2.0.0”及“© 年份 BlueDot”；不改登录接口、表单、路由或语言切换。
+
 ## 2026-08-28 练习复核页视频预览
 
 - `practiceReview/index.vue` 对 `preview_type=video` 使用原生 `<video controls preload="metadata">` 播放已有 Blob URL；复用既有源文件下载接口和 URL 回收，不新增播放器依赖。视频题目定位仅提示暂不支持按时间段定位。

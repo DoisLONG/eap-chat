@@ -63,7 +63,10 @@
           >
         </el-form-item>
       </el-form>
-      <div class="footer">© {{ year }} {{ $t("header.logo") }}</div>
+      <div class="footer">
+        <div>智能陪练 Enterprise Edition <span class="version">v2.0.0</span></div>
+        <div>© {{ year }} BlueDot</div>
+      </div>
     </div>
   </div>
 </template>
@@ -212,6 +215,10 @@ const onLogin = async () => {
   margin-top: 32px;
   color: #adb4bd;
   font-size: 13px;
+  line-height: 1.8;
   width: 100%;
+}
+.version {
+  margin-left: 4px;
 }
 </style>
