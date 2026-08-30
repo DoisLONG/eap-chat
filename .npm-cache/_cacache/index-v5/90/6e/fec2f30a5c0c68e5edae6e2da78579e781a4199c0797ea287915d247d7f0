@@ -1,0 +1,2 @@
+
+0ce8d1d2bb4fb1cd2f21a8a068e2e4476239ef91	{"key":"make-fetch-happen:request-cache:https://registry.npm.taobao.org/tinyglobby","integrity":null,"time":1783577568791,"size":"262","metadata":{"time":1783577568791,"url":"https://registry.npm.taobao.org/tinyglobby","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Thu, 09 Jul 2026 06:12:47 GMT","location":"https://registry.npmmirror.com/tinyglobby"},"options":{"compress":true},"status":301}}

@@ -39,8 +39,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/chathistoryapi/, ""),
       },
       "/userapi": {
-        target: "http://14.103.176.8:9011",
-        // target: "http://14.103.144.187:30112", // 四会
+        target: "http://14.103.144.187:30112", // 四会
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/userapi/, ""),
       },
